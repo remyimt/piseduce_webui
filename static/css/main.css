@@ -1,0 +1,45 @@
+/** Login forms **/
+.form-login {
+    width: 400px;
+    padding: 20px;
+    text-align: center;
+    margin-top: 100px;
+}
+
+.form-signup {
+    width: 600px;
+    padding: 20px;
+    margin-top: 100px;
+    text-align: center;
+}
+
+.form-signup label {
+    text-align: left;
+}
+
+/** Admin Property tables: worker, switch, node, environment **/
+.prop-title {
+    font-family: "Palatino Linotype";
+    color: #123eab;
+}
+
+.prop-table {
+    margin-left: 20px;
+}
+
+.prop-table .row {
+    height: 34px;
+}
+
+.prop-table .col select {
+    width: 154px;
+}
+
+.add-button {
+    width: 410px;
+    margin-top: 6px;
+}
+
+.delete-button {
+    width: 80px;
+}

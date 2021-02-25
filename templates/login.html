@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+    
+<head>
+	<title>PiSeduce</title>
+	<link rel="stylesheet" href="/static/css/bootstrap.min.css">
+	<link rel="stylesheet" href="/static/css/main.css">
+	<script src="/static/js/jquery-3.5.1.min.js"></script>
+</head>
+
+<body class="bg-light">
+    <div class="form-login mx-auto">
+        <img src="/static/img/piseduce.png" height="150px">
+        {% if request.args.get('msg') %}
+            <div class="alert alert-danger" role="alert">
+                {{ request.args.get('msg') }}
+            </div>
+        {% endif %}
+        <form action="/login-post" method="POST">
+            <input type="email" name="email" class="form-control" placeholder="Email address" required autofocus>
+            <input type="password" name="pwd" class="form-control mb-2" placeholder="Password" required>
+            <div class="form-group mb-1">
+                <button class="btn btn-lg btn-primary btn-block" type="submit">Sign In</button>
+            </div>
+            <div class="form-group">
+                <p class="text-muted text-center">Do not have an account?
+                    <a href="{{ url_for("login.signup") }}">Sign Up!</a>
+                </p>
+            </div>
+        </form>
+    </div>
+</body>
+</html>

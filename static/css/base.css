@@ -1,0 +1,57 @@
+body {
+    background: #f7f7f7;
+}
+
+/* The sidebar menu */
+.sidenav {
+    height: 100%;
+    width: 250px;
+    background-color: #343a40;
+    color: #fff;
+    position: fixed;
+    top: 0;
+    left: 0;
+}
+
+.sidenav-header {
+    background: #43494f;
+    text-align: center;
+    font-size: 20px;
+}
+
+.sidenav a {
+    padding: 6px 8px 6px 16px;
+    text-decoration: none;
+    font-size: 16px;
+    color: #fff;
+    display: block;
+}
+
+.sidenav a:last-child {
+    background: #d50000;
+}
+
+.sidenav a:hover {
+    color: #17a2b8;
+    background: #fff;
+}
+
+.sidenav .active {
+    background: #17a2b8;
+}
+
+.sidenav a span {
+    color: #dab600;
+}
+
+/* Style page content */
+.main {
+    margin-left: 250px; /* Same as the width of the sidebar */
+    padding: 20px;
+}
+
+/* On smaller screens, where height is less than 450px, change the style of the sidebar (less padding and a smaller font size) */
+@media screen and (max-height: 450px) {
+    .sidenav {padding-top: 15px;}
+    .sidenav a {font-size: 18px;}
+}

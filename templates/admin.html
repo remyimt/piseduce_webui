@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="bg-white p-2">
+    <h4 class="prop-title">Add {{ elem_type[0]|upper}}{{elem_type[1:] }}</h4>
+    {% if props|length == 0 %}
+        <span>No available worker</span>
+    {% else %}
+        {% if msg %}
+            <div class="alert alert-danger" role="alert">
+                {{ msg }}
+            </div>
+        {% endif %}
+        <form action="/admin/add/{{elem_type}}" method="post">
+            <div class="container prop-table">
+                <input type="hidden" value="{{ elem_type }}">
+                {% if workers|length > 0 %}
+                    <div class="row">
+                        <div class="col-2">
+                            Worker
+                        </div>
+                        <div class="col">
+                            <select name="worker">
+                            {% for w in workers %}
+                                <option value="{{w}}">{{w}}</option>
+                            {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                {% endif %}
+                {% for prop in props %}
+                    <div class="row">
+                        <div class="col-2">
+                            {{ prop }}
+                        </div>
+                        <div class="col">
+                            <input type="text" name="{{prop}}" placeholder="{{prop}}" size="12" required>
+                        </div>
+                    </div>
+                {% endfor %}
+                <div class="row">
+                    <div class="col">
+                        <input type="submit" class="btn btn-info add-button" value="Confirm">
+                    </div>
+                </div>
+            </div> <!-- container -->
+        </form>
+    {% endif %}
+    <h4 class="prop-title mt-4">Existing {{ elem_type[0]|upper}}{{elem_type[1:] }}s</h4>
+    {% if elements|length == 0 %}
+        <span>None</span>
+    {% else %}
+        <table class="table text-center">
+            <thead>
+                <tr>
+                    {% for prop in elements[0].keys() %}
+                        <th scope="col">
+                            {{ prop[0]|upper}}{{prop[1:] }}
+                        </th>
+                    {% endfor %}
+                    <th scope="col">
+                        Delete {{ elem_type[0]|upper}}{{elem_type[1:] }}
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for elem in elements %}
+                    <tr>
+                        {% for prop in elem.keys() %}
+                            {% set elem_str = elem[prop]|string %}
+                            {% if elem_str|length > 15 %}
+                                <td title="{{elem_str}}">
+                                    {{ elem_str[:15] }}...
+                            {% else %}
+                                <td>
+                                    {{ elem_str }}
+                            {% endif %}
+                            </td>
+                        {% endfor %}
+                        <td>
+                            <a href="/admin/delete/{{elem_type}}/{{elem["worker"]}}/{{elem["name"]}}" class="btn btn-warning
+                            delete-button">&#x2212;</a>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tr>
+            </tbody>
+        </table>
+    {% endif %}
+</div>
+{% endblock %}

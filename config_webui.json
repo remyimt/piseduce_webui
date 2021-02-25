@@ -1,0 +1,5 @@
+{
+    "port_number": 9000,
+    "secret_key": "oneSecretKey",
+    "db_url": "sqlite:///test-ui.db"
+}

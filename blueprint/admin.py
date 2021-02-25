@@ -1,6 +1,7 @@
 from database.connector import open_session, close_session, row2elem, row2dict
 from database.tables import User, Worker
 from flask_login import current_user, login_required
+from lib.config_loader import load_config
 import flask, functools, logging, requests
 
 
@@ -196,8 +197,13 @@ def get(el_type, error=None):
     properties = []
     existing = []
     worker_names = []
+    worker_types = load_config()["%s_provider" % el_type]
+    if worker_types is None or len(worker_types) == 0:
+        error = "missing '%s_provider' property in the configuration file" % el_type
+        return flask.render_template("admin.html", admin = current_user.is_admin, active_btn = "admin_%s" % el_type,
+            workers = worker_names, elem_type = el_type, props = properties, elements = existing, msg = error)
     db = open_session()
-    workers = db.query(Worker).filter(Worker.type == "raspberry").all()
+    workers = db.query(Worker).filter(Worker.type.in_(worker_types)).all()
     for w in workers:
         # Send the worker names to the template
         worker_names.append(w.name)
@@ -242,7 +248,7 @@ def add(el_type):
                 json_args[prop] = flask.request.form[prop]
         json_args["token"] = worker.token
         # Register the element to the worker
-        r = requests.post(url = "http://%s:%s/v1/admin/add-%s" % (worker.ip, worker.port, el_type), json = json_args)
+        r = requests.post(url = "http://%s:%s/v1/admin/add/%s" % (worker.ip, worker.port, el_type), json = json_args)
         if r.status_code != 200:
             msg = "can not add the %s '%s' to the worker '%s:%s'" % (el_type, flask.request.form["name"], worker.ip, worker.port)
         elif el_type not in r.json():

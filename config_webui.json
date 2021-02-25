@@ -1,5 +1,8 @@
 {
     "port_number": 9000,
     "secret_key": "oneSecretKey",
-    "db_url": "sqlite:///test-ui.db"
+    "db_url": "sqlite:///test-ui.db",
+    "node_provider": [ "fake", "raspberry" ],
+    "switch_provider": [ "raspberry" ],
+    "environment_provider": [ "raspberry" ]
 }

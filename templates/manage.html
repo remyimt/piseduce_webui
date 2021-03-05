@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block other_js %}
+	<script src="/static/js/manage.js"></script>
+{% endblock %}
+{% block content %}
+    <div class="bg-white shadow manage">
+        <center><h4>Node Management</h4></center>
+        {% for node in nodes %}
+            <div>
+                {{node}}
+            </div>
+        {% endfor %}
+    </div>
+{% endblock %}

@@ -43,3 +43,274 @@
 .delete-button {
     width: 80px;
 }
+
+/** Reserve page **/
+.reserve .title {
+    font-family: "Palatino Linotype";
+    font-size: 24px;
+    color: #123eab;
+}
+
+.reserve .subtitle {
+    font-family: "Palatino Linotype";
+    font-size: 20px;
+    color: #123eab;
+}
+
+.reserve > div {
+    width: 800px;
+}
+
+.searchbar {
+    text-align: center;
+}
+
+.searchbar > div {
+    text-align: left;
+    display: inline-block;
+}
+
+.searchbar input {
+    width: 300px;
+}
+
+.searchbar img {
+    position: relative;
+    left: -40px;
+}
+
+.searchbar .add-filter {
+    width: 100px;
+    display: inline-block;
+    height: 40px;
+    padding-top: 8px;
+    text-align: center;
+    color: white;
+}
+
+.filters {
+    height: 130px;
+    background: #fff;
+    margin-top: 10px;
+    overflow-y: auto;
+}
+
+.filter {
+    width: 184px;
+    height: 50px;
+    border: 1px solid green;
+    margin: 2px;
+    padding-left: 5px;
+    display: inline-block;
+}
+
+.filter > div:first-child {
+    width: 117px;
+    float: left;
+}
+
+.filter span:first-child {
+    color: green;
+}
+
+.filter .suppr {
+    width: 26px;
+    height: 48px;
+    padding-top: 10px;
+    text-align: center;
+    color: #fff;
+    background: green;
+    float: right;
+}
+
+.nodelist {
+    height: 294px;
+    margin-top: 30px;
+    padding: 5px;
+    background: #fff;
+}
+
+.info-view {
+    width: 800px;
+    height: 294px;
+    color: #fff;
+    opacity: 0.7;
+    display: none;
+    position: relative;
+    top: -291px;
+    left: -5px;
+}
+
+.nodelist .nodeitems {
+    height: 182px;
+    margin-top: 6px;
+    overflow-y: auto;
+}
+
+.nodeitems .node {
+    width: 186px;
+    height: 30px;
+    border: 1px solid green;
+    margin: 2px;
+    padding-left: 5px;
+    display: inline-block;
+}
+
+.nodeitems .node div {
+    display: inline-block;
+}
+
+.nodeitems .node div:last-child {
+    width: 40px;
+    height: 28px;
+    text-align: center;
+    color: #fff;
+    background: green;
+    float: right;
+}
+
+.nodeitems .reserved {
+    background: #ffdfdf;
+}
+
+.nodelist .fuzzy {
+    height: 46px;
+    margin-top: 16px;
+}
+
+.nodelist .fuzzy input {
+    width: 60px;
+    font-size: 16px;
+}
+
+.nodelist .fuzzy div:first-child {
+    margin-top: 5px;
+    float: left;
+}
+
+.nodelist .fuzzy div:last-child {
+    width: 130px;
+    height: 40px;
+    padding-top: 8px;
+    text-align: center;
+    color: white;
+    float: right;
+}
+
+.selectednodes {
+    height: 244px;
+    margin-top: 30px;
+    padding: 5px;
+}
+
+.selectednodes .ready-nodes {
+    height: 144px;
+    overflow-y: auto;
+}
+
+.selectednodes > div:last-child {
+    width: 100%;
+    height: 40px;
+    margin-top: 16px;
+    padding-top: 7px;
+    text-align: center;
+    color: #fff;
+}
+
+/** configure page **/
+.configure {
+    width: 800px;
+}
+
+.configure h4 {
+    padding-top: 10px;
+}
+
+.configure form {
+    padding-bottom: 5px;
+}
+
+.configure .desc {
+    height: 100px;
+    padding: 6px;
+    overflow-y: auto;
+    background: #f7f7f7;
+}
+
+.configure .title {
+    width: 300px;
+    padding-right: 30px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    font-size: 20px;
+    color: white;
+    text-align: right;
+}
+
+.configure .name {
+    margin-left: 10px; 
+    margin-bottom: 10px; 
+}
+
+.configure .name .row {
+    height: 40px;
+}
+
+.configure .name input {
+    width: 300px;
+}
+
+.configure .type-selection {
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+.configure .type-selection div {
+    width: 160px;
+    height: 40px;
+    padding-top: 5px;
+    display: inline-block;
+    font-size: 18px;
+}
+
+.configure .type-selection div:not(:first-child) {
+    margin-left: 20px;
+}
+
+.configure .node-config {
+    height: 430px;
+    overflow-y: scroll;
+}
+
+.configure .accordion .card a {
+    padding: 0;
+}
+
+.configure .apply-button {
+    margin-top: 8px;
+    text-align: center;
+}
+
+.configure .apply-button {
+    height: 30px;
+    padding-top: 2px;
+}
+
+.configure .properties input {
+    width: 210px;
+}
+
+.configure .properties select {
+    width: 210px;
+    height: 30px;
+}
+
+.configure .deploy-button {
+    width: 100%;
+    margin-top: 20px;
+}
+
+/** Manage Page **/
+.manage {
+    width: 800px;
+}

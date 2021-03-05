@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+{% block other_js %}
+	<script src="/static/js/configure.js"></script>
+{% endblock %}
+{% block content %}
+    <div class="bg-white shadow configure">
+        <center><h4>Node Configuration</h4></center>
+        <form action="/user/make/deploy" method="POST">
+            <div class="desc">
+            </div>
+            {% if request.args.get('msg') %}
+                <div class="alert alert-danger">
+                    {{request.args.get('msg')}}
+                </div>
+            {% endif %}
+            <div class="bg-info rounded-right title">
+                Deployment
+            </div>
+            <div class="name">
+                <div class="container">
+                    <div class="row">
+                        <div class="col">
+                            <span>
+                                Node bin name
+                            </span>
+                        </div>
+                        <div class="col">
+                            <input type="text" name="bin" onfocus="showDesc(this)" onfocusout="$('.desc').empty()" required>
+                        </div>
+                        <div class="col">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col">
+                            duration
+                        </div>
+                        <div class="col">
+                            <input type="number" name="duration" min="0" max="72" value="2"
+                                onfocus="showDesc(this)" onfocusout="$('.desc').empty()" required>
+                        </div>
+                        <div class="col">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-info rounded-right title">
+                Nodes
+            </div>
+            <div class="type-selection">
+                {% for node_type in nodes %}
+                    <div id="{{node_type}}-button" class="btn btn-outline-info"
+                        onclick="nodeSelection('{{node_type}}')">
+                        {{node_type}}
+                    </div>
+                {% endfor %}
+            </div>
+            <div class="node-config">
+                {% for node_type in nodes %}
+                    <div id="{{node_type}}" class="accordion">
+                    {% for node_name in nodes[node_type] %}
+                        {% set config = nodes[node_type][node_name] %}
+                        <!-- Remember the loop iterator -->
+                        {% set node_loop = loop %}
+                        <!-- Remove the 'name' and 'duration' property (common deployment properties) -->
+                        {% set useless = config.pop("node_bin") %}
+                        {% set useless = config.pop("duration") %}
+                        {% set worker = config.pop("worker") %}
+                        <!-- configure the number of columns per row -->
+                        {% set nb_col = 3 %}
+                        {% set extra_col = (nb_col - config|length % nb_col) % nb_col %}
+                        <!-- Send the worker name in the form -->
+                        <input type="hidden" name="{{node_name}}-worker" value="{{worker}}">
+                        <!-- Node properties for the deployment -->
+                        <div class="card">
+                            {% if loop.index == 1 %}
+                                <a type="button" data-toggle="collapse" data-target="#collapse{{node_loop.index}}"
+                                    aria-expanded="true" aria-controls="collapse{{node_loop.index}}" class="btn btn-link">
+                            {% else %}
+                                <a type="button" data-toggle="collapse" data-target="#collapse{{node_loop.index}}"
+                                    aria-expanded="false" aria-controls="collapse{{node_loop.index}}" class="btn btn-link">
+                            {% endif %}
+                            <div id="heading{{node_loop.index}}" class="card-header">
+                                    {{node_name}}
+                            </div><!-- card-header -->
+                            </a>
+                            {% if loop.index == 1 %}
+                                <div id="collapse{{node_loop.index}}" class="collapse show"
+                                    aria-labelledby="heading{{node_loop.index}}" data-parent="#{{node_type}}">
+                            {% else %}
+                                <div id="collapse{{node_loop.index}}" class="collapse collapsed"
+                                    aria-labelledby="heading{{node_loop.index}}" data-parent="#{{node_type}}">
+                            {% endif %}
+                            <div class="card-body">
+                                <div id="{{node_name}}-props" class="container properties">
+                                    {% for prop in config %}
+                                        {% if loop.index % nb_col == 1 %}
+                                            <div class="row">
+                                        {% endif %}
+                                        <div class="col">
+                                            <span>{{ prop }}</span><br/>
+                                            {% if config[prop]["values"]|length == 0 %}
+                                                {% if config[prop]["mandatory"] %}
+                                                    <input name="{{node_name}}-{{prop}}" type="text"
+                                                        onfocus="showDesc(this)" onfocusout="$('.desc').empty()"
+                                                        onchange="removeBold('heading{{node_loop.index}}')" required>
+                                                {% else %}
+                                                    <input name="{{node_name}}-{{prop}}" type="text"
+                                                        onfocus="showDesc(this)" onfocusout="$('.desc').empty()"
+                                                        onchange="removeBold('heading{{node_loop.index}}')">
+                                                {% endif %}
+                                            {% else %}
+                                                {% if config[prop]["mandatory"] %}
+                                                    <select name="{{node_name}}-{{prop}}" onfocus="showDesc(this)" onfocusout="$('.desc').empty()"
+                                                        onchange="removeBold('heading{{node_loop.index}}')" required>
+                                                        {% for v in config[prop]["values"] %}
+                                                            <option value="{{v}}">{{v}}</option>
+                                                        {% endfor %}
+                                                    </select>
+                                                {% else %}
+                                                    <select name="{{node_name}}-{{prop}}" onfocus="showDesc(this)" onfocusout="$('.desc').empty()"
+                                                        onchange="removeBold('heading{{node_loop.index}}')">
+                                                        {% for v in config[prop]["values"] %}
+                                                            <option value="{{v}}">{{v}}</option>
+                                                        {% endfor %}
+                                                    </select>
+                                                {% endif %}
+                                            {% endif %}
+                                        </div>
+                                        {% if loop.index % nb_col == 0 %}
+                                            </div><!-- end row -->
+                                        {% endif %}
+                                    {% endfor %}
+                                    {% for n in range(extra_col) %}
+                                        <div class="col">
+                                        </div>
+                                    {% endfor %}
+                                    {% if extra_col != 0 %}
+                                        </div><!-- end row -->
+                                    {% endif %}
+                                    <div class="row">
+                                        <div class="col apply-button">
+                                            <div class="btn btn-outline-secondary"
+                                                 onclick="copyConfiguration('{{node_name}}')">
+                                                Apply this configuration to next nodes
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div><!-- container -->
+                            </div><!-- card-body -->
+                            </div><!-- collapse -->
+                        </div><!-- card -->
+                    {% endfor %}
+                    </div><!-- node_type accordion -->
+                {% endfor %}
+            </div><!-- node-config -->
+            <button type="submit" class="btn btn-info deploy-button">Deploy</button>
+        </form>
+    </div>
+{% endblock %}

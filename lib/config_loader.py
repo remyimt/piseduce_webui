@@ -3,7 +3,7 @@ import json, os
 
 CONFIG_PATH = "config_webui.json"
 CONFIG_SINGLETON = None
-DATE_FORMAT= "%Y-%m-%d %H:%M:%S"
+DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
 
 
 def load_config():

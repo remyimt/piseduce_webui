@@ -1,4 +1,4 @@
-from database.connector import open_session, close_session
+from database.connector import open_session, close_session, load_worker_info
 from database.tables import User
 from flask import Flask, render_template
 from flask_login import LoginManager, UserMixin
@@ -44,9 +44,11 @@ def page_not_found(e):
     # note that we set the 404 status explicitly
     return render_template('403.html'), 403
 
+
 # Start the web interface
 if __name__ == "__main__":
     logging.basicConfig(filename="info_webui.log", level=logging.INFO,
         format="%(asctime)s %(levelname)-8s %(message)s", datefmt="%Y-%m-%d %H:%M:%S")
     port_number = load_config()["port_number"]
+    load_worker_info()
     webui.run(port=port_number, host="0.0.0.0")

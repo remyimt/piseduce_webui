@@ -214,7 +214,7 @@ def get(el_type, error=None):
         else:
             properties = r.json()["missing"]
         # Get the existing switches
-        r = requests.post(url = "http://%s:%s/v1/user/%s" % (w.ip, w.port, el_type), json = { "token": w.token })
+        r = requests.post(url = "http://%s:%s/v1/user/%s/list" % (w.ip, w.port, el_type), json = { "token": w.token })
         if r.status_code != 200:
             error = "can not get the list of %ss from the worker '%s:%s'" % (el_type, w.ip, w.port)
         else:

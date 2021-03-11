@@ -1,7 +1,8 @@
 from database.connector import open_session, close_session
-from database.tables import Worker
+from database.tables import User, Worker
 from flask_login import current_user, login_required
 import flask, json, logging, requests
+from werkzeug.security import generate_password_hash
 
 
 b_user = flask.Blueprint("user", __name__, template_folder="templates/")
@@ -229,6 +230,41 @@ def make_exec():
     return json.dumps(result)
 
 
+@b_user.route("/settings/password", methods=["POST"])
+@login_required
+def user_pwd():
+    msg = ""
+    form_data = flask.request.form
+    db = open_session()
+    user = db.query(User).filter(User.email == current_user.email).first()
+    if "password" in form_data and "confirm_password" in form_data:
+        if form_data["password"] == form_data["confirm_password"]:
+            user.password = generate_password_hash(form_data["password"], method="sha256")
+            msg = "Password updated!"
+        else:
+            msg = "The two passwords are different. Password unchanged!"
+    else:
+        msg = "Missing data in the request. Password unchanged!"
+    close_session(db)
+    return flask.redirect("/user/settings?msg=" + msg)
+
+
+@b_user.route("/settings/ssh", methods=["POST"])
+@login_required
+def user_ssh():
+    msg = ""
+    form_data = flask.request.form
+    db = open_session()
+    user = db.query(User).filter(User.email == current_user.email).first()
+    if "ssh_key" in form_data:
+        user.ssh_key = form_data["ssh_key"]
+        msg = "SSH key updated!"
+    else:
+        msg = "Missing data in the request. SSH key unchanged!"
+    close_session(db)
+    return flask.redirect("/user/settings?msg=" + msg)
+
+
 # HTML Pages
 @b_user.route("/reserve")
 @login_required
@@ -249,3 +285,22 @@ def configure():
 def manage():
     return flask.render_template("manage.html", admin = current_user.is_admin, active_btn = "user_manage",
         nodes = json.loads(node_deploying()))
+
+
+@b_user.route("/settings")
+@login_required
+def settings():
+    result = {}
+    db = open_session()
+    user = db.query(User).filter(User.email == current_user.email).first()
+    if user is not None:
+        status = "User"
+        if user.is_admin:
+            status = "Admin"
+        ssh_key = ""
+        if user.ssh_key is not None:
+            ssh_key = user.ssh_key
+        result = { "email": user.email, "ssh_key": ssh_key, "status": status }
+    close_session(db)
+    return flask.render_template("settings.html", admin = current_user.is_admin, active_btn = "user_settings",
+        user = result)

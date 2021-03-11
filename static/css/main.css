@@ -445,3 +445,19 @@
 .manage .empty {
     height: 20px;
 }
+
+/** Settings Page **/
+.settings {
+    width: 800px;
+    height: 600px;
+    padding-top: 20px;
+    padding-left: 6px;
+    background: #fff;
+}
+
+.ssh {
+    width: 400px;
+    height: 300px;
+    word-wrap: break-word;
+    overflow-y: auto;
+}

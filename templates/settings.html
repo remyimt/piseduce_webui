@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block other_js %}
+{% endblock %}
+{% block content %}
+    <div class="bg-white shadow settings">
+        <center><h4>Settings</h4></center>
+        {% if request.args.get('msg') %}
+            <div class="alert alert-danger">
+                {{request.args.get('msg')}}
+            </div>
+        {% endif %}
+        <!-- Nav tabs -->
+        <ul class="nav nav-tabs" id="myTab" role="tablist">
+            <li class="nav-item">
+                <a class="nav-link active" id="home-tab" data-toggle="tab" href="#home" role="tab"
+                    aria-controls="home" aria-selected="true">Account Info</a>
+            </li>
+            <li class="nav-item">
+                    <a class="nav-link" id="password-tab" data-toggle="tab" href="#password" role="tab"
+                        aria-controls="password" aria-selected="false">Password</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="ssh-tab" data-toggle="tab" href="#ssh" role="tab"
+                    aria-controls="ssh" aria-selected="false">SSH Key</a>
+            </li>
+        </ul>
+        <!-- Tab panes -->
+        <div class="tab-content grid-user">
+            <div class="tab-pane active pt-2 pane-user" id="home" role="tabpanel" aria-labelledby="home-tab">
+                <b class="text-info">Email</b>: {{user.email}}<br/>
+                {% if user.ssh_key|length > 0 %}
+                    <span>
+                        <b class="text-info">SSH key</b>: ...{{user.ssh_key[-30:]}}<br/>
+                    </span>
+                {% else %}
+                    <span>
+                        <b class="text-info">SSH key</b>: No SSH key registered<br/>
+                    </span>
+                {% endif %}
+                <b class="text-info">Status</b>: {{user.status}}<br/>
+            </div>
+            <div class="tab-pane pt-2" id="password" role="tabpanel" aria-labelledby="password-tab">
+                <div class="container">
+                    <form action="/user/settings/password" method="post">
+                        <div class="row" style="width: 400px;">
+                            <div class="col">New password</div>
+                            <div class="col"><input name="password" type="password"></div>
+                        </div>
+                        <div class="row" style="width: 400px;">
+                            <div class="col">Confirm password</div>
+                            <div class="col"><input name="confirm_password" type="password"></div>
+                        </div>
+                        <div class="row text-center" style="width: 400px;">
+                            <div class="col">
+                                <button type="submit" value="submit" class="btn btn-info btn-user">
+                                    Change password
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <div class="tab-pane pt-2" id="ssh" role="tabpanel" aria-labelledby="ssh-tab">
+                <div class="container">
+                    <form action="/user/settings/ssh" method="post">
+                        <div class="row">
+                            <div class="col">
+                                <b class="text-info">Current SSH key</b><br/>
+                            </div>
+                            <div class="col">
+                                <b class="text-info">New SSH key</b><br/>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col">
+                                <div class="ssh">
+                                    {{user.ssh_key}}
+                                </div>
+                            </div>
+                            <div class="col">
+                                <textarea type="text" id="ssh_key" name="ssh_key" rows=10 class="form-control input-user"></textarea>
+                            </div>
+                        </div>
+                        <br/>
+                        <div class="row">
+                            <div class="col center-block text-center">
+                                <button type="submit" value="submit" class="btn btn-info btn-user">
+                                    Change ssh key
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div><!-- tab-content -->
+    </div>
+{% endblock %}

@@ -1,14 +1,118 @@
 {% extends "base.html" %}
+{% block other_css %}
+	<link rel="stylesheet" href="/static/css/state-colors.css">
+{% endblock %}
 {% block other_js %}
 	<script src="/static/js/manage.js"></script>
 {% endblock %}
 {% block content %}
     <div class="bg-white shadow manage">
         <center><h4>Node Management</h4></center>
-        {% for node in nodes %}
-            <div>
-                {{node}}
+        {% if request.args.get('msg') %}
+            <div class="alert alert-danger">
+                {{request.args.get('msg')}}
+            </div>
+        {% endif %}
+        {% set errors = nodes.pop("errors") %}
+        {% if errors|length > 0 %}
+            <div class="alert alert-danger">
+                {% for worker in errors %}
+                    {{worker}}: {{errors[error]}}<br/>
+                {% endfor %}
+            </div>
+        {% endif %}
+        {% for node_bin in nodes %}
+            <div class="bg-info rounded-right title">
+                <div>{{node_bin|replace("_", " ")}}</div>
+                <div class="rounded-right" onclick="destroyBin('{{node_bin}}')">Destroy</div>
+            </div>
+            <div class="type-selection">
+                {% for node_type in nodes[node_bin] %}
+                    <div id="{{node_bin}}-{{node_type}}-button" class="btn btn-outline-info"
+                        onclick="nodeSelection(this)">
+                        {{node_type}}
+                    </div>
+                {% endfor %}
+            </div>
+            {% for node_type in nodes[node_bin] %}
+                {% if nodes[node_bin][node_type]|length > 0 %}
+                    <!-- 'accordion' class is used by the JS functions -->
+                    <div id="{{node_bin}}-{{node_type}}" class="accordion">
+                        {% for node_data in nodes[node_bin][node_type] %}
+                            {% set worker = node_data.pop("worker") %}
+                            {% set node_name = node_data.pop("name") %}
+                            <!-- Send the worker name in the form -->
+                            <input type="hidden" id="{{node_name}}-worker" value="{{worker}}">
+                            <div class="card">
+                                <div class="card-header" id="heading-{{node_name}}">
+                                    <a type="button" data-toggle="collapse" data-target="#collapse-{{node_name}}"
+                                        aria-expanded="false" aria-controls="collapse-{{node_name}}" class="btn-link">
+                                        <div>
+                                            <div id="{{node_name}}-circle" class="rounded-circle {{node_data["status"]}}"></div>
+                                            <div class="node-name">{{node_name}}</div>
+                                            <img src="/static/img/disabled-checkbox.png" onclick="tickNode(this)">
+                                        </div>
+                                    </a>
+                                </div><!-- card-header -->
+                                <div id="collapse-{{node_name}}" class="collapse collapsed"
+                                    aria-labelledby="heading-{{node_name}}" data-parent="#{{node_bin}}-{{node_type}}">
+                                    <div class="card-body">
+                                        <!-- configure the number of columns per row -->
+                                        {% set nb_col = 3 %}
+                                        {% set extra_col = (nb_col - config|length % nb_col) % nb_col %}
+                                        <div class="container">
+                                            {% for prop in node_data|dictsort %}
+                                                {% if loop.index % nb_col == 1 %}
+                                                    <div class="row">
+                                                {% endif %}
+                                                <div class="col">
+                                                    <div>
+                                                        {% for name in prop[0].split("_") %}
+                                                            {{ name[0]|upper}}{{name[1:] }}
+                                                        {% endfor %}
+                                                    </div>
+                                                    {% if prop[1]|string|length > 0 %}
+                                                        <div id="{{node_name}}-{{prop[0]}}">{{prop[1]}}</div>
+                                                    {% else %}
+                                                        <div id="{{node_name}}-{{prop[0]}}">None</div>
+                                                    {% endif %}
+                                                </div>
+                                                {% if loop.index % nb_col == 0 %}
+                                                    </div><!-- end row -->
+                                                {% endif %}
+                                            {% endfor %}
+                                            {% for n in range(extra_col) %}
+                                                <div class="col">
+                                                </div>
+                                            {% endfor %}
+                                            {% if extra_col != 0 %}
+                                                </div><!-- end row -->
+                                            {% endif %}
+                                        </div>
+                                    </div><!-- card-body -->
+                                </div><!-- collapse-node_name -->
+                            </div><!-- card -->
+                        {% endfor %}
+                    </div><!-- node_bin-node_type -->
+                {% endif %}
+            {% endfor %}
+            <div class="actions">
+                <div class="text-info">
+                    <span>Node Reconfiguration</span> (select nodes then execute the reconfiguration)
+                </div>
+                <div class="action">
+                    <select id="{{node_bin}}-select" onchange="loadInfo(this)">
+                        <option value="hard_reboot">Hard Reboot</option>
+                        <option value="deploy_again">Deploy Again</option>
+                        <option value="destroy">Destroy</option>
+                    </select>
+                    <div class="btn btn-info" onclick="reconfigure('{{node_bin}}')">Execute</div>
+                </div>
+                <div id="action-desc">
+                    Hard reboot nodes by turning off and on the power supply.
+                </div>
             </div>
         {% endfor %}
-    </div>
+        <div class="empty"></div>
+    </div><!-- manage -->
 {% endblock %}

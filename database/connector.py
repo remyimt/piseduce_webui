@@ -4,9 +4,6 @@ from sqlalchemy import inspect
 import database.tables, logging, requests, sys
 
 
-WORKER_MAP = None
-
-
 def open_session():
     return SessionLocal()
 
@@ -22,6 +19,7 @@ def row2elem(alchemyResult):
             result[ar.name] = {}
         result[ar.name][ar.prop_name] = ar.prop_value
     return result
+
 
 def row2props(alchemyResults):
     props = {}
@@ -53,25 +51,3 @@ def create_tables():
         Base.metadata.create_all(engine)
         return True
     return False
-
-
-def load_worker_info():
-    global WORKER_MAP
-    WORKER_MAP = {}
-    db = open_session()
-    for worker in db.query(database.tables.Worker).all():
-        r = requests.post(url = "http://%s:%s/v1/user/node/list" % (worker.ip, worker.port),
-            json = { "token": worker.token })
-        if r.status_code == 200:
-            WORKER_MAP[worker.name] = r.json().keys()
-        else:
-            logging.error("Can not build the WORKER_MAP: wrong answer from the worker '%s'" % worker.name)
-            sys.exit(3)
-    close_session(db)
-
-
-def get_worker_info():
-    global WORKER_MAP
-    if WORKER_MAP is None:
-        load_worker_info()
-    return WORKER_MAP

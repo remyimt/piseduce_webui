@@ -1,21 +1,23 @@
-// Global variables
-const NODE_TYPES = [ "raspberry", "sensor", "server", "fake" ];
-
-// Display nodes from their type
+// Display nodes and configure type buttons
 $(document).ready(function () {
     var hideMe = false;
     var no_node = true;
-    NODE_TYPES.forEach(function(nodeType) {
-        var nodeHMTL = $("#" + nodeType);
-        var activeMe = true;
-        if(nodeHMTL.children().length > 0) {
+    var activeButton = [];
+    $(".type-selection").children("div").each(function(idx, typeButton) {
+        var accordionId = $(typeButton).attr("id").replace("-button", "");
+        var accordion = $("#" + accordionId);
+        if(accordion.length > 0) {
             no_node = false;
-            if(activeMe) {
-                $("#" + nodeType + "-button").addClass("active");
-                activeMe = false;
+            if(hideMe) {
+                // A button is already active, hide the nodes
+                accordion.hide();
+            } else {
+                // Active the button and show the nodes
+                $(typeButton).addClass("active");
+                hideMe = true;
             }
         } else {
-            $("#" + nodeType + "-button").addClass("disabled");
+            $(typeButton).addClass("disabled");
         }
     });
     if(no_node) {
@@ -27,26 +29,37 @@ $(document).ready(function () {
 });
 
 // Functions
+function cancelReservation() {
+    alert("Not implemented yet");
+}
+
 function copyConfiguration(nodeName) {
+    var accordion = {}
     var inputConfig = [];
     var selectConfig = [];
-    $(".card-header").each(function(useless, node) {
-        nodeHTML = node.innerHTML.replace(/\s/g,'');
-        if(inputConfig.length > 0) {
-            $(node).removeClass("font-weight-bold");
-            $("#" + nodeHTML + "-props").find(".col").children("input").each(function(idx, input) {
+    $(".card-body .properties").each(function(useless, node) {
+        var myAccordion = $(node).parent().parent().parent().parent()[0];
+        if(myAccordion.id == accordion.id) {
+            console.log(node.id.replace("-props", ""));
+            $("#heading-" + node.id.replace("-props", "") + " a").removeClass("font-weight-bold");
+            // Write the properties
+            $(node).find(".col").children("input").each(function(idx, input) {
                 $(input).val(inputConfig[idx]);
             });
-            $("#" + nodeHTML + "-props").find(".col").children("select").each(function(idx, select) {
+            $(node).find(".col").children("select").each(function(idx, select) {
                 $(select).val(selectConfig[idx]);
             });
         }
-        if(nodeHTML == nodeName) {
-            $(node).addClass("font-weight-bold");
-            $("#" + nodeName + "-props").find(".col").children("input").each(function(idx, input) {
+        if(node.id.startsWith(nodeName)) {
+            // Get my accordion
+            accordion = myAccordion;
+            // Put the link in bold
+            $("#heading-" + nodeName + " a").addClass("font-weight-bold");
+            // Save the properties
+            $(node).find(".col").children("input").each(function(idx, input) {
                 inputConfig.push($(input).val());
             });
-            $("#" + nodeName + "-props").find(".col").children("select").each(function(idx, select) {
+            $(node).find(".col").children("select").each(function(idx, select) {
                 selectConfig.push($(select).val());
             });
         }
@@ -57,17 +70,18 @@ function removeBold(headerId) {
     $("#" + headerId).removeClass("font-weight-bold");
 }
 
-function nodeSelection(buttonType) {
-    if(!$("#" + buttonType + "-button").hasClass("disabled") && !$("#" + buttonType + "-button").hasClass("active")) {
-        console.log(buttonType);
-        NODE_TYPES.forEach(function(type) {
-            var button = $("#" + type + "-button");
-            if(type == buttonType) {
-                button.addClass("active");
-                $("#" + type).show();
+function nodeSelection(typeButton) {
+    if(!typeButton.classList.contains("disabled")) {
+        $(".type-selection").children("div").each(function(idx, allButton) {
+            var accordionId = $(allButton).attr("id").replace("-button", "");
+            if(allButton == typeButton) {
+                $("#" + accordionId).show();
+                $(allButton).addClass("active");
             } else {
-                button.removeClass("active");
-                $("#" + type).hide();
+                if(!$(allButton).hasClass("disabled")) {
+                    $("#" + accordionId).hide();
+                    $(allButton).removeClass("active");
+                }
             }
         });
     }

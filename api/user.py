@@ -55,16 +55,49 @@ def node_configuring():
 @b_user.route("/node/deploying")
 @login_required
 def node_deploying():
-    result = { "nodes": {}, "errors": {} }
+    result = { "errors": {} }
     db = open_session()
     for worker in db.query(Worker).all():
         r = requests.post(url = "http://%s:%s/v1/user/node/mine" % (worker.ip, worker.port),
             json = { "token": worker.token, "user": current_user.email })
         if r.status_code == 200:
-            result["nodes"].update(r.json())
+            # Add the worker name to the node information
+            json_data = r.json()
+            for node in json_data:
+                bin_name = json_data[node].pop("bin")
+                del json_data[node]["type"]
+                json_data[node]["worker"] = worker.name
+                # No bin for nodes in 'configuring' state
+                if len(bin_name) > 0:
+                    # Sort nodes by bin name
+                    if bin_name not in result:
+                        result[bin_name] = { "raspberry": [], "sensor": [], "server": [], "fake": [] }
+                    result[bin_name][worker.type].append(json_data[node])
         else:
             logging.error("deploying error: wrong answer from the worker '%s'" % worker.name)
             result["errors"][worker.name] = "connection error - return code %d" % r.status_code
+    close_session(db)
+    return json.dumps(result)
+
+
+@b_user.route("/node/updating")
+@login_required
+def node_updating():
+    result = { "errors": {} }
+    db = open_session()
+    for worker in db.query(Worker).all():
+        r = requests.post(url = "http://%s:%s/v1/user/node/status" % (worker.ip, worker.port),
+            json = { "token": worker.token, "user": current_user.email })
+        if r.status_code == 200:
+            json_data = r.json()
+            for node in json_data:
+                bin_name = json_data[node].pop("bin")
+                # No bin for nodes in 'configuring' state
+                if len(bin_name) > 0:
+                    # Sort nodes by bin name
+                    if bin_name not in result:
+                        result[bin_name] = { "raspberry": [], "sensor": [], "server": [], "fake": [] }
+                    result[bin_name][worker.type].append(json_data[node])
     close_session(db)
     return json.dumps(result)
 
@@ -132,7 +165,6 @@ def make_deploy():
     dep_name = None
     duration = None
     result = {}
-    print(form_data)
     json_result = { "errors": []}
     for prop in form_data:
         if prop == "bin":
@@ -167,6 +199,36 @@ def make_deploy():
     return json.dumps(json_result)
 
 
+@b_user.route("/make/exec", methods=["POST"])
+@login_required
+def make_exec():
+    result = {"errors": [] }
+    json_data = flask.request.json
+    # Use the function 'init_action_process' of worker_exec
+    if "nodes" in json_data and "reconfiguration" in json_data:
+        db = open_session()
+        for worker_name in json_data["nodes"]:
+            worker = db.query(Worker).filter(Worker.name == worker_name).first()
+            r = requests.post(url = "http://%s:%s/v1/user/%s" % (worker.ip, worker.port, json_data["reconfiguration"]),
+                    json = { "token": worker.token, "nodes": json_data["nodes"][worker_name], "user": current_user.email })
+            if r.status_code == 200:
+                json_answer = r.json();
+                failure = []
+                for node in json_answer:
+                    if json_answer[node] != "success":
+                        failure.append(node)
+                if len(failure) > 0:
+                    result["errors"].append("nodes with failure: %s" % failure)
+                else:
+                    result.update(json_answer)
+            else:
+                logging.error("reconfiguration failure: the worker '%s' fails to execute '%s'" % (
+                    worker_name, json_data["reconfiguration"]))
+                result["errors"].append("wrong answer from the worker '%s'" % worker_name)
+        close_session(db)
+    return json.dumps(result)
+
+
 # HTML Pages
 @b_user.route("/reserve")
 @login_required
@@ -185,6 +247,5 @@ def configure():
 @b_user.route("/manage")
 @login_required
 def manage():
-    print(node_deploying())
     return flask.render_template("manage.html", admin = current_user.is_admin, active_btn = "user_manage",
-        nodes = json.loads(node_deploying())["nodes"])
+        nodes = json.loads(node_deploying()))

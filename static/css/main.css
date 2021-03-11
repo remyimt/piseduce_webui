@@ -1,15 +1,21 @@
 /** Login forms **/
+.bg-login {
+    background: #343a40;
+}
+
 .form-login {
     width: 400px;
     padding: 20px;
     text-align: center;
     margin-top: 100px;
+    background: #fafafa;
 }
 
 .form-signup {
     width: 600px;
     padding: 20px;
     margin-top: 100px;
+    background: #fafafa;
     text-align: center;
 }
 
@@ -45,28 +51,36 @@
 }
 
 /** Reserve page **/
-.reserve .title {
-    font-family: "Palatino Linotype";
-    font-size: 24px;
-    color: #123eab;
-}
-
-.reserve .subtitle {
-    font-family: "Palatino Linotype";
-    font-size: 20px;
-    color: #123eab;
-}
-
-.reserve > div {
+.reserve {
     width: 800px;
+    padding-top: 20px;
+    background: #fff;
 }
 
-.searchbar {
+.reserve .title {
+    width: 300px;
+    padding-right: 30px;
+    margin-top: 10px;
+    font-size: 20px;
+    color: white;
+    text-align: right;
+}
+
+.reserve .title-text {
+    width: 300px;
+    margin-bottom: 10px;
     text-align: center;
+    font-size: 16px;
+    font-style: italic;
 }
 
-.searchbar > div {
-    text-align: left;
+.reserve .nb-nodes {
+    margin-left: 6px;
+}
+
+.searchbar .textbar {
+    margin-left: 6px;
+    margin-right: 35px;
     display: inline-block;
 }
 
@@ -85,7 +99,6 @@
     height: 40px;
     padding-top: 8px;
     text-align: center;
-    color: white;
 }
 
 .filters {
@@ -117,33 +130,31 @@
     width: 26px;
     height: 48px;
     padding-top: 10px;
-    text-align: center;
-    color: #fff;
     background: green;
+    color: white;
+    text-align: center;
     float: right;
 }
 
-.nodelist {
-    height: 294px;
-    margin-top: 30px;
-    padding: 5px;
-    background: #fff;
+/* Set the height to avoid the next div to move when the info-view is shown */
+.default-view {
+    height: 250px;
 }
 
 .info-view {
     width: 800px;
-    height: 294px;
+    height: 284px;
     color: #fff;
     opacity: 0.7;
     display: none;
     position: relative;
-    top: -291px;
-    left: -5px;
+    top: -276px;
 }
 
-.nodelist .nodeitems {
+.reserve .nodeitems {
     height: 182px;
     margin-top: 6px;
+    padding-left: 6px;
     overflow-y: auto;
 }
 
@@ -154,6 +165,7 @@
     margin: 2px;
     padding-left: 5px;
     display: inline-block;
+    cursor: default;
 }
 
 .nodeitems .node div {
@@ -163,9 +175,9 @@
 .nodeitems .node div:last-child {
     width: 40px;
     height: 28px;
-    text-align: center;
-    color: #fff;
     background: green;
+    text-align: center;
+    color: white;
     float: right;
 }
 
@@ -173,33 +185,30 @@
     background: #ffdfdf;
 }
 
-.nodelist .fuzzy {
+.reserve .fuzzy {
     height: 46px;
     margin-top: 16px;
 }
 
-.nodelist .fuzzy input {
+.reserve .fuzzy input {
     width: 60px;
     font-size: 16px;
 }
 
-.nodelist .fuzzy div:first-child {
+.reserve .fuzzy div:first-child {
     margin-top: 5px;
     float: left;
 }
 
-.nodelist .fuzzy div:last-child {
+.reserve .fuzzy div:last-child {
     width: 130px;
     height: 40px;
     padding-top: 8px;
-    text-align: center;
-    color: white;
+    margin-right: 10px;
     float: right;
 }
 
 .selectednodes {
-    height: 244px;
-    margin-top: 30px;
     padding: 5px;
 }
 
@@ -213,17 +222,13 @@
     height: 40px;
     margin-top: 16px;
     padding-top: 7px;
-    text-align: center;
-    color: #fff;
 }
 
-/** configure page **/
+/** Configure page **/
 .configure {
     width: 800px;
-}
-
-.configure h4 {
-    padding-top: 10px;
+    padding-top: 20px;
+    background: #fff;
 }
 
 .configure form {
@@ -282,8 +287,8 @@
     overflow-y: scroll;
 }
 
-.configure .accordion .card a {
-    padding: 0;
+.configure .card-header a {
+    width: 100%;
 }
 
 .configure .apply-button {
@@ -305,6 +310,11 @@
     height: 30px;
 }
 
+.configure .cancel-button {
+    width: 100%;
+    margin-top: 4px;
+}
+
 .configure .deploy-button {
     width: 100%;
     margin-top: 20px;
@@ -313,4 +323,125 @@
 /** Manage Page **/
 .manage {
     width: 800px;
+    padding-top: 20px;
+}
+
+.manage .type-selection {
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+.manage .type-selection div {
+    width: 160px;
+    height: 40px;
+    padding-top: 5px;
+    display: inline-block;
+    font-size: 18px;
+}
+
+.manage .type-selection div:not(:first-child) {
+    margin-left: 20px;
+}
+
+.manage .title {
+    width: 300px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    font-size: 20px;
+    color: white;
+}
+
+.manage .title div {
+    display: inline-block;
+}
+
+.manage .title div:first-child {
+    width: 214px;
+    height: 33px;
+    margin-left: 10px;
+}
+
+.manage .title .rounded-right {
+    width: 70px;
+    height: 33px;
+    text-align: center;
+    line-height: 33px;
+    font-size: 16px;
+    background: #d50000;
+}
+
+.manage .title .rounded-right:hover {
+    background: #dc3545;
+}
+
+.manage .card-header {
+    height: 54px;
+    text-align: left;
+}
+
+.manage .card-header a > div {
+    width: 100%;
+    height: 30px;
+    cursor: pointer;
+}
+
+.manage .card-header .rounded-circle {
+    width: 30px;
+    height: 30px;
+    margin-left: 10px;
+    float: left;
+}
+
+.manage .card-header .node-name {
+    line-height: 30px;
+    margin-left: 6px;
+    float: left;
+}
+
+.manage .card-header img {
+    margin-right: 10px;
+    float: right;
+}
+
+.manage .card-body .col > div:first-child {
+    font-weight: bold;
+    color: #138496;
+}
+
+.manage .actions {
+    margin-bottom: 20px;
+}
+
+.manage .actions .text-info {
+    font-size: 16px;
+    padding-left: 10px;
+    margin-top: 10px;
+    margin-bottom: 4px;
+}
+
+.manage .actions .text-info span {
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.manage .actions div:last-child {
+    padding-left: 10px;
+}
+
+.manage .action {
+    margin-left: 10px;
+}
+
+.manage .action select {
+    height: 38px;
+    width: 200px;
+}
+
+.manage .action .btn {
+    width: 150px;
+    margin-left: 424px;
+}
+
+.manage .empty {
+    height: 20px;
 }

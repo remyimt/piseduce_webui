@@ -15,7 +15,7 @@ function showInfoView(nodeName) {
         $("#info-node").append($("<span>" + prop + ": " + NODES[nodeName][prop] + "</span><br/>"));
     }
     $(".info-view").fadeIn(200);
-    event.stopPropagation()
+    event.stopPropagation();
 }
 
 function hideInfoView() {
@@ -23,13 +23,13 @@ function hideInfoView() {
 }
 
 function updateNodes() {
-    $.get( "http://localhost:9000/user/node/list", function( data ) {
+    $.get( "http://localhost:9000/user/node/list", function(data) {
         var data = JSON.parse(data);
         NODES = data["nodes"];
         for (var node in NODES) {
             // Get the properties with values to build the filters
             for (var prop in NODES[node]) {
-                if(NODES[node][prop].length > 0) {
+                if(NODES[node][prop] != null && NODES[node][prop].length > 0) {
                     if(!(prop in PROPERTIES)) {
                         PROPERTIES[prop] = new Set();
                     }

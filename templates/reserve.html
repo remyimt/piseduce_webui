@@ -3,69 +3,68 @@
 	<script src="/static/js/reserve.js"></script>
 {% endblock %}
 {% block content %}
-<div class="reserve">
-    <div class="shadow bg-white p-2 select-resource">
-        <center><h4>Node Reservation</h4></center>
-        <span class="title">Filters</span><br/>
-        <div class="searchbar">
-            <div>
-                <span>Property Name</span><br/>
-                <input id="prop-names-list" list="prop-names" name="property"
-                    placeholder="Click to display names" onfocusout="displayPropValues()">
-                <datalist id="prop-names">
-                </datalist>
+<div class="shadow reserve">
+    <center><h4>Node Reservation</h4></center>
+    <div class="bg-info rounded-right title">Filters</div>
+    <div class="title-text">Adjust properties to select specific nodes</div>
+    <div class="searchbar">
+        <div class="textbar">
+            <span>Property Name</span><br/>
+            <input id="prop-names-list" list="prop-names" name="property"
+                placeholder="Click to display names" onfocusout="displayPropValues()">
+            <datalist id="prop-names">
+            </datalist>
+        </div>
+        <div class="textbar">
+            <span>Property Value</span><br/>
+            <input id="prop-values-list" list="prop-values" name="value"
+                placeholder="Select names before selecting values">
+            <datalist id="prop-values">
+            </datalist>
+        </div>
+        <div class="btn btn-info rounded add-filter" onclick="addFilter()">Add filter</div>
+    </div><!-- searchbar -->
+    <div class="filters">
+    </div><!-- filters -->
+    <div class="bg-info rounded-right title">Available Nodes</div>
+    <div class="title-text">Click on the nodes to select them</div>
+    <div class="default-view">
+        <div class="nodeitems">
+            {% for node in nodes %}
+                {% if nodes[node]["status"] == "available" %}
+                    <div id="{{node}}" class="node" onclick="addNameFilter(this)">
+                        <img src="/static/img/rpi4b.png" width="30px">
+                        <div>{{node}}</div>
+                        <div class="btn-color" onclick="showInfoView('{{node}}')">info</div>
+                    </div>
+                {% else %}
+                    <div id="{{node}}" class="node reserved">
+                        <img src="/static/img/rpi4b.png" width="30px">
+                        <div>{{node}}</div>
+                        <div class="btn-color" onclick="showInfoView('{{node}}')">info</div>
+                    </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+        <div class="fuzzy">
+            <div class="nb-nodes">
+                Select
+                <input type="number" min="1" max="10" value="1" onchange="updateNbPrint(this)">
+                of <span id="max-number"></span> nodes according to filters
             </div>
-            <div>
-                <span>Property Value</span><br/>
-                <input id="prop-values-list" list="prop-values" name="value"
-                    placeholder="Select names before selecting values">
-                <datalist id="prop-values">
-                </datalist>
-            </div>
-            <div class="bg-info rounded add-filter" onclick="addFilter()">Add filter</div>
-        </div><!-- searchbar -->
-        <div class="filters">
-        </div><!-- filters -->
-    </div><!-- select-ressources -->
-    <div class="shadow nodelist">
-        <div class="default-view">
-            <span class="title">Node list (click on the nodes to select them)</span><br/>
-            <div class="nodeitems">
-                {% for node in nodes %}
-                    {% if nodes[node]["status"] == "available" %}
-                        <div id="{{node}}" class="node" onclick="addNameFilter(this)">
-                            <img src="/static/img/rpi4b.png" width="30px">
-                            <div>{{node}}</div>
-                            <div onclick="showInfoView('{{node}}')">info</div>
-                        </div>
-                    {% else %}
-                        <div id="{{node}}" class="node reserved">
-                            <img src="/static/img/rpi4b.png" width="30px">
-                            <div>{{node}}</div>
-                            <div onclick="showInfoView('{{node}}')">info</div>
-                        </div>
-                    {% endif %}
-                {% endfor %}
-            </div>
-            <div class="fuzzy">
-                <div class="subtitle">
-                    Select
-                    <input type="number" min="1" max="10" value="1" onchange="updateNbPrint(this)">
-                    of <span id="max-number"></span> nodes according to filters
-                </div>
-                <div class="bg-info rounded" onclick="addFilterSelection()">Add <span id="nb_print">1</span> node(s)</div>
-            </div>
-        </div><!-- default-view -->
+            <div class="btn btn-info rounded" onclick="addFilterSelection()">Add <span id="nb_print">1</span> node(s)</div>
+        </div>
         <div class="shadow-lg bg-dark info-view">
             <div class="bg-danger" onclick="hideInfoView()">close</div>
             <div id="info-node"></div>
         </div>
-    </div><!-- nodelist -->
-    <div class="shadow selectednodes">
-        <span class="title">Selected Nodes</span><br/>
+    </div><!-- default-view -->
+    <div class="bg-info rounded-right title">Selected Nodes</div>
+    <div class="title-text">Click on reserve to use the nodes</div>
+    <div class="selectednodes">
         <div class="ready-nodes">
         </div>
-        <div class="bg-info rounded" onclick="reserveNodes()">Reserve</div>
+        <div class="btn btn-info rounded" onclick="reserveNodes()">Reserve</div>
     </div>
 </div>
 {% endblock %}

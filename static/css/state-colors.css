@@ -1,0 +1,129 @@
+/*** Common states ***/
+.available {
+    background-color: #cde7ca;
+}
+
+.configuring {
+    background-color: #b8dcec;
+}
+
+.ready {
+    background-color: #fffbb7;
+}
+
+.in_progress {
+    background-color: #ff9f99;
+}
+
+/*** Fake states ***/
+.deploy1 {
+    background-color: #191970;
+}
+
+.deploy2 {
+    background-color: #9acd32;
+}
+
+.deploy3 {
+    background-color: #dda0dd;
+}
+
+/*** Raspberry states ***/
+/* 20 generated colors from https://mokole.com/palette.html */
+.initialized {
+    background-color: #dcdcdc;
+}
+
+.boot_conf {
+    background-color: #2e8b57;
+}
+
+.turn_off {
+    background-color: #191970;
+}
+
+.turn_on {
+    background-color: #b22222;
+}
+
+.ssh_nfs {
+    background-color: #bdb76b;
+}
+
+.env_copy {
+    background-color: #9acd32;
+}
+
+.env_check {
+    background-color: #ff0000;
+}
+
+.delete_partition {
+    background-color: #ff8c00;
+}
+
+.create_partition {
+    background-color: #ffd700;
+}
+
+.mount_partition {
+    background-color: #0000cd;
+}
+
+.resize_partition {
+    background-color: #dda0dd;
+}
+
+.wait_resizing {
+    background-color: #ba55d3;
+}
+
+.system_conf {
+    background-color: #00fa9a;
+}
+
+.boot_files {
+    background-color: #87cefa;
+}
+
+.ssh_system {
+    background-color: #00ffff;
+}
+
+.system_update {
+    background-color: #ffe4b5;
+}
+
+.boot_update {
+    background-color: #dc143c;
+}
+
+.user_conf {
+    background-color: #ff00ff;
+}
+
+.user_script {
+    background-color: #1e90ff;
+}
+
+.deployed {
+    background-color: #00ff00;
+}
+
+.lost {
+    background-color: #696969;
+}
+
+/* Rebooting nodes */
+.coming_back {
+    background-color: #ff1493;
+}
+
+/* Destroying nodes */
+.destroying {
+    background-color: #fd7dff;
+}
+
+.destroyed {
+    background-color: #b67dff;
+}

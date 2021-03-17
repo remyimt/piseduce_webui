@@ -2,7 +2,7 @@ from database.connector import open_session, close_session, row2elem, row2dict
 from database.tables import User, Worker
 from flask_login import current_user, login_required
 from lib.config_loader import load_config
-import flask, functools, logging, requests
+import flask, functools, json, logging, requests
 
 
 b_admin = flask.Blueprint("admin", __name__, template_folder="templates/")
@@ -117,11 +117,13 @@ def promote_user(email):
 @login_required
 @admin_required
 def list_worker(error=None):
-    properties = [ "name", "ip", "port", "token" ]
+    result = {"worker_key": {
+        "properties": { "name": [], "ip": [], "port": [], "token": [] },
+        "existing": []
+    }}
     db = open_session()
-    existing = []
     for w in db.query(Worker).all():
-        existing.append({
+        result["worker_key"]["existing"].append({
             "name": w.name,
             "type": w.type,
             "ip": w.ip,
@@ -131,11 +133,11 @@ def list_worker(error=None):
     close_session(db)
     # Display the type of the worker
     if error is None or len(error) == 0:
-        return flask.render_template("admin.html", admin = current_user.is_admin, active_btn = "admin_worker", elem_type = "worker",
-            props = properties, elements = existing)
+        return flask.render_template("admin.html", admin = current_user.is_admin, active_btn = "admin_worker",
+            elem_type = "worker", elements = result)
     else:
-        return flask.render_template("admin.html", admin = current_user.is_admin, active_btn = "admin_worker", elem_type = "worker",
-            props = properties, elements = existing, msg = error)
+        return flask.render_template("admin.html", admin = current_user.is_admin, active_btn = "admin_worker",
+            elem_type = "worker", elements = result, msg = error)
 
 
 @b_admin.route("/add/worker", methods=[ "POST" ])
@@ -194,42 +196,45 @@ def delete_worker(worker_name):
 @login_required
 @admin_required
 def get(el_type, error=None):
-    properties = []
-    existing = []
-    worker_names = []
+    result = {"worker_key": {
+        "properties": [ "name", "ip", "port", "token" ],
+        "existing": []
+    }}
+    result = {}
     worker_types = load_config()["%s_provider" % el_type]
     if worker_types is None or len(worker_types) == 0:
         error = "missing '%s_provider' property in the configuration file" % el_type
         return flask.render_template("admin.html", admin = current_user.is_admin, active_btn = "admin_%s" % el_type,
-            workers = worker_names, elem_type = el_type, props = properties, elements = existing, msg = error)
+            elem_type = el_type, elements = result, msg = error)
     db = open_session()
     workers = db.query(Worker).filter(Worker.type.in_(worker_types)).all()
     for w in workers:
-        # Send the worker names to the template
-        worker_names.append(w.name)
-        # Get the switch properties to register new switches
+        result[w.name] = { "properties": [], "existing": [] }
+        # Get the element properties to register new elements
         r = requests.post(url = "http://%s:%s/v1/admin/add/%s" % (w.ip, w.port, el_type), json = { "token": w.token })
         if r.status_code != 200 or "missing" not in r.json():
             error = "property error from the worker '%s:%s'" % (w.ip, w.port)
         else:
-            properties = r.json()["missing"]
-        # Get the existing switches
+            result[w.name]["properties"] = r.json()["missing"]
+            for prop in result[w.name]["properties"]:
+                if "no_values" in result[w.name]["properties"][prop]:
+                    result[w.name]["properties"] = "Missing '%s' elements to create '%s' elements." % (prop, el_type)
+        # Get the existing elements
         r = requests.post(url = "http://%s:%s/v1/user/%s/list" % (w.ip, w.port, el_type), json = { "token": w.token })
         if r.status_code != 200:
             error = "can not get the list of %ss from the worker '%s:%s'" % (el_type, w.ip, w.port)
         else:
-            for sw in r.json():
-                existing.append(r.json()[sw])
-                existing[-1]["name"] = sw
-                existing[-1]["worker"] = w.name
+            for el in r.json():
+                result[w.name]["existing"].append(r.json()[el])
+                result[w.name]["existing"][-1]["name"] = el
+                result[w.name]["existing"][-1]["worker"] = w.name
     close_session(db)
-    # Get the existing switches
     if error is None or len(error) == 0:
         return flask.render_template("admin.html", admin = current_user.is_admin, active_btn = "admin_%s" % el_type,
-            workers = worker_names, elem_type = el_type, props = properties, elements = existing)
+            webui_str = "%s:%s" % (load_config()["ip"], load_config()["port_number"]), elem_type = el_type, elements = result)
     else:
         return flask.render_template("admin.html", admin = current_user.is_admin, active_btn = "admin_%s" % el_type,
-            workers = worker_names, elem_type = el_type, props = properties, elements = existing, msg = error)
+            elem_type = el_type, elements = result, msg = error)
 
 
 @b_admin.route("/add/<el_type>/", methods=[ "POST" ])
@@ -250,14 +255,17 @@ def add(el_type):
         # Register the element to the worker
         r = requests.post(url = "http://%s:%s/v1/admin/add/%s" % (worker.ip, worker.port, el_type), json = json_args)
         if r.status_code != 200:
-            msg = "can not add the %s '%s' to the worker '%s:%s'" % (el_type, flask.request.form["name"], worker.ip, worker.port)
+            msg = "can not add the %s '%s' to the worker '%s'" % (el_type, flask.request.form["name"], worker.name)
         elif el_type not in r.json():
-            msg = "wrong answer from '%s:%s' for the %s '%s'"% (worker.ip, worker.port, el_type, flask.request.form["name"])
+            if "check" in r.json():
+                msg = r.json()["check"]
+            else:
+                msg = "wrong answer from '%s' for the %s '%s'"% (worker.name, el_type, flask.request.form["name"])
         else:
             msg = ""
     except:
         logging.exception("add worker failure")
-        msg = "wrong %s configuration for '%s'" % (el_type, json_args["name"])
+        msg = "wrong %s configuration for '%s'" % (el_type, flask.request.form["name"])
     close_session(db)
     return get(el_type, msg)
 
@@ -285,5 +293,199 @@ def delete(el_type, worker_name, el_name):
         logging.exception("delete element failure")
         msg = "can not delete the %s '%s'" % (el_type, el_name)
     return get(el_type, msg)
+
+
+# Switch operations
+@b_admin.route("/switch/<worker_name>/<switch_name>")
+@login_required
+@admin_required
+def poe_status(worker_name, switch_name):
+    result = {}
+    # Get the worker information
+    db = open_session()
+    worker = db.query(Worker).filter(Worker.name == worker_name).first()
+    json_args = { "token": worker.token }
+    worker_ip = worker.ip
+    worker_port = worker.port
+    close_session(db)
+    try:
+        # Get the PoE status of all switch ports
+        r = requests.post(url = "http://%s:%s/v1/admin/switch/ports/%s" % (worker_ip, worker_port, switch_name), json = json_args)
+        if r.status_code == 200:
+            result = r.json()
+    except:
+        logging.exception("get PoE status for the switch '%s' failed (worker: '%s')" % (switch_name, worker_name))
+    return json.dumps(result)
+
+
+@b_admin.route("/switch/<worker_name>/<switch_name>/nodes", methods = [ "POST" ])
+@login_required
+@admin_required
+def switch_nodes(worker_name, switch_name):
+    result = {}
+    # Get the worker information
+    db = open_session()
+    worker = db.query(Worker).filter(Worker.name == worker_name).first()
+    json_args = { "token": worker.token }
+    worker_ip = worker.ip
+    worker_port = worker.port
+    close_session(db)
+    try:
+        # Get the PoE status of all switch ports
+        r = requests.post(url = "http://%s:%s/v1/admin/switch/nodes/%s" % (worker_ip, worker_port, switch_name), json = json_args)
+        if r.status_code == 200:
+            result = r.json()
+    except:
+        logging.exception("get PoE status for the switch '%s' failed (worker: '%s')" % (switch_name, worker_name))
+    return json.dumps(result)
+
+
+@b_admin.route("/switch/<worker_name>/<switch_name>/turn_off", methods = [ "POST" ])
+@login_required
+@admin_required
+def turn_off(worker_name, switch_name):
+    result = {}
+    if "ports" not in flask.request.json:
+        return json.dumps(result)
+    # Get the worker information
+    db = open_session()
+    worker = db.query(Worker).filter(Worker.name == worker_name).first()
+    json_args = { "token": worker.token, "ports": flask.request.json["ports"] }
+    worker_ip = worker.ip
+    worker_port = worker.port
+    close_session(db)
+    try:
+        # Turn off switch ports
+        r = requests.post(url = "http://%s:%s/v1/admin/switch/turn_off/%s" % (worker_ip, worker_port, switch_name), json = json_args)
+        if r.status_code == 200:
+            result = r.json()
+    except:
+        logging.exception("turn off PoE port of the switch '%s' failed (worker: '%s')" % (switch_name, worker_name))
+    return json.dumps(result)
+
+
+@b_admin.route("/switch/<worker_name>/<switch_name>/turn_on", methods = [ "POST" ])
+@login_required
+@admin_required
+def turn_on(worker_name, switch_name):
+    result = {}
+    if "ports" not in flask.request.json:
+        return json.dumps(result)
+    # Get the worker information
+    db = open_session()
+    worker = db.query(Worker).filter(Worker.name == worker_name).first()
+    json_args = { "token": worker.token, "ports": flask.request.json["ports"] }
+    worker_ip = worker.ip
+    worker_port = worker.port
+    close_session(db)
+    try:
+        # Turn on switch ports
+        r = requests.post(url = "http://%s:%s/v1/admin/switch/turn_on/%s" % (worker_ip, worker_port, switch_name), json = json_args)
+        if r.status_code == 200:
+            result = r.json()
+    except:
+        logging.exception("turn on PoE port of the switch '%s' failed (worker: '%s')" % (switch_name, worker_name))
+    return json.dumps(result)
+
+
+@b_admin.route("/switch/<worker_name>/init_detect", methods = [ "POST" ])
+@login_required
+@admin_required
+def init_detect(worker_name):
+    result = {}
+    if "ports" not in flask.request.json:
+        return json.dumps(result)
+    # Get the worker information
+    db = open_session()
+    worker = db.query(Worker).filter(Worker.name == worker_name).first()
+    json_args = { "token": worker.token, "ports": flask.request.json["ports"] }
+    worker_ip = worker.ip
+    worker_port = worker.port
+    close_session(db)
+    try:
+        r = requests.post(url = "http://%s:%s/v1/admin/switch/init_detect" % (worker_ip, worker_port), json = json_args)
+        if r.status_code == 200:
+            result = r.json()
+    except:
+        logging.exception("configure node failure: worker: '%s', switch: '%s',  ports: %s" % (worker_name, switch_name, ports))
+    return json.dumps(result)
+
+
+@b_admin.route("/switch/<worker_name>/<switch_name>/dhcp_conf", methods = [ "POST" ])
+@login_required
+@admin_required
+def dhcp_conf(worker_name, switch_name):
+    result = { "errors": [] }
+    flask_data = flask.request.json
+    if "port" not in flask_data or "macs" not in flask_data or "network" not in flask_data:
+        result["errors"].append("Required parameters: 'port', 'macs', 'network'")
+        return json.dumps(result)
+    # Get the worker information
+    db = open_session()
+    worker = db.query(Worker).filter(Worker.name == worker_name).first()
+    json_args = { "token": worker.token }
+    json_args.update(flask_data)
+    worker_ip = worker.ip
+    worker_port = worker.port
+    close_session(db)
+    try:
+        r = requests.post(url = "http://%s:%s/v1/admin/switch/dhcp_conf/%s" % (worker_ip, worker_port, switch_name), json = json_args)
+        if r.status_code == 200:
+            result = r.json()
+    except:
+        logging.exception("configure node failure: worker: '%s', switch: '%s',  ports: %s" % (worker_name, switch_name, ports))
+    return json.dumps(result)
+
+
+@b_admin.route("/switch/<worker_name>/<switch_name>/dhcp_conf/del", methods = [ "POST" ])
+@login_required
+@admin_required
+def dhcp_conf_del(worker_name, switch_name):
+    result = { "errors": [] }
+    flask_data = flask.request.json
+    if "ip" not in flask_data or "mac" not in flask_data:
+        result["errors"].append("Required parameters: 'ip' and 'mac'")
+        return json.dumps(result)
+    # Get the worker information
+    db = open_session()
+    worker = db.query(Worker).filter(Worker.name == worker_name).first()
+    json_args = { "token": worker.token }
+    json_args.update(flask_data)
+    worker_ip = worker.ip
+    worker_port = worker.port
+    close_session(db)
+    try:
+        r = requests.post(url = "http://%s:%s/v1/admin/switch/dhcp_conf/%s/del" % (worker_ip, worker_port, switch_name), json = json_args)
+        if r.status_code == 200:
+            result = r.json()
+    except:
+        logging.exception("configure node failure: worker: '%s', switch: '%s',  ports: %s" % (worker_name, switch_name, ports))
+    return json.dumps(result)
+
+
+@b_admin.route("/switch/<worker_name>/<switch_name>/node_conf", methods = [ "POST" ])
+@login_required
+@admin_required
+def node_conf(worker_name, switch_name):
+    result = { "errors": [] }
+    flask_data = flask.request.json
+    if "node_ip" not in flask_data or "port" not in flask_data:
+        result["errors"].append("Required parameters: 'node_ip', 'port'")
+        return json.dumps(result)
+    # Get the worker information
+    db = open_session()
+    worker = db.query(Worker).filter(Worker.name == worker_name).first()
+    json_args = { "token": worker.token }
+    json_args.update(flask_data)
+    worker_ip = worker.ip
+    worker_port = worker.port
+    close_session(db)
+    try:
+        r = requests.post(url = "http://%s:%s/v1/admin/switch/node_conf/%s" % (worker_ip, worker_port, switch_name), json = json_args)
+        if r.status_code == 200:
+            result = r.json()
+    except:
+        logging.exception("configure node failure: worker: '%s', switch: '%s',  ports: %s" % (worker_name, switch_name, ports))
+    return json.dumps(result)
 
 

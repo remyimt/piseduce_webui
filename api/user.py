@@ -1,8 +1,8 @@
 from database.connector import open_session, close_session
 from database.tables import User, Worker
 from flask_login import current_user, login_required
-import flask, json, logging, requests
 from werkzeug.security import generate_password_hash
+import flask, json, logging, requests
 
 
 b_user = flask.Blueprint("user", __name__, template_folder="templates/")

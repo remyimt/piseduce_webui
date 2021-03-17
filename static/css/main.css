@@ -24,30 +24,114 @@
 }
 
 /** Admin Property tables: worker, switch, node, environment **/
-.prop-title {
-    font-family: "Palatino Linotype";
-    color: #123eab;
+.admin {
+    width: 1000px;
+    padding-top: 20px;
+    padding-bottom: 20px;
 }
 
-.prop-table {
-    margin-left: 20px;
+.admin .title {
+    width: 300px;
+    padding-right: 30px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    font-size: 20px;
+    color: white;
+    text-align: right;
 }
 
-.prop-table .row {
-    height: 34px;
+.admin > select {
+    width: 294px;
+    margin-left: 6px;
 }
 
-.prop-table .col select {
+.admin .none {
+    padding-left: 6px;
+}
+
+.admin .ok {
+    color: green;
+}
+
+.admin .wrong {
+    color: red;
+}
+
+.admin .prop-table {
+    margin-left: 6px;
+    padding: 0;
+}
+
+.admin .prop-table .row {
+    margin-bottom: 3px; 
+}
+
+.admin .prop-table .col select {
     width: 154px;
+    height: 30px;
 }
 
-.add-button {
-    width: 410px;
-    margin-top: 6px;
+.admin .add-button {
+    width: 286px;
 }
 
-.delete-button {
+.admin .delete-button {
     width: 80px;
+}
+
+.admin .switch-table {
+    display: none;
+}
+
+.admin .port-node {
+    width: 240px;
+    border: 2px solid #fff;
+    text-align: center;
+}
+
+.admin .on {
+    background: #c1ff9b;
+}
+
+.admin .off {
+    background: #fec2b2;
+}
+
+.admin .unknown {
+    background: #e7eae6;
+}
+
+.admin .switch-title {
+    margin-top: 10px;
+    background: #6c757d;
+    color: #fff;
+    font-weight: bold;
+    font-size: 22px;
+    text-align: center;
+}
+
+.admin .switch-buttons {
+    padding-left: 6px;
+}
+
+.admin .switch-buttons select {
+    width: 200px;
+}
+
+.admin .switch-buttons .btn-info {
+    width: 100px;
+    margin-left: 688px;
+}
+
+.admin .switch-console {
+    width: 90%;
+    height: 200px;
+    overflow-y: auto;
+    padding-left: 6px;
+    border: 1px solid lightgray;
+    margin: auto;
+    margin-top: 20px;
+    display: none;
 }
 
 /** Reserve page **/

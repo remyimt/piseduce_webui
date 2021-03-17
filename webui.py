@@ -10,7 +10,7 @@ import logging
 
 # Create the application
 webui = Flask(__name__)
-webui.secret_key = load_config()["secret_key"]
+webui.secret_key = load_config()["pwd_secret_key"]
 # Add routes from blueprints
 webui.register_blueprint(b_login)
 webui.register_blueprint(b_admin, url_prefix="/admin/")

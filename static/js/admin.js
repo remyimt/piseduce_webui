@@ -1,5 +1,11 @@
 // When loading the admin switch page, get the nodes connected to the switches
 $(document).ready(function () {
+    updateSwitchNodes();
+    displayTable($("#switch-list"));
+});
+
+// Functions);
+function updateSwitchNodes() {
     $("#switch-list").children("option").each(function(useless, option) {
         var switchName = option.text;
         if(switchName != "-") {
@@ -24,9 +30,8 @@ $(document).ready(function () {
             });
         }
     });
-});
+}
 
-// Functions
 function displayTable(select) {
     $(".switch-table").hide();
     $("#" + $(select).val()).show()
@@ -252,12 +257,19 @@ function nodeConf(worker, switchName, ports, portIdx, baseIP, existingMACs, node
             if(data["errors"].length > 0) {
                 alert(data["errors"]);
             } else {
+                // The node is turned off, update the square color
+                $("#" + switchName + "-table").find(".col").each(function(idx, port) {
+                    if(ports[portIdx] == String(idx + 1)) {
+                        $(port).attr("class", "col port-node off");
+                    }
+                });
+                // Detecting the next selected node
                 portIdx++;
                 if(portIdx < ports.length) {
                     bootNode(worker, switchName, ports, portIdx, baseIP, existingMACs);
                 } else {
-                    switchMessage("All nodes are configured. " +
-                        "<a href=\"javascript:window.location.reload()\">Refresh the page</a> to see the modifications.");
+                    updateSwitchNodes();
+                    switchMessage("All nodes are configured.");
                 }
             }
         },

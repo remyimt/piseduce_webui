@@ -196,10 +196,6 @@ def delete_worker(worker_name):
 @login_required
 @admin_required
 def get(el_type, error=None):
-    result = {"worker_key": {
-        "properties": [ "name", "ip", "port", "token" ],
-        "existing": []
-    }}
     result = {}
     worker_types = load_config()["%s_provider" % el_type]
     if worker_types is None or len(worker_types) == 0:
@@ -227,7 +223,6 @@ def get(el_type, error=None):
             for el in r.json():
                 result[w.name]["existing"].append(r.json()[el])
                 result[w.name]["existing"][-1]["name"] = el
-                result[w.name]["existing"][-1]["worker"] = w.name
     close_session(db)
     if error is None or len(error) == 0:
         return flask.render_template("admin.html", admin = current_user.is_admin, active_btn = "admin_%s" % el_type,

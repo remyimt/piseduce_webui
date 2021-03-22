@@ -75,7 +75,6 @@ function reconfigure(switchName) {
             case "port_status":
                 $.get( "http://" + WEBUI + "/admin/switch/" + worker + "/" + switchName, function(data) {
                     var data = JSON.parse(data);
-                    console.log(data);
                     $("#" + switchName + "-table").find(".col").each(function(idx, port) {
                         $(port).attr("class", "col port-node " + data[switchName][idx]);
                     });
@@ -145,7 +144,7 @@ function initDetect(worker, switchName, ports) {
     switchMessage("Preparing the NFS boot for nodes on ports " + ports);
     $.ajax({
         type: "POST",
-        url: "http://" + WEBUI + "/admin/switch/" + worker + "/init_detect",
+        url: "http://" + WEBUI + "/admin/switch/" + worker + "/" + switchName + "/init_detect",
         dataType: 'json',
         contentType: 'application/json',
         async: false,
@@ -154,18 +153,16 @@ function initDetect(worker, switchName, ports) {
             if(data["errors"].length > 0) {
                 for(error of data["errors"]) {
                     if(error.includes("DHCP configuration")) {
-                        var msg = error + " <a href=\"javascript:deleteDHCPRule('" + switchName + "', '" +
+                        error = error + " <a href=\"javascript:deleteDHCPRule('" + switchName + "', '" +
                             error.split(" ")[0] + "')\">Update the DHCP configuration</a> to delete " +
                             error.split(" ")[0] + ".";
-                        switchMessage(msg, "text-danger");
-                    } else {
-                        switchMessage(error, "text-danger");
                     }
+                    switchMessage(error, "text-danger");
                 }
             } else {
                 switchMessage("Turn off nodes on the selected ports");
                 turnOff(worker, switchName, ports);
-                bootNode(worker, switchName, ports, 0, data["network"], data["macs"]);
+                bootNode(worker, switchName, ports, 0, data["macs"], data["network"], data["ip_offset"]);
             }
         },
         error: function () {
@@ -199,41 +196,55 @@ function deleteDHCPRule(switchName, ip_mac) {
     });
 }
 
-function bootNode(worker, switchName, ports, portIdx, baseIP, existingMACs) {
+function bootNode(worker, switchName, ports, portIdx, existingMACs, network, ipOffset) {
     switchMessage("Turn on the node on port " + ports[portIdx], "text-warning");
     turnOn(worker, switchName, [ ports[portIdx] ]);
     switchMessage("The node on port " + ports[portIdx] + " is booting");
+    switchMessage("Capturing DHCP requests, waiting 40s");
     setTimeout(function() {
-        dhcpConf(worker, switchName, ports, portIdx, baseIP, existingMACs, 0);
-    }, 5000);
+        dhcpConf(worker, switchName, ports, portIdx, existingMACs, network, ipOffset, 0);
+    }, 10000);
 }
 
-function dhcpConf(worker, switchName, ports, portIdx, baseIP, existingMACs, loopNb) {
-        switchMessage("Capturing DHCP requests, waiting " + (30 - loopNb * 10) + "s");
+function dhcpConf(worker, switchName, ports, portIdx, existingMACs, network, ipOffset, loopNb) {
+        switchMessage("Capturing DHCP requests, waiting " + (40 - 10 - loopNb * 10) + "s");
         $.ajax({
             type: "POST",
             url: "http://" + WEBUI + "/admin/switch/" + worker + "/" + switchName + "/dhcp_conf",
             dataType: 'json',
             contentType: 'application/json',
             async: false,
-            data: JSON.stringify({"port": ports[portIdx], "macs": existingMACs, "network": baseIP}),
+            data: JSON.stringify({"port": ports[portIdx], "macs": existingMACs, "network": network, "ip_offset": ipOffset }),
             success: function (data) {
-                if("node_ip" in data && data["node_ip"].length > 0) {
-                    switchMessage("The node 'node-" + ports[portIdx] + "' has the IP '" + data["node_ip"] + "'");
-                    switchMessage("Rebooting the node");
-                    switchMessage("Configuring the node 'node-" + ports[portIdx] + "', waiting 90s");
-                    setTimeout(function() {
-                        nodeConf(worker, switchName, ports, portIdx, baseIP, existingMACs, data["node_ip"], 0);
-                    }, 40000);
-            } else {
-                    if(loopNb < 3) {
-                        loopNb++;
+                if(data["errors"].length > 0) {
+                    cleanDetect(worker);
+                    for(error of data["errors"]) {
+                        if(error.includes("DHCP configuration")) {
+                            error = error + " <a href=\"javascript:deleteDHCPRule('" + switchName + "', '" +
+                                error.split(" ")[0] + "')\">Update the DHCP configuration</a> to delete " +
+                                error.split(" ")[0] + ".";
+                        }
+                        switchMessage(error, "text-danger");
+                    }
+                } else {
+                    if("node_ip" in data && data["node_ip"].length > 0) {
+                        switchMessage("The node on the port " + ports[portIdx] + " has the IP '" + data["node_ip"] + "'");
+                        switchMessage("Rebooting the node");
+                        switchMessage("Configuring the node on the port " + ports[portIdx] + ", waiting 90s");
                         setTimeout(function() {
-                            dhcpConf(worker, switchName, ports, portIdx, baseIP, existingMACs, loopNb);
-                        }, 10000);
+                            nodeConf(worker, switchName, ports, portIdx, existingMACs, network, ipOffset, data["node_ip"], 0);
+                        }, 40000);
                     } else {
-                        switchMessage("No IP detects for the node on the port " + ports[portIdx] +
-                            ". Check the node MAC address is not already in the DHCP configuration.", "text-danger");
+                        if(loopNb < 3) {
+                            loopNb++;
+                            setTimeout(function() {
+                                dhcpConf(worker, switchName, ports, portIdx, existingMACs, network, ipOffset, loopNb);
+                            }, 10000);
+                        } else {
+                            cleanDetect(worker);
+                            switchMessage("No IP detects for the node on the port " + ports[portIdx] +
+                                ". Check the node MAC address is not already in the DHCP configuration.", "text-danger");
+                        }
                     }
                 }
             },
@@ -244,7 +255,7 @@ function dhcpConf(worker, switchName, ports, portIdx, baseIP, existingMACs, loop
 }
 
 
-function nodeConf(worker, switchName, ports, portIdx, baseIP, existingMACs, nodeIp, loopNb) {
+function nodeConf(worker, switchName, ports, portIdx, existingMACs, network, ipOffset, nodeIp, loopNb) {
     switchMessage("Configuring the node 'node-" + ports[portIdx] + "', waiting " + (90 - 40 - loopNb * 10) + "s");
     $.ajax({
         type: "POST",
@@ -255,22 +266,52 @@ function nodeConf(worker, switchName, ports, portIdx, baseIP, existingMACs, node
         data: JSON.stringify( {"port": ports[portIdx], "node_ip": nodeIp} ),
         success: function (data) {
             if(data["errors"].length > 0) {
-                alert(data["errors"]);
-            } else {
-                // The node is turned off, update the square color
-                $("#" + switchName + "-table").find(".col").each(function(idx, port) {
-                    if(ports[portIdx] == String(idx + 1)) {
-                        $(port).attr("class", "col port-node off");
-                    }
-                });
-                // Detecting the next selected node
-                portIdx++;
-                if(portIdx < ports.length) {
-                    bootNode(worker, switchName, ports, portIdx, baseIP, existingMACs);
-                } else {
-                    updateSwitchNodes();
-                    switchMessage("All nodes are configured.");
+                cleanDetect(worker);
+                for(error of data["errors"]) {
+                    switchMessage(error, "text-danger");
                 }
+            } else {
+                if(data["serial"].length > 0) {
+                    // The node is turned off, update the square color
+                    $("#" + switchName + "-table").find(".col").each(function(idx, port) {
+                        if(ports[portIdx] == String(idx + 1)) {
+                            $(port).attr("class", "col port-node off");
+                        }
+                    });
+                    switchMessage("The node on the port " + ports[portIdx] + " is configured!", "text-success");
+                    // Detecting the next selected node
+                    portIdx++;
+                    if(portIdx < ports.length) {
+                        bootNode(worker, switchName, ports, portIdx, existingMACs, network, ipOffset);
+                    } else {
+                        switchMessage("All nodes are configured. Cleaning the TFTP directory..");
+                        cleanDetect(worker);
+                        updateSwitchNodes();
+                    }
+                } else {
+                    loopNb++;
+                    setTimeout(function() {
+                        nodeConf(worker, switchName, ports, portIdx, existingMACs, network, ipOffset, nodeIp, loopNb);
+                    }, 10000);
+                }
+            }
+        },
+        error: function () {
+            alert("Error: can not send the request");
+        },
+    });
+}
+
+function cleanDetect(worker) {
+    $.ajax({
+        type: "POST",
+        url: "http://" + WEBUI + "/admin/switch/" + worker + "/clean_detect",
+        dataType: 'json',
+        contentType: 'application/json',
+        async: false,
+        success: function (data) {
+            if(data["errors"].length > 0) {
+                alert(data["errors"]);
             }
         },
         error: function () {

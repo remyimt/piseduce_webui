@@ -383,10 +383,10 @@ def turn_on(worker_name, switch_name):
     return json.dumps(result)
 
 
-@b_admin.route("/switch/<worker_name>/init_detect", methods = [ "POST" ])
+@b_admin.route("/switch/<worker_name>/<switch_name>/init_detect", methods = [ "POST" ])
 @login_required
 @admin_required
-def init_detect(worker_name):
+def init_detect(worker_name, switch_name):
     result = {}
     if "ports" not in flask.request.json:
         return json.dumps(result)
@@ -398,7 +398,7 @@ def init_detect(worker_name):
     worker_port = worker.port
     close_session(db)
     try:
-        r = requests.post(url = "http://%s:%s/v1/admin/switch/init_detect" % (worker_ip, worker_port), json = json_args)
+        r = requests.post(url = "http://%s:%s/v1/admin/switch/init_detect/%s" % (worker_ip, worker_port, switch_name), json = json_args)
         if r.status_code == 200:
             result = r.json()
     except:
@@ -412,8 +412,9 @@ def init_detect(worker_name):
 def dhcp_conf(worker_name, switch_name):
     result = { "errors": [] }
     flask_data = flask.request.json
-    if "port" not in flask_data or "macs" not in flask_data or "network" not in flask_data:
-        result["errors"].append("Required parameters: 'port', 'macs', 'network'")
+    if "port" not in flask_data or "macs" not in flask_data or \
+            "ip_offset" not in flask_data and "network" not in flask_data:
+        result["errors"].append("Required parameters: 'port', 'macs', 'network' and 'ip_offset'")
         return json.dumps(result)
     # Get the worker information
     db = open_session()
@@ -479,8 +480,35 @@ def node_conf(worker_name, switch_name):
         r = requests.post(url = "http://%s:%s/v1/admin/switch/node_conf/%s" % (worker_ip, worker_port, switch_name), json = json_args)
         if r.status_code == 200:
             result = r.json()
+        else:
+            result["errors"].append("wrong answer from the worker '%s'" % worker_name)
     except:
         logging.exception("configure node failure: worker: '%s', switch: '%s',  ports: %s" % (worker_name, switch_name, ports))
+        result["errors"].append("node configuration from the worker '%s' failed" % worker_name)
+    return json.dumps(result)
+
+
+@b_admin.route("/switch/<worker_name>/clean_detect", methods = [ "POST" ])
+@login_required
+@admin_required
+def clean_detect(worker_name):
+    result = { "errors": [] }
+    # Get the worker information
+    db = open_session()
+    worker = db.query(Worker).filter(Worker.name == worker_name).first()
+    json_args = { "token": worker.token }
+    worker_ip = worker.ip
+    worker_port = worker.port
+    close_session(db)
+    try:
+        r = requests.post(url = "http://%s:%s/v1/admin/switch/clean_detect" % (worker_ip, worker_port), json = json_args)
+        if r.status_code == 200:
+            result = r.json()
+        else:
+            result["errors"].append("wrong answer from the worker '%s'" % worker_name)
+    except:
+        logging.exception("clean detect failure: worker: '%s'" % worker_name)
+        result["errors"].append("can not clean the TFTP folder of the worker '%s'" % worker_name)
     return json.dumps(result)
 
 

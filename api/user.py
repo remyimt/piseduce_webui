@@ -7,12 +7,35 @@ import flask, json, logging, requests
 
 b_user = flask.Blueprint("user", __name__, template_folder="templates/")
 
+# sort names with pattern string-number
+def sort_by_name(named_dict):
+    result = {}
+    names = {}
+    for name in named_dict:
+        key_name = ""
+        if "-" in name:
+            key_name = name.split("-")[0]
+        else:
+            key_name = name
+        if key_name not in names:
+            names[key_name] = []
+        names[key_name].append(name)
+    for n_str in sorted(names):
+        if len(names[n_str]) > 1:
+            nb_sorted = sorted(names[n_str], key=lambda nb: int(nb.split("-")[1]))
+            for n in nb_sorted:
+                result[n] = named_dict[n]
+        else:
+            key = names[n_str][0]
+            result[key] = named_dict[key]
+    return result
+
 
 # REST API to connect the web UI and the workers
 @b_user.route("/node/list")
 @login_required
 def node_list():
-    result = { "nodes": {}, "errors": {} }
+    result = { "errors": [], "nodes": {} }
     db = open_session()
     for worker in db.query(Worker).all():
         r = requests.post(url = "http://%s:%s/v1/user/node/prop" % (worker.ip, worker.port),
@@ -26,17 +49,19 @@ def node_list():
                 else:
                     result["nodes"][node] = r_json[node]
             if len(duplicated_names) > 0:
-                result["errors"][worker.name] = "duplicated names: %s" % duplicated_names
+                result["errors"].append("on worker '%s', duplicated names: %s" % (worker.name, duplicated_names))
         else:
-            result["errors"][worker.name] = "connection error - return code %d" % r.status_code
+            result["errors"].append("on worker '%s', connection error with return code %d" % (worker.name, r.status_code))
     close_session(db)
+    if len(result["errors"]) == 0:
+        result["nodes"] = sort_by_name(result["nodes"])
     return json.dumps(result)
 
 
 @b_user.route("/node/configuring")
 @login_required
 def node_configuring():
-    result = { "raspberry": {}, "sensor": {}, "server": {}, "fake": {} }
+    result = { "errors": [], "raspberry": {}, "sensor": {}, "server": {}, "fake": {} }
     db = open_session()
     for worker in db.query(Worker).all():
         r = requests.post(url = "http://%s:%s/v1/user/configure" % (worker.ip, worker.port),

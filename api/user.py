@@ -1,34 +1,13 @@
+from api.tool import sort_by_name
 from database.connector import open_session, close_session
 from database.tables import User, Worker
 from flask_login import current_user, login_required
+from lib.config_loader import load_config
 from werkzeug.security import generate_password_hash
 import flask, json, logging, requests
 
 
 b_user = flask.Blueprint("user", __name__, template_folder="templates/")
-
-# sort names with pattern string-number
-def sort_by_name(named_dict):
-    result = {}
-    names = {}
-    for name in named_dict:
-        key_name = ""
-        if "-" in name:
-            key_name = name.split("-")[0]
-        else:
-            key_name = name
-        if key_name not in names:
-            names[key_name] = []
-        names[key_name].append(name)
-    for n_str in sorted(names):
-        if len(names[n_str]) > 1:
-            nb_sorted = sorted(names[n_str], key=lambda nb: int(nb.split("-")[1]))
-            for n in nb_sorted:
-                result[n] = named_dict[n]
-        else:
-            key = names[n_str][0]
-            result[key] = named_dict[key]
-    return result
 
 
 # REST API to connect the web UI and the workers
@@ -52,9 +31,9 @@ def node_list():
                 result["errors"].append("on worker '%s', duplicated names: %s" % (worker.name, duplicated_names))
         else:
             result["errors"].append("on worker '%s', connection error with return code %d" % (worker.name, r.status_code))
-    close_session(db)
     if len(result["errors"]) == 0:
         result["nodes"] = sort_by_name(result["nodes"])
+    close_session(db)
     return json.dumps(result)
 
 
@@ -75,6 +54,9 @@ def node_configuring():
         else:
             logging.error("configuring error: wrong answer from the worker '%s'" % worker.name)
     close_session(db)
+    for node_type in result:
+        if node_type != "errors":
+            result[node_type] = sort_by_name(result[node_type])
     return json.dumps(result)
 
 
@@ -295,21 +277,24 @@ def user_ssh():
 @login_required
 def reserve():
     return flask.render_template("reserve.html", admin = current_user.is_admin, active_btn = "user_reserve",
-        nodes = json.loads(node_list())["nodes"])
+        nodes = json.loads(node_list())["nodes"],
+        webui_str = "%s:%s" % (load_config()["ip"], load_config()["port_number"]))
 
 
 @b_user.route("/configure")
 @login_required
 def configure():
     return flask.render_template("configure.html", admin = current_user.is_admin, active_btn = "user_configure",
-        nodes = json.loads(node_configuring()))
+        nodes = json.loads(node_configuring()),
+        webui_str = "%s:%s" % (load_config()["ip"], load_config()["port_number"]))
 
 
 @b_user.route("/manage")
 @login_required
 def manage():
     return flask.render_template("manage.html", admin = current_user.is_admin, active_btn = "user_manage",
-        nodes = json.loads(node_deploying()))
+        nodes = json.loads(node_deploying()),
+        webui_str = "%s:%s" % (load_config()["ip"], load_config()["port_number"]))
 
 
 @b_user.route("/settings")
@@ -328,4 +313,5 @@ def settings():
         result = { "email": user.email, "ssh_key": ssh_key, "status": status }
     close_session(db)
     return flask.render_template("settings.html", admin = current_user.is_admin, active_btn = "user_settings",
-        user = result)
+        user = result,
+        webui_str = "%s:%s" % (load_config()["ip"], load_config()["port_number"]))

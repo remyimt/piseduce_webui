@@ -34,7 +34,6 @@ $(document).ready(function () {
 // Functions
 function updateNodeStatus() {
     $.get( "http://localhost:9000/user/node/updating", function(data) {
-        var data = JSON.parse(data);
         if(data["errors"].length > 0) {
             alert(data["errors"].join(","));
             return;

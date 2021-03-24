@@ -23,28 +23,37 @@ function hideInfoView() {
 }
 
 function updateNodes() {
-    $.get( "http://localhost:9000/user/node/list", function(data) {
-        var data = JSON.parse(data);
-        NODES = data["nodes"];
-        for (var node in NODES) {
-            // Get the properties with values to build the filters
-            for (var prop in NODES[node]) {
-                if(NODES[node][prop] != null && NODES[node][prop].length > 0) {
-                    if(!(prop in PROPERTIES)) {
-                        PROPERTIES[prop] = new Set();
+    console.log("done");
+    $.ajax({
+        type: "GET",
+        url: "http://" + WEBUI + "/user/node/list",
+        dataType: 'json',
+        success: function (data) {
+            console.log(data);
+            NODES = data["nodes"];
+            for (var node in NODES) {
+                // Get the properties with values to build the filters
+                for (var prop in NODES[node]) {
+                    if(NODES[node][prop] != null && NODES[node][prop].length > 0) {
+                        if(!(prop in PROPERTIES)) {
+                            PROPERTIES[prop] = new Set();
+                        }
+                        PROPERTIES[prop].add(NODES[node][prop]);
+                    } else {
+                        // Delete unused properties
+                        delete NODES[node][prop];
                     }
-                    PROPERTIES[prop].add(NODES[node][prop]);
-                } else {
-                    // Delete unused properties
-                    delete NODES[node][prop];
                 }
             }
-        }
-        // Sort the properties
-        for (var prop of Array.from(Object.keys(PROPERTIES)).sort()) {
-            // Add the property name to the selector
-            $("#prop-names").append($("<option value='" + prop + "'>"));
-        }
+            // Sort the properties
+            for (var prop of Array.from(Object.keys(PROPERTIES)).sort()) {
+                // Add the property name to the selector
+                $("#prop-names").append($("<option value='" + prop + "'>"));
+            }
+        },
+        error: function () {
+            alert("error: can not send the request");
+        },
     });
 }
 

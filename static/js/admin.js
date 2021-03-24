@@ -256,7 +256,7 @@ function dhcpConf(worker, switchName, ports, portIdx, existingMACs, network, ipO
 
 
 function nodeConf(worker, switchName, ports, portIdx, existingMACs, network, ipOffset, nodeIp, loopNb) {
-    switchMessage("Configuring the node 'node-" + ports[portIdx] + "', waiting " + (90 - 40 - loopNb * 10) + "s");
+    switchMessage("Configuring the node on the port " + ports[portIdx] + ", waiting " + (90 - 40 - loopNb * 10) + "s");
     $.ajax({
         type: "POST",
         url: "http://" + WEBUI + "/admin/switch/" + worker + "/" + switchName + "/node_conf",
@@ -286,13 +286,17 @@ function nodeConf(worker, switchName, ports, portIdx, existingMACs, network, ipO
                     } else {
                         switchMessage("All nodes are configured. Cleaning the TFTP directory..");
                         cleanDetect(worker);
-                        updateSwitchNodes();
                     }
                 } else {
-                    loopNb++;
-                    setTimeout(function() {
-                        nodeConf(worker, switchName, ports, portIdx, existingMACs, network, ipOffset, nodeIp, loopNb);
-                    }, 10000);
+                    if(loopNb < 3) {
+                        loopNb++;
+                        setTimeout(function() {
+                            nodeConf(worker, switchName, ports, portIdx, existingMACs, network, ipOffset, nodeIp, loopNb);
+                        }, 10000);
+                    } else {
+                        switchMessage("Can not get the node information. The node is not configured!", "text-danger");
+                        cleanDetect(worker);
+                    }
                 }
             }
         },
@@ -313,6 +317,7 @@ function cleanDetect(worker) {
             if(data["errors"].length > 0) {
                 alert(data["errors"]);
             }
+            updateSwitchNodes();
         },
         error: function () {
             alert("Error: can not send the request");

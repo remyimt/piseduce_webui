@@ -1,3 +1,4 @@
+from api.tool import sort_by_name
 from database.connector import open_session, close_session, row2elem, row2dict
 from database.tables import User, Worker
 from flask_login import current_user, login_required
@@ -43,7 +44,8 @@ def list_user():
             pending_users.append(user_dict)
     close_session(db)
     return flask.render_template("user.html", admin = current_user.is_admin, active_btn = "admin_user",
-        pending_users = pending_users, authorized_users = authorized_users, admin_users = admin_users)
+        pending_users = pending_users, authorized_users = authorized_users, admin_users = admin_users,
+        webui_str = "%s:%s" % (load_config()["ip"], load_config()["port_number"]))
 
 
 @b_admin.route("/user/remove/<email>")
@@ -134,10 +136,12 @@ def list_worker(error=None):
     # Display the type of the worker
     if error is None or len(error) == 0:
         return flask.render_template("admin.html", admin = current_user.is_admin, active_btn = "admin_worker",
-            elem_type = "worker", elements = result)
+            elem_type = "worker", elements = result,
+            webui_str = "%s:%s" % (load_config()["ip"], load_config()["port_number"]))
     else:
         return flask.render_template("admin.html", admin = current_user.is_admin, active_btn = "admin_worker",
-            elem_type = "worker", elements = result, msg = error)
+            elem_type = "worker", elements = result, msg = error,
+            webui_str = "%s:%s" % (load_config()["ip"], load_config()["port_number"]))
 
 
 @b_admin.route("/add/worker", methods=[ "POST" ])
@@ -196,20 +200,21 @@ def delete_worker(worker_name):
 @login_required
 @admin_required
 def get(el_type, error=None):
-    result = {}
+    result = { "errors": []}
     worker_types = load_config()["%s_provider" % el_type]
     if worker_types is None or len(worker_types) == 0:
-        error = "missing '%s_provider' property in the configuration file" % el_type
+        result["errors"].append("missing '%s_provider' property in the configuration file" % el_type)
         return flask.render_template("admin.html", admin = current_user.is_admin, active_btn = "admin_%s" % el_type,
-            elem_type = el_type, elements = result, msg = error)
+            elem_type = el_type, elements = result, msg = result["errors"][0],
+            webui_str = "%s:%s" % (load_config()["ip"], load_config()["port_number"]))
     db = open_session()
     workers = db.query(Worker).filter(Worker.type.in_(worker_types)).all()
     for w in workers:
-        result[w.name] = { "properties": [], "existing": [] }
+        result[w.name] = { "properties": [], "existing": {} }
         # Get the element properties to register new elements
         r = requests.post(url = "http://%s:%s/v1/admin/add/%s" % (w.ip, w.port, el_type), json = { "token": w.token })
         if r.status_code != 200 or "missing" not in r.json():
-            error = "property error from the worker '%s:%s'" % (w.ip, w.port)
+            result["errors"].append("wrong answer from the worker '%s'" % w.name)
         else:
             result[w.name]["properties"] = r.json()["missing"]
             for prop in result[w.name]["properties"]:
@@ -218,18 +223,25 @@ def get(el_type, error=None):
         # Get the existing elements
         r = requests.post(url = "http://%s:%s/v1/user/%s/list" % (w.ip, w.port, el_type), json = { "token": w.token })
         if r.status_code != 200:
-            error = "can not get the list of %ss from the worker '%s:%s'" % (el_type, w.ip, w.port)
+            result["errors"].append("can not get the list of %ss from the worker '%s'" % (el_type, w.name))
         else:
-            for el in r.json():
-                result[w.name]["existing"].append(r.json()[el])
-                result[w.name]["existing"][-1]["name"] = el
+            node_info = r.json()
+            for el_name in node_info:
+                one_node = node_info[el_name]
+                one_node["name"] = el_name
+                result[w.name]["existing"][el_name] = one_node
     close_session(db)
-    if error is None or len(error) == 0:
+    for worker in result:
+        if worker != "errors":
+            result[worker]["existing"] = sort_by_name(result[worker]["existing"])
+    if len(result["errors"]) == 0:
         return flask.render_template("admin.html", admin = current_user.is_admin, active_btn = "admin_%s" % el_type,
-            webui_str = "%s:%s" % (load_config()["ip"], load_config()["port_number"]), elem_type = el_type, elements = result)
+            elem_type = el_type, elements = result,
+            webui_str = "%s:%s" % (load_config()["ip"], load_config()["port_number"]))
     else:
         return flask.render_template("admin.html", admin = current_user.is_admin, active_btn = "admin_%s" % el_type,
-            elem_type = el_type, elements = result, msg = error)
+            elem_type = el_type, elements = result, msg = ",".join(result["errors"]),
+            webui_str = "%s:%s" % (load_config()["ip"], load_config()["port_number"]))
 
 
 @b_admin.route("/add/<el_type>/", methods=[ "POST" ])

@@ -35,7 +35,7 @@ $(document).ready(function () {
 function updateNodeStatus() {
     $.ajax({
         type: "GET",
-        url: "http://" + WEBUI + "/user/node/updating",
+        url: WEBUI + "/user/node/updating",
         dataType: 'json',
         success: function (data) {
             if(data["errors"].length > 0) {
@@ -50,6 +50,7 @@ function updateNodeStatus() {
                         if(oldStatus.html() != node["status"]) {
                             oldStatus.html(node["status"]);
                             $("#" + node["name"] + "-circle").attr("class", "rounded-circle " + node["status"]);
+                            $("#" + node["name"] + "-circle").attr("title", node["status"]);
                         }
                     }
                 }
@@ -80,10 +81,6 @@ function loadInfo(select) {
 function reconfigure(binName) {
     var nodeNames = {};
     var reconfiguration = $("#" + binName + "-select").val();
-    if(reconfiguration == "deploy_again" || reconfiguration == "hard_reboot") {
-        alert("Not implemented yet!");
-        return;
-    }
     $(".accordion:visible").each(function(idx, accordion) {
         if(accordion.id.startsWith(binName)) {
             $(accordion).find(".node-name").each(function(idx, name) {
@@ -101,7 +98,7 @@ function reconfigure(binName) {
     if(Object.keys(nodeNames).length > 0) {
         $.ajax({
             type: "POST",
-            url: "http://" + WEBUI + "/user/make/exec",
+            url: WEBUI + "/user/make/exec",
             dataType: 'json',
             contentType: 'application/json',
             async: false,
@@ -143,7 +140,7 @@ function destroyBin(binName) {
     if(Object.keys(nodeNames).length > 0) {
         $.ajax({
             type: "POST",
-            url: "http://" + WEBUI + "/user/make/exec",
+            url: WEBUI + "/user/make/exec",
             dataType: 'json',
             contentType: 'application/json',
             async: false,

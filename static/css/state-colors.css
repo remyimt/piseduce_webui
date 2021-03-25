@@ -15,6 +15,10 @@
     background-color: #ff9f99;
 }
 
+.rebooted {
+    background-color: #a2ff9e;
+}
+
 /*** Fake states ***/
 .deploy1 {
     background-color: #191970;

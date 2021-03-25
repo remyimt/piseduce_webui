@@ -145,7 +145,7 @@ def make_reserve():
                     r = requests.post(url = "http://%s:%s/v1/user/node/status" % (worker.ip, worker.port),
                         json = { "token": worker.token, "nodes": matching_nodes })
                     if r.status_code == 200:
-                        for node, props in r.json().items():
+                        for node, props in r.json()["nodes"].items():
                             if props["status"] == "available" and len(available_nodes) < nb_nodes:
                                 available_nodes.append(node)
                     else:
@@ -280,16 +280,14 @@ def user_ssh():
 @login_required
 def reserve():
     return flask.render_template("reserve.html", admin = current_user.is_admin, active_btn = "user_reserve",
-        nodes = json.loads(node_list())["nodes"],
-        webui_str = "%s:%s" % (load_config()["ip"], load_config()["port_number"]))
+        nodes = json.loads(node_list())["nodes"], webui_str = load_config()["base_url"])
 
 
 @b_user.route("/configure")
 @login_required
 def configure():
     return flask.render_template("configure.html", admin = current_user.is_admin, active_btn = "user_configure",
-        nodes = json.loads(node_configuring()),
-        webui_str = "%s:%s" % (load_config()["ip"], load_config()["port_number"]))
+        nodes = json.loads(node_configuring()), webui_str = load_config()["base_url"])
 
 
 @b_user.route("/manage")
@@ -298,7 +296,7 @@ def manage():
     json_data = json.loads(node_deploying())
     return flask.render_template("manage.html", admin = current_user.is_admin, active_btn = "user_manage",
         nodes = json_data["nodes"], states = json_data["states"], errors = json_data["errors"],
-        webui_str = "%s:%s" % (load_config()["ip"], load_config()["port_number"]))
+        webui_str = load_config()["base_url"])
 
 
 @b_user.route("/settings")
@@ -317,5 +315,4 @@ def settings():
         result = { "email": user.email, "ssh_key": ssh_key, "status": status }
     close_session(db)
     return flask.render_template("settings.html", admin = current_user.is_admin, active_btn = "user_settings",
-        user = result,
-        webui_str = "%s:%s" % (load_config()["ip"], load_config()["port_number"]))
+        user = result, webui_str = load_config()["base_url"])

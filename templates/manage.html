@@ -30,6 +30,8 @@
                     </div>
                     <div class="row">
                         <div class="col legend">
+                            <div title="ready" class="state ready">
+                            </div>
                         {% for state in states[node_type] %}
                             <div title="{{state}}" class="state {{state}}">
                             </div>
@@ -66,7 +68,9 @@
                                     <a type="button" data-toggle="collapse" data-target="#collapse-{{node_name}}"
                                         aria-expanded="false" aria-controls="collapse-{{node_name}}" class="btn-link">
                                         <div>
-                                            <div id="{{node_name}}-circle" class="rounded-circle {{node_data["status"]}}"></div>
+                                            <div id="{{node_name}}-circle" title="{{node_data["status"]}}"
+                                                class="rounded-circle {{node_data["status"]}}">
+                                            </div>
                                             <div class="node-name">{{node_name}}</div>
                                             <img src="/static/img/disabled-checkbox.png" onclick="tickNode(this)">
                                         </div>
@@ -120,8 +124,8 @@
                 </div>
                 <div class="action">
                     <select id="{{node_bin}}-select" onchange="loadInfo(this)">
-                        <option value="hard_reboot">Hard Reboot</option>
-                        <option value="deploy_again">Deploy Again</option>
+                        <option value="hardreboot">Hard Reboot</option>
+                        <option value="deployagain">Deploy Again</option>
                         <option value="destroy">Destroy</option>
                     </select>
                     <div class="btn btn-info" onclick="reconfigure('{{node_bin}}')">Execute</div>

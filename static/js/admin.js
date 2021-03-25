@@ -12,7 +12,7 @@ function updateSwitchNodes() {
             var worker = $("#" + switchName + "-worker").val();
             $.ajax({
                 type: "POST",
-                url: "http://" + WEBUI + "/admin/switch/" + worker + "/" + switchName + "/nodes",
+                url: WEBUI + "/admin/switch/" + worker + "/" + switchName + "/nodes",
                 dataType: 'json',
                 contentType: 'application/json',
                 async: false,
@@ -73,7 +73,7 @@ function reconfigure(switchName) {
                 initDetect(worker, switchName, ports);
                 break;
             case "port_status":
-                $.get( "http://" + WEBUI + "/admin/switch/" + worker + "/" + switchName, function(data) {
+                $.get(WEBUI + "/admin/switch/" + worker + "/" + switchName, function(data) {
                     var data = JSON.parse(data);
                     $("#" + switchName + "-table").find(".col").each(function(idx, port) {
                         $(port).attr("class", "col port-node " + data[switchName][idx]);
@@ -95,7 +95,7 @@ function reconfigure(switchName) {
 function turnOff(worker, switchName, ports) {
     $.ajax({
         type: "POST",
-        url: "http://" + WEBUI + "/admin/switch/" + worker + "/" + switchName + "/turn_off",
+        url: WEBUI + "/admin/switch/" + worker + "/" + switchName + "/turn_off",
         dataType: 'json',
         contentType: 'application/json',
         async: false,
@@ -119,7 +119,7 @@ function turnOff(worker, switchName, ports) {
 function turnOn(worker, switchName, ports) {
     $.ajax({
         type: "POST",
-        url: "http://" + WEBUI + "/admin/switch/" + worker + "/" + switchName + "/turn_on",
+        url: WEBUI + "/admin/switch/" + worker + "/" + switchName + "/turn_on",
         dataType: 'json',
         contentType: 'application/json',
         async: false,
@@ -144,7 +144,7 @@ function initDetect(worker, switchName, ports) {
     switchMessage("Preparing the NFS boot for nodes on ports " + ports);
     $.ajax({
         type: "POST",
-        url: "http://" + WEBUI + "/admin/switch/" + worker + "/" + switchName + "/init_detect",
+        url: WEBUI + "/admin/switch/" + worker + "/" + switchName + "/init_detect",
         dataType: 'json',
         contentType: 'application/json',
         async: false,
@@ -182,7 +182,7 @@ function deleteDHCPRule(switchName, ip_mac) {
     }
     $.ajax({
         type: "POST",
-        url: "http://" + WEBUI + "/admin/switch/" + worker + "/" + switchName + "/dhcp_conf/del",
+        url: WEBUI + "/admin/switch/" + worker + "/" + switchName + "/dhcp_conf/del",
         dataType: 'json',
         contentType: 'application/json',
         async: false,
@@ -210,7 +210,7 @@ function dhcpConf(worker, switchName, ports, portIdx, existingMACs, network, ipO
         switchMessage("Capturing DHCP requests, waiting " + (40 - 10 - loopNb * 10) + "s");
         $.ajax({
             type: "POST",
-            url: "http://" + WEBUI + "/admin/switch/" + worker + "/" + switchName + "/dhcp_conf",
+            url: WEBUI + "/admin/switch/" + worker + "/" + switchName + "/dhcp_conf",
             dataType: 'json',
             contentType: 'application/json',
             async: false,
@@ -259,7 +259,7 @@ function nodeConf(worker, switchName, ports, portIdx, existingMACs, network, ipO
     switchMessage("Configuring the node on the port " + ports[portIdx] + ", waiting " + (90 - 40 - loopNb * 10) + "s");
     $.ajax({
         type: "POST",
-        url: "http://" + WEBUI + "/admin/switch/" + worker + "/" + switchName + "/node_conf",
+        url: WEBUI + "/admin/switch/" + worker + "/" + switchName + "/node_conf",
         dataType: 'json',
         contentType: 'application/json',
         async: false,
@@ -309,7 +309,7 @@ function nodeConf(worker, switchName, ports, portIdx, existingMACs, network, ipO
 function cleanDetect(worker) {
     $.ajax({
         type: "POST",
-        url: "http://" + WEBUI + "/admin/switch/" + worker + "/clean_detect",
+        url: WEBUI + "/admin/switch/" + worker + "/clean_detect",
         dataType: 'json',
         contentType: 'application/json',
         async: false,

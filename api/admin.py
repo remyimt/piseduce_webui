@@ -45,7 +45,7 @@ def list_user():
     close_session(db)
     return flask.render_template("user.html", admin = current_user.is_admin, active_btn = "admin_user",
         pending_users = pending_users, authorized_users = authorized_users, admin_users = admin_users,
-        webui_str = "%s:%s" % (load_config()["ip"], load_config()["port_number"]))
+        webui_str = load_config()["base_url"])
 
 
 @b_admin.route("/user/remove/<email>")
@@ -136,12 +136,10 @@ def list_worker(error=None):
     # Display the type of the worker
     if error is None or len(error) == 0:
         return flask.render_template("admin.html", admin = current_user.is_admin, active_btn = "admin_worker",
-            elem_type = "worker", elements = result,
-            webui_str = "%s:%s" % (load_config()["ip"], load_config()["port_number"]))
+            elem_type = "worker", elements = result, webui_str = load_config()["base_url"])
     else:
         return flask.render_template("admin.html", admin = current_user.is_admin, active_btn = "admin_worker",
-            elem_type = "worker", elements = result, msg = error,
-            webui_str = "%s:%s" % (load_config()["ip"], load_config()["port_number"]))
+            elem_type = "worker", elements = result, msg = error, webui_str = load_config()["base_url"])
 
 
 @b_admin.route("/add/worker", methods=[ "POST" ])
@@ -206,7 +204,7 @@ def get(el_type, error=None):
         result["errors"].append("missing '%s_provider' property in the configuration file" % el_type)
         return flask.render_template("admin.html", admin = current_user.is_admin, active_btn = "admin_%s" % el_type,
             elem_type = el_type, elements = result, msg = result["errors"][0],
-            webui_str = "%s:%s" % (load_config()["ip"], load_config()["port_number"]))
+            webui_str = load_config()["base_url"])
     db = open_session()
     workers = db.query(Worker).filter(Worker.type.in_(worker_types)).all()
     for w in workers:
@@ -237,11 +235,11 @@ def get(el_type, error=None):
     if len(result["errors"]) == 0:
         return flask.render_template("admin.html", admin = current_user.is_admin, active_btn = "admin_%s" % el_type,
             elem_type = el_type, elements = result,
-            webui_str = "%s:%s" % (load_config()["ip"], load_config()["port_number"]))
+            webui_str = load_config()["base_url"])
     else:
         return flask.render_template("admin.html", admin = current_user.is_admin, active_btn = "admin_%s" % el_type,
             elem_type = el_type, elements = result, msg = ",".join(result["errors"]),
-            webui_str = "%s:%s" % (load_config()["ip"], load_config()["port_number"]))
+            webui_str = load_config()["base_url"])
 
 
 @b_admin.route("/add/<el_type>/", methods=[ "POST" ])

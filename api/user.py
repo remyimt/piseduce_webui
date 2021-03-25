@@ -63,27 +63,30 @@ def node_configuring():
 @b_user.route("/node/deploying")
 @login_required
 def node_deploying():
-    result = { "errors": {} }
+    result = { "errors": [], "nodes": {}, "states": [] }
     db = open_session()
     for worker in db.query(Worker).all():
         r = requests.post(url = "http://%s:%s/v1/user/node/mine" % (worker.ip, worker.port),
             json = { "token": worker.token, "user": current_user.email })
         if r.status_code == 200:
-            # Add the worker name to the node information
             json_data = r.json()
-            for node in json_data:
-                bin_name = json_data[node].pop("bin")
-                del json_data[node]["type"]
-                json_data[node]["worker"] = worker.name
+            result["states"] = { "raspberry": [], "sensor": [], "server": [], "fake": [] }
+            result["states"][worker.type] = json_data["states"]
+            for node in json_data["nodes"]:
+                # Sort the nodes by bin
+                bin_name = json_data["nodes"][node].pop("bin")
+                del json_data["nodes"][node]["type"]
+                # Add the worker name to the node information
+                json_data["nodes"][node]["worker"] = worker.name
                 # No bin for nodes in 'configuring' state
                 if len(bin_name) > 0:
                     # Sort nodes by bin name
-                    if bin_name not in result:
-                        result[bin_name] = { "raspberry": [], "sensor": [], "server": [], "fake": [] }
-                    result[bin_name][worker.type].append(json_data[node])
+                    if bin_name not in result["nodes"]:
+                        result["nodes"][bin_name] = { "raspberry": [], "sensor": [], "server": [], "fake": [] }
+                    result["nodes"][bin_name][worker.type].append(json_data["nodes"][node])
         else:
             logging.error("deploying error: wrong answer from the worker '%s'" % worker.name)
-            result["errors"][worker.name] = "connection error - return code %d" % r.status_code
+            result["errors"].append("connection error for the worker '%s' (return code %d)" % (worker.name, r.status_code))
     close_session(db)
     return json.dumps(result)
 
@@ -91,21 +94,21 @@ def node_deploying():
 @b_user.route("/node/updating")
 @login_required
 def node_updating():
-    result = { "errors": {} }
+    result = { "errors": [] }
     db = open_session()
     for worker in db.query(Worker).all():
         r = requests.post(url = "http://%s:%s/v1/user/node/status" % (worker.ip, worker.port),
             json = { "token": worker.token, "user": current_user.email })
         if r.status_code == 200:
             json_data = r.json()
-            for node in json_data:
-                bin_name = json_data[node].pop("bin")
+            for node in json_data["nodes"]:
+                bin_name = json_data["nodes"][node].pop("bin")
                 # No bin for nodes in 'configuring' state
                 if len(bin_name) > 0:
                     # Sort nodes by bin name
                     if bin_name not in result:
                         result[bin_name] = { "raspberry": [], "sensor": [], "server": [], "fake": [] }
-                    result[bin_name][worker.type].append(json_data[node])
+                    result[bin_name][worker.type].append(json_data["nodes"][node])
     close_session(db)
     return json.dumps(result)
 
@@ -210,7 +213,7 @@ def make_deploy():
 @b_user.route("/make/exec", methods=["POST"])
 @login_required
 def make_exec():
-    result = {"errors": [] }
+    result = { "errors": [] }
     json_data = flask.request.json
     # Use the function 'init_action_process' of worker_exec
     if "nodes" in json_data and "reconfiguration" in json_data:
@@ -292,8 +295,9 @@ def configure():
 @b_user.route("/manage")
 @login_required
 def manage():
+    json_data = json.loads(node_deploying())
     return flask.render_template("manage.html", admin = current_user.is_admin, active_btn = "user_manage",
-        nodes = json.loads(node_deploying()),
+        nodes = json_data["nodes"], states = json_data["states"], errors = json_data["errors"],
         webui_str = "%s:%s" % (load_config()["ip"], load_config()["port_number"]))
 
 

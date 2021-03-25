@@ -410,6 +410,17 @@
     padding-top: 20px;
 }
 
+.manage .legend {
+    text-align: center;
+    font-size: 0px;
+}
+
+.manage .state {
+    width: 20px;
+    height: 30px;
+    display: inline-block;
+}
+
 .manage .type-selection {
     text-align: center;
     margin-bottom: 10px;
@@ -456,6 +467,7 @@
 
 .manage .title .rounded-right:hover {
     background: #dc3545;
+    cursor: pointer;
 }
 
 .manage .card-header {

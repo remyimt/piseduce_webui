@@ -23,7 +23,6 @@ function hideInfoView() {
 }
 
 function updateNodes() {
-    console.log("done");
     $.ajax({
         type: "GET",
         url: "http://" + WEBUI + "/user/node/list",
@@ -208,7 +207,7 @@ function reserveNodes() {
         $.ajax({
             type: "POST",
             //the url where you want to sent the userName and password to
-            url: "http://localhost:9000/user/make/reserve",
+            url: "http://" + WEBUI + "/user/make/reserve",
             dataType: 'json',
             contentType: 'application/json',
             async: false,
@@ -217,7 +216,7 @@ function reserveNodes() {
                 if(data["errors"].length > 0) {
                     alert("Reservation error: " + data["errors"]);
                 } else {
-                    window.location.href = "http://localhost:9000/user/configure";
+                    window.location.href = "http://" + WEBUI + "/user/configure";
                 }
             },
             error: function () {

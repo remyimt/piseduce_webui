@@ -13,6 +13,8 @@
                     {{request.args.get('msg')}}
                 </div>
             {% endif %}
+            <!-- remove the errors field -->
+            {% set useless = nodes.pop("errors") %}
             <div class="bg-info rounded-right title">
                 Deployment
             </div>

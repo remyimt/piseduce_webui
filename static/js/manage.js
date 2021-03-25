@@ -33,23 +33,31 @@ $(document).ready(function () {
 
 // Functions
 function updateNodeStatus() {
-    $.get( "http://localhost:9000/user/node/updating", function(data) {
-        if(data["errors"].length > 0) {
-            alert(data["errors"].join(","));
-            return;
-        }
-        delete data["errors"];
-        for (bin in data) {
-            for (nodeType in data[bin]) {
-                for (node of data[bin][nodeType]) {
-                    var oldStatus = $("#" + node["name"] + "-status");
-                    if(oldStatus.html() != node["status"]) {
-                        oldStatus.html(node["status"]);
-                        $("#" + node["name"] + "-circle").attr("class", "rounded-circle " + node["status"]);
+    $.ajax({
+        type: "GET",
+        url: "http://" + WEBUI + "/user/node/updating",
+        dataType: 'json',
+        success: function (data) {
+            if(data["errors"].length > 0) {
+                alert(data["errors"].join(","));
+                return;
+            }
+            delete data["errors"];
+            for (bin in data) {
+                for (nodeType in data[bin]) {
+                    for (node of data[bin][nodeType]) {
+                        var oldStatus = $("#" + node["name"] + "-status");
+                        if(oldStatus.html() != node["status"]) {
+                            oldStatus.html(node["status"]);
+                            $("#" + node["name"] + "-circle").attr("class", "rounded-circle " + node["status"]);
+                        }
                     }
                 }
-            }
-        }
+           }
+        },
+        error: function () {
+            alert("error: can not send the request");
+        },
     });
 }
 
@@ -93,7 +101,7 @@ function reconfigure(binName) {
     if(Object.keys(nodeNames).length > 0) {
         $.ajax({
             type: "POST",
-            url: "http://localhost:9000/user/make/exec",
+            url: "http://" + WEBUI + "/user/make/exec",
             dataType: 'json',
             contentType: 'application/json',
             async: false,
@@ -135,7 +143,7 @@ function destroyBin(binName) {
     if(Object.keys(nodeNames).length > 0) {
         $.ajax({
             type: "POST",
-            url: "http://localhost:9000/user/make/exec",
+            url: "http://" + WEBUI + "/user/make/exec",
             dataType: 'json',
             contentType: 'application/json',
             async: false,

@@ -204,10 +204,9 @@ def get(el_type, error=None):
     result = { "errors": []}
     worker_types = load_config()["%s_provider" % el_type]
     if worker_types is None or len(worker_types) == 0:
-        result["errors"].append("missing '%s_provider' property in the configuration file" % el_type)
+        error = "missing '%s_provider' property in the configuration file" % el_type
         return flask.render_template("admin.html", admin = current_user.is_admin, active_btn = "admin_%s" % el_type,
-            elem_type = el_type, elements = result, msg = result["errors"][0],
-            webui_str = load_config()["base_url"])
+            elem_type = el_type, elements = result, msg = error, webui_str = load_config()["base_url"])
     db = open_session()
     workers = db.query(Worker).filter(Worker.type.in_(worker_types)).all()
     for w in workers:
@@ -235,14 +234,15 @@ def get(el_type, error=None):
     for worker in result:
         if worker != "errors":
             result[worker]["existing"] = sort_by_name(result[worker]["existing"])
+    if isinstance(error, dict) or (error is not None and len(error) > 0):
+        return flask.render_template("admin.html", admin = current_user.is_admin, active_btn = "admin_%s" % el_type,
+            elem_type = el_type, elements = result, msg = error, webui_str = load_config()["base_url"])
     if len(result["errors"]) == 0:
         return flask.render_template("admin.html", admin = current_user.is_admin, active_btn = "admin_%s" % el_type,
-            elem_type = el_type, elements = result,
-            webui_str = load_config()["base_url"])
+            elem_type = el_type, elements = result, webui_str = load_config()["base_url"])
     else:
         return flask.render_template("admin.html", admin = current_user.is_admin, active_btn = "admin_%s" % el_type,
-            elem_type = el_type, elements = result, msg = ",".join(result["errors"]),
-            webui_str = load_config()["base_url"])
+            elem_type = el_type, elements = result, msg = ",".join(result["errors"]), webui_str = load_config()["base_url"])
 
 
 @b_admin.route("/add/<el_type>/", methods=[ "POST" ])

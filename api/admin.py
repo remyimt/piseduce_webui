@@ -119,19 +119,22 @@ def promote_user(email):
 @login_required
 @admin_required
 def list_worker(error=None):
-    result = {"worker_key": {
-        "properties": { "name": [], "ip": [], "port": [], "token": [] },
-        "existing": []
-    }}
+    result = {
+        "errors": [],
+        "worker_key": {
+            "properties": { "name": [], "ip": [], "port": [], "token": [] },
+            "existing": {}
+        }
+    }
     db = open_session()
     for w in db.query(Worker).all():
-        result["worker_key"]["existing"].append({
+        result["worker_key"]["existing"][w.name] = {
             "name": w.name,
             "type": w.type,
             "ip": w.ip,
             "port": w.port,
             "token": w.token
-        })
+        }
     close_session(db)
     # Display the type of the worker
     if error is None or len(error) == 0:

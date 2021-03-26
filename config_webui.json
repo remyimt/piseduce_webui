@@ -1,5 +1,4 @@
 {
-    "base_url": "http://localhost:9000",
     "port_number": 9000,
     "pwd_secret_key": "oneSecretKey",
     "db_url": "sqlite:///test-ui.db",

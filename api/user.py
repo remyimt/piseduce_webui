@@ -1,4 +1,4 @@
-from api.tool import sort_by_name, read_base_url
+from api.tool import sort_by_name
 from database.connector import open_session, close_session
 from database.tables import User, Worker
 from flask_login import current_user, login_required
@@ -279,14 +279,14 @@ def user_ssh():
 @login_required
 def reserve():
     return flask.render_template("reserve.html", admin = current_user.is_admin, active_btn = "user_reserve",
-        nodes = json.loads(node_list())["nodes"], webui_str = read_base_url(flask.request))
+        nodes = json.loads(node_list())["nodes"])
 
 
 @b_user.route("/configure")
 @login_required
 def configure():
     return flask.render_template("configure.html", admin = current_user.is_admin, active_btn = "user_configure",
-        nodes = json.loads(node_configuring()), webui_str = read_base_url(flask.request))
+        nodes = json.loads(node_configuring()))
 
 
 @b_user.route("/manage")
@@ -294,8 +294,7 @@ def configure():
 def manage():
     json_data = json.loads(node_deploying())
     return flask.render_template("manage.html", admin = current_user.is_admin, active_btn = "user_manage",
-        nodes = json_data["nodes"], states = json_data["states"], errors = json_data["errors"],
-        webui_str = read_base_url(flask.request))
+        nodes = json_data["nodes"], states = json_data["states"], errors = json_data["errors"])
 
 
 @b_user.route("/settings")
@@ -314,4 +313,4 @@ def settings():
         result = { "email": user.email, "ssh_key": ssh_key, "status": status }
     close_session(db)
     return flask.render_template("settings.html", admin = current_user.is_admin, active_btn = "user_settings",
-        user = result, webui_str = read_base_url(flask.request))
+        user = result)

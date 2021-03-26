@@ -21,8 +21,3 @@ def sort_by_name(named_dict):
             key = names[n_str][0]
             result[key] = named_dict[key]
     return result
-
-# Extract the base_url from a Flask Request object
-def read_base_url(flask_request):
-    req_args = flask_request.base_url.split("/")
-    return "%s//%s" % (req_args[0], req_args[2])

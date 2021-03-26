@@ -1,4 +1,4 @@
-from api.tool import sort_by_name, read_base_url
+from api.tool import sort_by_name
 from database.connector import open_session, close_session, row2elem, row2dict
 from database.tables import User, Worker
 from flask_login import current_user, login_required
@@ -44,8 +44,7 @@ def list_user():
             pending_users.append(user_dict)
     close_session(db)
     return flask.render_template("user.html", admin = current_user.is_admin, active_btn = "admin_user",
-        pending_users = pending_users, authorized_users = authorized_users, admin_users = admin_users,
-        webui_str = read_base_url(flask.request))
+        pending_users = pending_users, authorized_users = authorized_users, admin_users = admin_users)
 
 
 @b_admin.route("/user/remove/<email>")
@@ -139,10 +138,10 @@ def list_worker(error=None):
     # Display the type of the worker
     if error is None or len(error) == 0:
         return flask.render_template("admin.html", admin = current_user.is_admin, active_btn = "admin_worker",
-            elem_type = "worker", elements = result, webui_str = read_base_url(flask.request))
+            elem_type = "worker", elements = result)
     else:
         return flask.render_template("admin.html", admin = current_user.is_admin, active_btn = "admin_worker",
-            elem_type = "worker", elements = result, msg = error, webui_str = read_base_url(flask.request))
+            elem_type = "worker", elements = result, msg = error)
 
 
 @b_admin.route("/add/worker", methods=[ "POST" ])
@@ -206,7 +205,7 @@ def get(el_type, error=None):
     if worker_types is None or len(worker_types) == 0:
         error = "missing '%s_provider' property in the configuration file" % el_type
         return flask.render_template("admin.html", admin = current_user.is_admin, active_btn = "admin_%s" % el_type,
-            elem_type = el_type, elements = result, msg = error, webui_str = read_base_url(flask.request))
+            elem_type = el_type, elements = result, msg = error)
     db = open_session()
     workers = db.query(Worker).filter(Worker.type.in_(worker_types)).all()
     for w in workers:
@@ -236,13 +235,13 @@ def get(el_type, error=None):
             result[worker]["existing"] = sort_by_name(result[worker]["existing"])
     if isinstance(error, dict) or (error is not None and len(error) > 0):
         return flask.render_template("admin.html", admin = current_user.is_admin, active_btn = "admin_%s" % el_type,
-            elem_type = el_type, elements = result, msg = error, webui_str = read_base_url(flask.request))
+            elem_type = el_type, elements = result, msg = error)
     if len(result["errors"]) == 0:
         return flask.render_template("admin.html", admin = current_user.is_admin, active_btn = "admin_%s" % el_type,
-            elem_type = el_type, elements = result, webui_str = read_base_url(flask.request))
+            elem_type = el_type, elements = result)
     else:
         return flask.render_template("admin.html", admin = current_user.is_admin, active_btn = "admin_%s" % el_type,
-            elem_type = el_type, elements = result, msg = ",".join(result["errors"]), webui_str = read_base_url(flask.request))
+            elem_type = el_type, elements = result, msg = ",".join(result["errors"]))
 
 
 @b_admin.route("/add/<el_type>/", methods=[ "POST" ])

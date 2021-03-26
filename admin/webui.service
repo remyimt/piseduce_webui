@@ -1,0 +1,14 @@
+[Unit]
+Description=PiSeduce WebUI
+ 
+[Service]
+Type=simple
+User=root
+Group=root
+WorkingDirectory=/root/piseduce_webui
+ExecStart=/usr/bin/python3 webui.py config_webui.json
+TimeoutStopSec=20
+Restart=on-failure
+ 
+[Install]
+WantedBy=multi-user.target

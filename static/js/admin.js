@@ -200,14 +200,14 @@ function bootNode(worker, switchName, ports, portIdx, existingMACs, network, ipO
     switchMessage("Turn on the node on port " + ports[portIdx], "text-warning");
     turnOn(worker, switchName, [ ports[portIdx] ]);
     switchMessage("The node on port " + ports[portIdx] + " is booting");
-    switchMessage("Capturing DHCP requests, waiting 40s");
+    switchMessage("Capturing DHCP requests, waiting 60s");
     setTimeout(function() {
         dhcpConf(worker, switchName, ports, portIdx, existingMACs, network, ipOffset, 0);
-    }, 10000);
+    }, 30000);
 }
 
 function dhcpConf(worker, switchName, ports, portIdx, existingMACs, network, ipOffset, loopNb) {
-        switchMessage("Capturing DHCP requests, waiting " + (40 - 10 - loopNb * 10) + "s");
+        switchMessage("Capturing DHCP requests, waiting " + (60 - 30 - loopNb * 10) + "s");
         $.ajax({
             type: "POST",
             url: WEBUI + "/admin/switch/" + worker + "/" + switchName + "/dhcp_conf",
@@ -230,7 +230,7 @@ function dhcpConf(worker, switchName, ports, portIdx, existingMACs, network, ipO
                     if("node_ip" in data && data["node_ip"].length > 0) {
                         switchMessage("The node on the port " + ports[portIdx] + " has the IP '" + data["node_ip"] + "'");
                         switchMessage("Rebooting the node");
-                        switchMessage("Configuring the node on the port " + ports[portIdx] + ", waiting 90s");
+                        switchMessage("Configuring the node on the port " + ports[portIdx] + ", waiting 120s");
                         setTimeout(function() {
                             nodeConf(worker, switchName, ports, portIdx, existingMACs, network, ipOffset, data["node_ip"], 0);
                         }, 40000);
@@ -256,7 +256,7 @@ function dhcpConf(worker, switchName, ports, portIdx, existingMACs, network, ipO
 
 
 function nodeConf(worker, switchName, ports, portIdx, existingMACs, network, ipOffset, nodeIp, loopNb) {
-    switchMessage("Configuring the node on the port " + ports[portIdx] + ", waiting " + (90 - 40 - loopNb * 10) + "s");
+    switchMessage("Configuring the node on the port " + ports[portIdx] + ", waiting " + (120 - 40 - loopNb * 10) + "s");
     $.ajax({
         type: "POST",
         url: WEBUI + "/admin/switch/" + worker + "/" + switchName + "/node_conf",
@@ -288,7 +288,7 @@ function nodeConf(worker, switchName, ports, portIdx, existingMACs, network, ipO
                         cleanDetect(worker);
                     }
                 } else {
-                    if(loopNb < 3) {
+                    if(loopNb < 8) {
                         loopNb++;
                         setTimeout(function() {
                             nodeConf(worker, switchName, ports, portIdx, existingMACs, network, ipOffset, nodeIp, loopNb);

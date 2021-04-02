@@ -28,7 +28,6 @@ function updateNodes() {
         url: WEBUI + "/user/node/list",
         dataType: 'json',
         success: function (data) {
-            console.log(data);
             NODES = data["nodes"];
             for (var node in NODES) {
                 // Get the properties with values to build the filters

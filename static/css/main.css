@@ -58,7 +58,6 @@
 }
 
 .admin .prop-table {
-    margin-left: 6px;
     padding: 0;
 }
 
@@ -72,11 +71,19 @@
 }
 
 .admin .add-button {
-    width: 286px;
+    width: 90px;
 }
 
 .admin .delete-button {
     width: 80px;
+}
+
+.admin .vpn-large {
+    width: 230px;
+}
+
+.admin .vpn-small {
+    width: 90px;
 }
 
 .admin .switch-table {
@@ -132,6 +139,34 @@
     margin: auto;
     margin-top: 20px;
     display: none;
+}
+
+/** Admin VPN page **/
+.vpn {
+    padding-top: 20px;
+    padding-bottom: 20px;
+    padding-left: 6px;
+}
+
+.vpn table {
+    margin-left: 20px;
+}
+
+.vpn table th:first-child {
+    width: 400px;
+}
+
+.vpn table tr {
+    height: 44px;
+}
+
+.vpn .col-button {
+    width: 120px;
+    text-align: center;
+}
+
+.vpn a {
+    width: 90px;
 }
 
 /** Reserve page **/

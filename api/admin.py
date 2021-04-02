@@ -2,8 +2,9 @@ from api.tool import sort_by_name
 from database.connector import open_session, close_session, row2elem, row2dict
 from database.tables import User, Worker
 from flask_login import current_user, login_required
+from glob import glob
 from lib.config_loader import load_config
-import flask, functools, json, logging, requests
+import flask, functools, json, logging, os, requests, subprocess
 
 
 b_admin = flask.Blueprint("admin", __name__, template_folder="templates/")
@@ -122,7 +123,8 @@ def list_worker(error=None):
         "errors": [],
         "worker_key": {
             "properties": { "name": [], "ip": [], "port": [], "token": [] },
-            "existing": {}
+            "existing": {},
+            "vpn": {}
         }
     }
     db = open_session()
@@ -135,6 +137,10 @@ def list_worker(error=None):
             "token": w.token
         }
     close_session(db)
+    key_list = vpn_key_list()
+    for key in key_list:
+        if key not in result["worker_key"]["existing"] and len(key_list[key]["subnet"]) > 0:
+            result["worker_key"]["vpn"][key] = key_list[key]
     # Display the type of the worker
     if error is None or len(error) == 0:
         return flask.render_template("admin.html", admin = current_user.is_admin, active_btn = "admin_worker",
@@ -524,3 +530,134 @@ def clean_detect(worker_name):
     return json.dumps(result)
 
 
+# VPN Management
+def vpn_key_list():
+    vpn_keys = {}
+    with open("/etc/openvpn/easy-rsa/keys/index.txt", "r") as index:
+        for line in index.readlines():
+            if line[0] == "V":
+                cn = line[line.index("CN="):]
+                cn = cn[3:cn.index("/")]
+                if cn != "pimaster":
+                    vpn_keys[cn] = {"ip": "", "subnet": ""}
+    for client in glob("/etc/openvpn/server/ccd/*"):
+        client_name = os.path.basename(client)
+        if client_name in vpn_keys:
+            with open(client, "r") as ccd:
+                for line in ccd.readlines():
+                    if line.startswith("iroute"):
+                        vpn_keys[client_name]["subnet"] = line.split()[1]
+                    if line.startswith("ifconfig"):
+                        vpn_keys[client_name]["ip"] = line.split()[1]
+        else:
+            logging.error("ccd file for the key '%s' without value in the 'index.txt' file" % client)
+    return vpn_keys
+
+
+@b_admin.route("/vpn")
+@login_required
+@admin_required
+def vpn():
+    vpn_clients = { "user": [], "worker": [] }
+    # List the existing keys
+    vpn_keys = vpn_key_list()
+    # Read the database to get the existing user accounts and the existing workers
+    db = open_session()
+    for u in db.query(User).all():
+        vpn_clients["user"].append(u.email.replace("@", "_"))
+    for w in db.query(Worker).all():
+        vpn_clients["worker"].append(w.name)
+    close_session(db)
+    # Render the beautiful page
+    return flask.render_template("vpn.html", admin = current_user.is_admin, active_btn = "admin_vpn", keys = vpn_keys,
+        clients = vpn_clients)
+
+
+@b_admin.route("/vpn/delete/<vpn_key>")
+@login_required
+@admin_required
+def vpn_delete(vpn_key):
+    with open("/etc/openvpn/server/ccd/%s" % vpn_key, "r") as ccd:
+        for line in ccd.readlines():
+            if line.startswith("iroute"):
+                # Delete the route from the server configuration
+                network = line.split()[1]
+                cmd = "sed -i '/%s/d' /etc/openvpn/server/server.conf" % network
+                subprocess.run(cmd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    subprocess.run("bash ./scripts/revoke-vpn-key.sh %s" % vpn_key, shell=True,
+        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    return flask.redirect("/admin/vpn")
+
+
+@b_admin.route("/vpn/generate/<vpn_key>")
+@login_required
+@admin_required
+def vpn_generate(vpn_key):
+    result = vpn_generate_w_subnet(vpn_key)
+    if len(result["errors"]) == 0:
+        return flask.redirect("/admin/vpn")
+    else:
+        return flask.redirect("/admin/vpn?msg=%s" % result["errors"][0])
+        
+
+
+@b_admin.route("/vpn/generate/<vpn_key>/<subnet>")
+@login_required
+@admin_required
+def vpn_generate_w_subnet(vpn_key, subnet = None):
+    result = {"errors": [] }
+    if vpn_key in vpn_key_list():
+        result["errors"].append("Key already exists!")
+        return result
+    # Find the IP for the new VPN client
+    ip_last_list = []
+    network = ""
+    for client in glob("/etc/openvpn/server/ccd/*"):
+        cmd = "grep ^ifconfig %s" % client
+        process = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+            universal_newlines=True)
+        client_ip = process.stdout.split(" ")[1]
+        ip_last_list.append(int(client_ip.split(".")[-1]))
+        network = client_ip[:client_ip.rindex(".")]
+    if len(ip_last_list) == 0:
+        cmd = "grep ^server /etc/openvpn/server/server.conf"
+        process = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+            universal_newlines=True)
+        network_ip = process.stdout.split()[1]
+        network = network_ip[:network_ip.rindex(".")]
+    for ip_last in range(2, 254):
+        if ip_last not in ip_last_list:
+            break
+    # Generate the VPN key from the client name
+    cmd = "bash ./scripts/generate-vpn-key.sh %s" % vpn_key
+    subprocess.run(cmd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    # Generate the client file containing all keys
+    try:
+        ca_crt = ""
+        with open("/etc/openvpn/easy-rsa/keys/ca.crt", "r") as crt:
+            ca_crt = crt.read()
+        client_crt = ""
+        with open("/etc/openvpn/easy-rsa/keys/%s.crt" % vpn_key, "r") as crt:
+            client_crt = crt.read()
+        client_key = ""
+        with open("/etc/openvpn/easy-rsa/keys/%s.key" % vpn_key, "r") as key:
+            client_key = key.read()
+        ta_key = ""
+        with open("/etc/openvpn/easy-rsa/keys/ta.key", "r") as key:
+            ta_key = key.read()
+        client_file = flask.render_template("client_vpn.conf", ca_crt = ca_crt, client_crt = client_crt,
+                client_key = client_key, ta_key = ta_key)
+        with open("vpn_keys/%s.conf" % vpn_key, "w") as client_conf:
+            client_conf.write(client_file)
+    except:
+        result["errors"].append("Can not generate the VPN key")
+        return result
+    # Assign the IP to the client
+    with open("/etc/openvpn/server/ccd/%s" % vpn_key, "w") as ipfile:
+        ipfile.write("ifconfig-push %s.%d %s.1\n" % (network, ip_last, network))
+        if subnet is not None:
+            ipfile.write("iroute %s 255.255.255.0" % subnet)
+    # Add the route to the server
+    cmd = "echo 'push \"route %s 255.255.255.0\"' >> /etc/openvpn/server/server.conf" % subnet
+    subprocess.run(cmd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    return result

@@ -37,6 +37,16 @@
                         <b class="text-info">SSH key</b>: No SSH key registered<br/>
                     </span>
                 {% endif %}
+                {% if user.vpn_key %}
+                    <span>
+                        <b class="text-info">VPN key</b>:
+                        <a href="/user/vpn/download/{{user.email|replace("@", "_")}}">download</a><br/>
+                    </span>
+                {% else %}
+                    <span>
+                        <b class="text-info">VPN key</b>: No VPN key<br/>
+                    </span>
+                {% endif %}
                 <b class="text-info">Status</b>: {{user.status}}<br/>
             </div>
             <div class="tab-pane pt-2" id="password" role="tabpanel" aria-labelledby="password-tab">

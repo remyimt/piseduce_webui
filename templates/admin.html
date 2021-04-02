@@ -37,7 +37,10 @@
     {% endif %}
     {% for worker in elements %}
         {% if elements[worker]["properties"] is mapping %}
-            <form id="{{worker}}-form" action="/admin/add/{{elem_type}}" method="post">
+            <div class="ml-1 mt-3 text-info">
+                <b>Manual Configuration</b>
+            </div>
+            <form id="{{worker}}-form" action="/admin/add/{{elem_type}}" method="post" class="ml-3">
                 <input type="hidden" name="worker" value="{{worker}}">
                 <div class="container prop-table">
                     {% set el_props = elements[worker]["properties"] %}
@@ -91,7 +94,57 @@
                 </div><!-- container -->
             </form>
         {% else %}
-            <div class="none">{{elements[worker]["properties"]}}</div>
+            <div class="none">
+                {{elements[worker]["properties"]}}
+            </div>
+        {% endif %}
+        <!-- Add workers from the VPN configuration -->
+        {% if elements[worker]["vpn"]|length > 0 %}
+            <div class="ml-1 mt-3 text-info">
+                <b>VPN Configuration</b>
+            </div>
+            <table class="ml-3">
+                <thead>
+                    <tr>
+                        <th scope="col" class="vpn-large">
+                            Name
+                        </th>
+                        <th scope="col" class="vpn-small text-center">
+                            Ip
+                        </th>
+                        <th scope="col" class="vpn-small text-center">
+                            Port
+                        </th>
+                        <th scope="col" class="vpn-large text-center">
+                            Token
+                        </th>
+                        <th scope="col" class="vpn-small text-center">
+                            Add
+                        </th>
+                </thead>
+                <tbody>
+                    {% for key in elements[worker]["vpn"] %}
+                        {% set key_props = elements[worker]["vpn"][key] %}
+                        <tr>
+                            <td>
+                                {{key}}
+                            </td>
+                            <td class="text-center">
+                                {{key_props["ip"]}}
+                            </td>
+                            <td class="text-center">
+                                <input type="text" size="3">
+                            </td>
+                            <td class="text-center">
+                                <input type="text">
+                            </td>
+                            <td class="text-center">
+                                <a href="javascript:addVPNWoker('{{key}}')" class="btn btn-info delete-button">&#x002B;</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         {% endif %}
     {% endfor %}
     <div class="bg-info rounded-right title">Existing {{ elem_type[0]|upper}}{{elem_type[1:] }}s</div>

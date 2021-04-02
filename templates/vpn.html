@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% block other_js %}
+	<script src="/static/js/vpn.js"></script>
+{% endblock %}
+
+{% block content %}
+    <div class="bg-white rounded shadow-sm vpn">
+        <h4 class="text-info">Existing VPN keys</h4>
+        {% if keys|length == 0 %}
+            <div class="ml-4">No Existing key</div>
+        {% else %}
+            <table>
+                <thead>
+                    <tr>
+                        <th scope="col">Key Name</th>
+                        <th scope="col" class="col-button">Client IP</th>
+                        <th scope="col" class="col-button">Client Subnet</th>
+                        <th scope="col" class="col-button">Download</th>
+                        <th scope="col" class="col-button">Delete</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for k in keys %}
+                        <tr>
+                            <td>{{k}}</td>
+                            <td class="text-center">{{keys[k]["ip"]}}</td>
+                            {% if keys[k]["subnet"]|length == 0 %}
+                                <td class="text-center">N/A</td>
+                            {% else %}
+                                <td class="text-center">{{keys[k]["subnet"]}}</td>
+                            {% endif %}
+                            <td class="text-center">
+                                <a href="/user/vpn/download/{{k}}" class="btn btn-secondary">&#9660;</a>
+                            </td>
+                            <td class="text-center">
+                                <a href="/admin/vpn/delete/{{k}}" class="btn btn-warning">&#x2212;</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+        {% if request.args.get('msg') %}
+            <div class="alert alert-danger" role="alert">
+                {{ request.args.get('msg') }}
+            </div>
+        {% endif %}
+        <h4 class="mt-3 text-info">Generate new VPN keys for users</h4>
+        <table>
+            <thead>
+                <tr>
+                    <th scope="col">User Name</th>
+                    <th scope="col" class="col-button">Generate</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for c in clients["user"] %}
+                    <tr>
+                        <td>{{c}}</td>
+                        {% if c in keys %}
+                            <td class="text-center">N/A</td>
+                        {% else %}
+                            <td class="text-center">
+                                <a href="/admin/vpn/generate/{{c}}" class="btn btn-info">&#x002B;</a>
+                            </td>
+                        {% endif %}
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <h4 class="mt-3 text-info">Generate new VPN keys for workers</h4>
+        <table>
+            <thead>
+                <tr>
+                    <th scope="col">Worker Name</th>
+                    <th scope="col">Worker Subnet</th>
+                    <th scope="col" class="col-button">Generate</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for c in clients["worker"] %}
+                        <tr>
+                            <td>
+                                {{c}}
+                            </td>
+                            {% if c in keys %}
+                                <td>
+                                    {{keys[c]["subnet"]}}
+                                </td>
+                                <td class="text-center">
+                                    N/A
+                                </td>
+                            {% else %}
+                                <td>
+                                    <input id="{{c}}-subnet" type="text">
+                                </td>
+                                <td class="text-center">
+                                    <a href="javascript:workerVPNKey('{{c}}')" class="btn btn-info">&#x002B;</a>
+                                </td>
+                            {% endif %}
+                        </tr>
+                {% endfor %}
+                <tr>
+                    <td>
+                        <input id="worker-name" size="30" type="text">
+                    </td>
+                    <td>
+                        <input id="worker-subnet" type="text">
+                    </td>
+                    <td class="text-center">
+                        <a href="javascript:workerVPNKey('')" class="btn btn-info">&#x002B;</a>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+{% endblock %}

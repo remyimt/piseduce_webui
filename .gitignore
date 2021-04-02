@@ -1,3 +1,8 @@
+# Python files
 *__pycache__*
+# Log files
 *.log
+# SQLite Database
 *.db
+# VPN client configuration
+vpn_keys/*.conf

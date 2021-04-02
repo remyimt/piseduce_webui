@@ -3,7 +3,7 @@ from database.connector import open_session, close_session
 from database.tables import User, Worker
 from flask_login import current_user, login_required
 from werkzeug.security import generate_password_hash
-import flask, json, logging, requests
+import flask, json, logging, os, requests
 
 
 b_user = flask.Blueprint("user", __name__, template_folder="templates/")
@@ -310,7 +310,18 @@ def settings():
         ssh_key = ""
         if user.ssh_key is not None:
             ssh_key = user.ssh_key
-        result = { "email": user.email, "ssh_key": ssh_key, "status": status }
+        if os.path.isfile("vpn_keys/%s.conf" % current_user.email.replace("@", "_")):
+            result = { "email": user.email, "ssh_key": ssh_key, "status": status, "vpn_key": True }
+        else:
+            result = { "email": user.email, "ssh_key": ssh_key, "status": status, "vpn_key": False }
     close_session(db)
     return flask.render_template("settings.html", admin = current_user.is_admin, active_btn = "user_settings",
         user = result)
+
+
+@b_user.route("/vpn/download/<vpn_key>")
+@login_required
+def vpn_download(vpn_key):
+    if current_user.is_admin or current_user.email.replace("@", "_") == vpn_key:
+        return flask.send_file("vpn_keys/%s.conf" % vpn_key, as_attachment = True)
+

@@ -30,8 +30,8 @@ def login_post():
     if len(form_data["email"]) > 0 and len(form_data["pwd"]) > 0:
         db = open_session()
         user = db.query(User).filter_by(email = form_data["email"]).first()
-        if user.is_authorized:
-            if user is not None  and check_password_hash(user.password, form_data["pwd"]):
+        if user is not None and user.is_authorized:
+            if check_password_hash(user.password, form_data["pwd"]):
                 authenticated = True
                 login_user(user, remember=True)
             else:

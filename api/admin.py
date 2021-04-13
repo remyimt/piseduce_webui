@@ -554,10 +554,10 @@ def vpn_key_list():
     return vpn_keys
 
 
-@b_admin.route("/vpn")
+@b_admin.route("/network")
 @login_required
 @admin_required
-def vpn():
+def network():
     vpn_clients = { "user": [], "worker": [] }
     # List the existing keys
     vpn_keys = vpn_key_list()
@@ -569,7 +569,7 @@ def vpn():
         vpn_clients["worker"].append(w.name)
     close_session(db)
     # Render the beautiful page
-    return flask.render_template("vpn.html", admin = current_user.is_admin, active_btn = "admin_vpn", keys = vpn_keys,
+    return flask.render_template("network.html", admin = current_user.is_admin, active_btn = "admin_network", keys = vpn_keys,
         clients = vpn_clients)
 
 
@@ -586,7 +586,7 @@ def vpn_delete(vpn_key):
                 subprocess.run(cmd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     subprocess.run("bash ./scripts/revoke-vpn-key.sh %s" % vpn_key, shell=True,
         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    return flask.redirect("/admin/vpn")
+    return flask.redirect("/admin/network")
 
 
 @b_admin.route("/vpn/generate/<vpn_key>")
@@ -595,9 +595,9 @@ def vpn_delete(vpn_key):
 def vpn_generate(vpn_key):
     result = vpn_generate_w_subnet(vpn_key)
     if len(result["errors"]) == 0:
-        return flask.redirect("/admin/vpn")
+        return flask.redirect("/admin/network")
     else:
-        return flask.redirect("/admin/vpn?msg=%s" % result["errors"][0])
+        return flask.redirect("/admin/network?msg=%s" % result["errors"][0])
         
 
 
@@ -658,6 +658,9 @@ def vpn_generate_w_subnet(vpn_key, subnet = None):
         if subnet is not None:
             ipfile.write("iroute %s 255.255.255.0" % subnet)
     # Add the route to the server
+    cmd = "echo 'route %s 255.255.255.0' >> /etc/openvpn/server/server.conf" % subnet
+    subprocess.run(cmd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    # Send the route to the clients
     cmd = "echo 'push \"route %s 255.255.255.0\"' >> /etc/openvpn/server/server.conf" % subnet
     subprocess.run(cmd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     return result

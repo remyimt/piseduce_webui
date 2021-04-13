@@ -25,7 +25,6 @@
 
 /** Admin Property tables: worker, switch, node, environment **/
 .admin {
-    width: 1000px;
     padding-top: 20px;
     padding-bottom: 20px;
 }
@@ -141,31 +140,56 @@
     display: none;
 }
 
-/** Admin VPN page **/
-.vpn {
+/** Admin User page **/
+.user {
     padding-top: 20px;
     padding-bottom: 20px;
-    padding-left: 6px;
 }
 
-.vpn table {
+.user .title{
+    width: 300px;
+    padding-right: 30px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    font-size: 20px;
+    color: white;
+    text-align: right;
+}
+
+/** Admin Network page **/
+.network {
+    padding-top: 20px;
+    padding-bottom: 20px;
+}
+
+.network .title {
+    width: 300px;
+    padding-right: 30px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    font-size: 20px;
+    color: white;
+    text-align: right;
+}
+
+.network table {
     margin-left: 20px;
 }
 
-.vpn table th:first-child {
+.network table th:first-child {
     width: 400px;
 }
 
-.vpn table tr {
+.network table tr {
     height: 44px;
 }
 
-.vpn .col-button {
+.network .col-button {
     width: 120px;
     text-align: center;
 }
 
-.vpn a {
+.network a {
     width: 90px;
 }
 

@@ -29,9 +29,9 @@ function workerVPNKey(name) {
         dataType: 'json',
         success: function (data) {
             if(data["errors"].length == 0) {
-                window.location.href = WEBUI + "/admin/vpn";
+                window.location.href = WEBUI + "/admin/network";
             } else {
-                window.location.href = WEBUI + "/admin/vpn?msg=" + data["errors"][0];
+                window.location.href = WEBUI + "/admin/network?msg=" + data["errors"][0];
             }
         },
         error: function() {

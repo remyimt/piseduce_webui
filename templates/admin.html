@@ -37,9 +37,11 @@
     {% endif %}
     {% for worker in elements %}
         {% if elements[worker]["properties"] is mapping %}
-            <div class="ml-1 mt-3 text-info">
-                <b>Manual Configuration</b>
-            </div>
+            {% if elem_type == "worker" %}
+                <div class="ml-1 mt-3 text-info">
+                    <b>From Manual Configuration</b>
+                </div>
+            {% endif %}
             <form id="{{worker}}-form" action="/admin/add/{{elem_type}}" method="post" class="ml-3">
                 <input type="hidden" name="worker" value="{{worker}}">
                 <div class="container prop-table">
@@ -101,7 +103,7 @@
         <!-- Add workers from the VPN configuration -->
         {% if elements[worker]["vpn"]|length > 0 %}
             <div class="ml-1 mt-3 text-info">
-                <b>VPN Configuration</b>
+                <b>From VPN Configuration</b>
             </div>
             <table class="ml-3">
                 <thead>

@@ -178,9 +178,9 @@
                             <tr>
                                 {% for prop in existing[elem] %}
                                     {% set elem_str = existing[elem][prop]|string %}
-                                    {% if elem_str|length > 15 %}
+                                    {% if elem_str|length > 18 %}
                                         <td title="{{elem_str}}">
-                                            {{ elem_str[:15] }}...
+                                            {{ elem_str[:18] }}...
                                     {% else %}
                                         <td>
                                             {{ elem_str }}
@@ -188,8 +188,13 @@
                                     </td>
                                 {% endfor %}
                                 <td>
-                                    <a href="/admin/delete/{{elem_type}}/{{worker}}/{{existing[elem]["name"]}}" class="btn btn-warning
-                                        delete-button">&#x2212;</a>
+                                    {% if elem_type == "client" %}
+                                        <a href="/admin/delete/{{elem_type}}/{{worker}}/{{existing[elem]["ip"]}}" class="btn btn-warning
+                                            delete-button">&#x2212;</a>
+                                    {% else %}
+                                        <a href="/admin/delete/{{elem_type}}/{{worker}}/{{existing[elem]["name"]}}" class="btn btn-warning
+                                            delete-button">&#x2212;</a>
+                                    {% endif %}
                                 </td>
                             </tr>
                         {% endfor %}

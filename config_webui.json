@@ -4,5 +4,6 @@
     "db_url": "sqlite:///test-ui.db",
     "node_provider": [ "fake", "raspberry" ],
     "switch_provider": [ "raspberry" ],
+    "client_provider": [ "raspberry" ],
     "environment_provider": [ "raspberry" ]
 }

@@ -157,12 +157,12 @@
 }
 
 /** Admin Network page **/
-.network {
+.vpn {
     padding-top: 20px;
     padding-bottom: 20px;
 }
 
-.network .title {
+.vpn .title {
     width: 300px;
     padding-right: 30px;
     margin-top: 10px;
@@ -172,24 +172,24 @@
     text-align: right;
 }
 
-.network table {
+.vpn table {
     margin-left: 20px;
 }
 
-.network table th:first-child {
+.vpn table th:first-child {
     width: 400px;
 }
 
-.network table tr {
+.vpn table tr {
     height: 44px;
 }
 
-.network .col-button {
+.vpn .col-button {
     width: 120px;
     text-align: center;
 }
 
-.network a {
+.vpn a {
     width: 90px;
 }
 

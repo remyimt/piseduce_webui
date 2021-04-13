@@ -160,7 +160,7 @@ def make_reserve():
                             r.status_code, worker.name))
                         result["errors"] += available_nodes
                 else:
-                    logging.error("No available node. Matching nodes: %s" % matching_nodes);
+                    logging.error("No available node. Matching nodes: %s" % matching_nodes)
                     result["errors"] += "No available node"
         else:
             logging.error("node reservation failure: no 'type' property in the JSON content")
@@ -222,7 +222,7 @@ def make_exec():
             r = requests.post(url = "http://%s:%s/v1/user/%s" % (worker.ip, worker.port, json_data["reconfiguration"]),
                     json = { "token": worker.token, "nodes": json_data["nodes"][worker_name], "user": current_user.email })
             if r.status_code == 200:
-                json_answer = r.json();
+                json_answer = r.json()
                 failure = []
                 for node in json_answer:
                     if json_answer[node] != "success":

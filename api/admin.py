@@ -554,7 +554,7 @@ def vpn_key_list():
     return vpn_keys
 
 
-@b_admin.route("/network")
+@b_admin.route("/vpn")
 @login_required
 @admin_required
 def network():
@@ -569,8 +569,8 @@ def network():
         vpn_clients["worker"].append(w.name)
     close_session(db)
     # Render the beautiful page
-    return flask.render_template("network.html", admin = current_user.is_admin, active_btn = "admin_network", keys = vpn_keys,
-        clients = vpn_clients)
+    return flask.render_template("vpn.html", admin = current_user.is_admin, active_btn = "admin_vpn",
+        keys = vpn_keys, clients = vpn_clients)
 
 
 @b_admin.route("/vpn/delete/<vpn_key>")
@@ -586,7 +586,7 @@ def vpn_delete(vpn_key):
                 subprocess.run(cmd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     subprocess.run("bash ./scripts/revoke-vpn-key.sh %s" % vpn_key, shell=True,
         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    return flask.redirect("/admin/network")
+    return flask.redirect("/admin/vpn")
 
 
 @b_admin.route("/vpn/generate/<vpn_key>")
@@ -595,9 +595,9 @@ def vpn_delete(vpn_key):
 def vpn_generate(vpn_key):
     result = vpn_generate_w_subnet(vpn_key)
     if len(result["errors"]) == 0:
-        return flask.redirect("/admin/network")
+        return flask.redirect("/admin/vpn")
     else:
-        return flask.redirect("/admin/network?msg=%s" % result["errors"][0])
+        return flask.redirect("/admin/vpn?msg=%s" % result["errors"][0])
         
 
 

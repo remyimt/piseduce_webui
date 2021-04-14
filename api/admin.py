@@ -533,24 +533,26 @@ def clean_detect(worker_name):
 # VPN Management
 def vpn_key_list():
     vpn_keys = {}
-    with open("/etc/openvpn/easy-rsa/keys/index.txt", "r") as index:
-        for line in index.readlines():
-            if line[0] == "V":
-                cn = line[line.index("CN="):]
-                cn = cn[3:cn.index("/")]
-                if cn != "pimaster":
-                    vpn_keys[cn] = {"ip": "", "subnet": ""}
-    for client in glob("/etc/openvpn/server/ccd/*"):
-        client_name = os.path.basename(client)
-        if client_name in vpn_keys:
-            with open(client, "r") as ccd:
-                for line in ccd.readlines():
-                    if line.startswith("iroute"):
-                        vpn_keys[client_name]["subnet"] = line.split()[1]
-                    if line.startswith("ifconfig"):
-                        vpn_keys[client_name]["ip"] = line.split()[1]
-        else:
-            logging.error("ccd file for the key '%s' without value in the 'index.txt' file" % client)
+    openvpn_index = "/etc/openvpn/easy-rsa/keys/index.txt"
+    if os.path.exists(openvpn_index):
+        with open(openvpn_index, "r") as index:
+            for line in index.readlines():
+                if line[0] == "V":
+                    cn = line[line.index("CN="):]
+                    cn = cn[3:cn.index("/")]
+                    if cn != "pimaster":
+                        vpn_keys[cn] = {"ip": "", "subnet": ""}
+        for client in glob("/etc/openvpn/server/ccd/*"):
+            client_name = os.path.basename(client)
+            if client_name in vpn_keys:
+                with open(client, "r") as ccd:
+                    for line in ccd.readlines():
+                        if line.startswith("iroute"):
+                            vpn_keys[client_name]["subnet"] = line.split()[1]
+                        if line.startswith("ifconfig"):
+                            vpn_keys[client_name]["ip"] = line.split()[1]
+            else:
+                logging.error("ccd file for the key '%s' without value in the 'index.txt' file" % client)
     return vpn_keys
 
 

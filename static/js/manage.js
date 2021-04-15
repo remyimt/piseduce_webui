@@ -38,10 +38,6 @@ function updateNodeStatus() {
         url: WEBUI + "/user/node/updating",
         dataType: 'json',
         success: function (data) {
-            if(data["errors"].length > 0) {
-                alert(data["errors"].join(","));
-                return;
-            }
             delete data["errors"];
             for (bin in data) {
                 for (nodeType in data[bin]) {
@@ -58,7 +54,7 @@ function updateNodeStatus() {
         },
         error: function () {
             alert("error: can not send the request");
-        },
+        }
     });
 }
 

@@ -100,8 +100,13 @@
                     </div><!-- container -->
                 </form>
             {% else %}
+                <!-- List properties to add worker elements -->
                 <div class="none">
-                    {{elements[worker]["properties"]}}
+                    {% if elements[worker]["properties"]|length == 0 %}
+                        No properties
+                    {% else %}
+                        {{elements[worker]["properties"]}}
+                    {% endif %}
                 </div>
             {% endif %}
             <!-- Add workers from the VPN configuration -->

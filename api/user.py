@@ -16,20 +16,25 @@ def node_list():
     result = { "errors": [], "nodes": {} }
     db = open_session()
     for worker in db.query(Worker).all():
-        r = requests.post(url = "http://%s:%s/v1/user/node/prop" % (worker.ip, worker.port),
-            json = { "token": worker.token })
-        if r.status_code == 200:
-            r_json = r.json()
-            duplicated_names = []
-            for node in r_json:
-                if node in result["nodes"]:
-                    duplicated_names.append(node)
-                else:
-                    result["nodes"][node] = r_json[node]
-            if len(duplicated_names) > 0:
-                result["errors"].append("on worker '%s', duplicated names: %s" % (worker.name, duplicated_names))
-        else:
-            result["errors"].append("on worker '%s', connection error with return code %d" % (worker.name, r.status_code))
+        try:
+            r = requests.post(url = "http://%s:%s/v1/user/node/prop" % (worker.ip, worker.port),
+                json = { "token": worker.token })
+            if r.status_code == 200:
+                r_json = r.json()
+                duplicated_names = []
+                for node in r_json:
+                    if node in result["nodes"]:
+                        duplicated_names.append(node)
+                    else:
+                        result["nodes"][node] = r_json[node]
+                if len(duplicated_names) > 0:
+                    result["errors"].append("on worker '%s', duplicated names: %s" % (worker.name, duplicated_names))
+            else:
+                result["errors"].append("on worker '%s', connection error with return code %d" % (worker.name, r.status_code))
+        except:
+            error_msg = "connection failure from the worker '%s'" %  worker.name
+            result["errors"].append(error_msg)
+            logging.error(error_msg)
     if len(result["errors"]) == 0:
         result["nodes"] = sort_by_name(result["nodes"])
     close_session(db)
@@ -42,16 +47,22 @@ def node_configuring():
     result = { "errors": [], "raspberry": {}, "sensor": {}, "server": {}, "fake": {} }
     db = open_session()
     for worker in db.query(Worker).all():
-        r = requests.post(url = "http://%s:%s/v1/user/configure" % (worker.ip, worker.port),
-            json = { "token": worker.token, "user": current_user.email })
-        if r.status_code == 200 and worker.type in result:
-            # Add the worker name to the node information
-            json_data = r.json()
-            for node in json_data:
-                json_data[node]["worker"] = worker.name
-            result[worker.type].update(json_data)
-        else:
-            logging.error("configuring error: wrong answer from the worker '%s'" % worker.name)
+        try:
+            r = requests.post(url = "http://%s:%s/v1/user/configure" % (worker.ip, worker.port),
+                json = { "token": worker.token, "user": current_user.email })
+            if r.status_code == 200 and worker.type in result:
+                # Add the worker name to the node information
+                json_data = r.json()
+                for node in json_data:
+                    json_data[node]["worker"] = worker.name
+                result[worker.type].update(json_data)
+            else:
+                logging.error("configuring error: wrong answer from the worker '%s'" % worker.name)
+
+        except:
+            error_msg = "connection failure from the worker '%s'" %  worker.name
+            result["errors"].append(error_msg)
+            logging.error(error_msg)
     close_session(db)
     for node_type in result:
         if node_type != "errors":
@@ -65,27 +76,34 @@ def node_deploying():
     result = { "errors": [], "nodes": {}, "states": [] }
     db = open_session()
     for worker in db.query(Worker).all():
-        r = requests.post(url = "http://%s:%s/v1/user/node/mine" % (worker.ip, worker.port),
-            json = { "token": worker.token, "user": current_user.email })
-        if r.status_code == 200:
-            json_data = r.json()
-            result["states"] = { "raspberry": [], "sensor": [], "server": [], "fake": [] }
-            result["states"][worker.type] = json_data["states"]
-            for node in json_data["nodes"]:
-                # Sort the nodes by bin
-                bin_name = json_data["nodes"][node].pop("bin")
-                del json_data["nodes"][node]["type"]
-                # Add the worker name to the node information
-                json_data["nodes"][node]["worker"] = worker.name
-                # No bin for nodes in 'configuring' state
-                if len(bin_name) > 0:
-                    # Sort nodes by bin name
-                    if bin_name not in result["nodes"]:
-                        result["nodes"][bin_name] = { "raspberry": [], "sensor": [], "server": [], "fake": [] }
-                    result["nodes"][bin_name][worker.type].append(json_data["nodes"][node])
-        else:
-            logging.error("deploying error: wrong answer from the worker '%s'" % worker.name)
-            result["errors"].append("connection error for the worker '%s' (return code %d)" % (worker.name, r.status_code))
+        try:
+            r = requests.post(url = "http://%s:%s/v1/user/node/mine" % (worker.ip, worker.port),
+                json = { "token": worker.token, "user": current_user.email })
+            if r.status_code == 200:
+                json_data = r.json()
+                result["states"] = { "raspberry": [], "sensor": [], "server": [], "fake": [] }
+                result["states"][worker.type] = json_data["states"]
+                for node in json_data["nodes"]:
+                    # Sort the nodes by bin
+                    bin_name = json_data["nodes"][node].pop("bin")
+                    del json_data["nodes"][node]["type"]
+                    # Add the worker name to the node information
+                    json_data["nodes"][node]["worker"] = worker.name
+                    # No bin for nodes in 'configuring' state
+                    if len(bin_name) > 0:
+                        # Sort nodes by bin name
+                        if bin_name not in result["nodes"]:
+                            result["nodes"][bin_name] = { "raspberry": [], "sensor": [], "server": [], "fake": [] }
+                        result["nodes"][bin_name][worker.type].append(json_data["nodes"][node])
+            else:
+                error_msg = "deploying error: wrong answer from the worker '%s' (return code %d)" % (
+                    worker.name, r.status_code)
+                logging.error(error_msg)
+                result["errors"].append(error_msg)
+        except:
+            error_msg = "connection failure from the worker '%s'" %  worker.name
+            result["errors"].append(error_msg)
+            logging.error(error_msg)
     close_session(db)
     return json.dumps(result)
 
@@ -96,18 +114,23 @@ def node_updating():
     result = { "errors": [] }
     db = open_session()
     for worker in db.query(Worker).all():
-        r = requests.post(url = "http://%s:%s/v1/user/node/status" % (worker.ip, worker.port),
-            json = { "token": worker.token, "user": current_user.email })
-        if r.status_code == 200:
-            json_data = r.json()
-            for node in json_data["nodes"]:
-                bin_name = json_data["nodes"][node].pop("bin")
-                # No bin for nodes in 'configuring' state
-                if len(bin_name) > 0:
-                    # Sort nodes by bin name
-                    if bin_name not in result:
-                        result[bin_name] = { "raspberry": [], "sensor": [], "server": [], "fake": [] }
-                    result[bin_name][worker.type].append(json_data["nodes"][node])
+        try:
+            r = requests.post(url = "http://%s:%s/v1/user/node/status" % (worker.ip, worker.port),
+                json = { "token": worker.token, "user": current_user.email })
+            if r.status_code == 200:
+                json_data = r.json()
+                for node in json_data["nodes"]:
+                    bin_name = json_data["nodes"][node].pop("bin")
+                    # No bin for nodes in 'configuring' state
+                    if len(bin_name) > 0:
+                        # Sort nodes by bin name
+                        if bin_name not in result:
+                            result[bin_name] = { "raspberry": [], "sensor": [], "server": [], "fake": [] }
+                        result[bin_name][worker.type].append(json_data["nodes"][node])
+        except:
+            error_msg = "connection failure from the worker '%s'" %  worker.name
+            result["errors"].append(error_msg)
+            logging.error(error_msg)
     close_session(db)
     return json.dumps(result)
 
@@ -160,8 +183,8 @@ def make_reserve():
                             r.status_code, worker.name))
                         result["errors"] += available_nodes
                 else:
-                    logging.error("No available node. Matching nodes: %s" % matching_nodes)
-                    result["errors"] += "No available node"
+                    logging.error("No available node from the worker '%s'. Matching nodes: %s" % (
+                        worker.name, matching_nodes))
         else:
             logging.error("node reservation failure: no 'type' property in the JSON content")
     close_session(db)

@@ -216,25 +216,29 @@ def get(el_type, error=None):
     workers = db.query(Worker).filter(Worker.type.in_(worker_types)).all()
     for w in workers:
         result[w.name] = { "properties": [], "existing": {} }
-        # Get the element properties to register new elements
-        r = requests.post(url = "http://%s:%s/v1/admin/add/%s" % (w.ip, w.port, el_type), json = { "token": w.token })
-        if r.status_code != 200 or "missing" not in r.json():
-            result["errors"].append("wrong answer from the worker '%s'" % w.name)
-        else:
-            result[w.name]["properties"] = r.json()["missing"]
-            for prop in result[w.name]["properties"]:
-                if "no_values" in result[w.name]["properties"][prop]:
-                    result[w.name]["properties"] = "Missing '%s' elements to create '%s' elements." % (prop, el_type)
-        # Get the existing elements
-        r = requests.post(url = "http://%s:%s/v1/user/%s/list" % (w.ip, w.port, el_type), json = { "token": w.token })
-        if r.status_code != 200:
-            result["errors"].append("can not get the list of %ss from the worker '%s'" % (el_type, w.name))
-        else:
-            node_info = r.json()
-            for el_name in node_info:
-                one_node = node_info[el_name]
-                one_node["name"] = el_name
-                result[w.name]["existing"][el_name] = one_node
+        try:
+            # Get the element properties to register new elements
+            r = requests.post(url = "http://%s:%s/v1/admin/add/%s" % (w.ip, w.port, el_type), json = { "token": w.token })
+            if r.status_code != 200 or "missing" not in r.json():
+                result["errors"].append("wrong answer from the worker '%s'" % w.name)
+            else:
+                result[w.name]["properties"] = r.json()["missing"]
+                for prop in result[w.name]["properties"]:
+                    if "no_values" in result[w.name]["properties"][prop]:
+                        result[w.name]["properties"] = "Missing '%s' elements to create '%s' elements." % (prop, el_type)
+            # Get the existing elements
+            r = requests.post(url = "http://%s:%s/v1/user/%s/list" % (w.ip, w.port, el_type), json = { "token": w.token })
+            if r.status_code != 200:
+                result["errors"].append("can not get the list of %ss from the worker '%s'" % (el_type, w.name))
+            else:
+                node_info = r.json()
+                for el_name in node_info:
+                    one_node = node_info[el_name]
+                    one_node["name"] = el_name
+                    result[w.name]["existing"][el_name] = one_node
+        except:
+            result["errors"].append("can not connect to the worker '%s'" % w.name)
+            logging.exception("can not connect to the worker '%s'" % w.name)
     close_session(db)
     for worker in result:
         if worker != "errors":

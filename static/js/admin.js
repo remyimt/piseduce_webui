@@ -1,10 +1,29 @@
 // When loading the admin switch page, get the nodes connected to the switches
 $(document).ready(function () {
     updateSwitchNodes();
-    displayTable($("#switch-list"));
+    var workerSelector = $("#worker-selector");
+    if(workerSelector && Object.keys(workerSelector).length > 0) {
+        // The element type is not worker
+        workerSelect(workerSelector);
+    } else {
+        // The element type is worker, show the div
+        $("#worker_key-add").show();
+        $("#worker_key-existing").show();
+    }
 });
 
-// Functions);
+// Functions
+function workerSelect(select) {
+    $(".worker-div").hide();
+    $("#" + $(select).val() + "-add").show()
+    $("#" + $(select).val() + "-existing").show()
+    $("#" + $(select).val() + "-switch").show()
+    var switchSelector = $("#" + $(select).val() + "-switch-list");
+    if(switchSelector && Object.keys(switchSelector).length > 0) {
+        displayTable(switchSelector);
+    }
+}
+
 function updateSwitchNodes() {
     $("#switch-list").children("option").each(function(useless, option) {
         var switchName = option.text;

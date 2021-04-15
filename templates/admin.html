@@ -22,242 +22,251 @@
     {% if elem_type != "worker" %}
         <div class="bg-info rounded-right title">Worker Selection</div>
         {% if elements|length == 0 %}
-            <div class="none">No available worker</div>
+            <div id="worker-selector" class="none">No available worker</div>
         {% else %}
-            <select name="worker">
+            <select id="worker-selector" name="worker" onchange="workerSelect(this)">
                 {% for worker in elements %}
                     <option value="{{worker}}">{{worker}}</option>
                 {% endfor %}
             </select>
         {% endif %}
     {% endif %}
-    <div class="bg-info rounded-right title">Add {{elem_type[0]|upper}}{{elem_type[1:]}}</div>
+    <div class="bg-info rounded-right title">
+        Add {{elem_type[0]|upper}}{{elem_type[1:]}}
+    </div>
     {% if elements|length == 0 %}
         <div class="none">No available worker</div>
     {% endif %}
     {% for worker in elements %}
-        {% if elements[worker]["properties"] is mapping %}
-            {% if elem_type == "worker" %}
-                <div class="ml-1 mt-3 text-info">
-                    <b>From Manual Configuration</b>
+        <!-- The class 'worker-div' is used by JS to hide the div -->
+        <div id="{{worker}}-add" class="worker-div">
+            {% if elements[worker]["properties"] is mapping %}
+                {% if elem_type == "worker" %}
+                    <div class="ml-1 mt-3 text-info">
+                        <b>From Manual Configuration</b>
+                    </div>
+                {% endif %}
+                <form id="{{worker}}-form" action="/admin/add/{{elem_type}}" method="post" class="ml-3">
+                    <input type="hidden" name="worker" value="{{worker}}">
+                    <div class="container prop-table">
+                        {% set el_props = elements[worker]["properties"] %}
+                        {% for prop in el_props %}
+                            <div class="row">
+                                <div class="col-2">
+                                    {{prop}}
+                                </div>
+                                <div class="col">
+                                    {% if el_props[prop]|length == 0 %}
+                                        {% if prop in checks %}
+                                            <input type="text" name="{{prop}}" value="{{checks[prop]["value"]}}"
+                                                placeholder="{{prop}}" size="12" required>
+                                            {% if "check" in checks[prop] %}
+                                                {% if checks[prop]["check"] %}
+                                                    <span class="ok">ok</span>
+                                                {% else %}
+                                                    <span class="wrong">wrong</span>
+                                                {% endif %}
+                                            {% endif %}
+                                        {% else %}
+                                            <input type="text" name="{{prop}}" placeholder="{{prop}}" size="12" required>
+                                        {% endif %}
+                                    {% else %}
+                                        {% if prop in checks %}
+                                            <input type="text" name="{{prop}}" value="{{checks[prop]["value"]}}"
+                                                placeholder="{{prop}}" size="12" required>
+                                            {% if "check" in checks[prop] %}
+                                                {% if checks[prop]["check"] %}
+                                                    <span class="ok">ok</span>
+                                                {% else %}
+                                                    <span class="wrong">wrong</span>
+                                                {% endif %}
+                                            {% endif %}
+                                        {% else %}
+                                            <select name="{{prop}}">
+                                                {% for value in el_props[prop] %}
+                                                    <option value="{{value}}">{{value}}</option>
+                                                {% endfor %}
+                                            </select>
+                                        {% endif %}
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                        <div class="row">
+                            <div class="col">
+                                <input type="submit" class="btn btn-info add-button" value="Add">
+                            </div>
+                        </div>
+                    </div><!-- container -->
+                </form>
+            {% else %}
+                <div class="none">
+                    {{elements[worker]["properties"]}}
                 </div>
             {% endif %}
-            <form id="{{worker}}-form" action="/admin/add/{{elem_type}}" method="post" class="ml-3">
-                <input type="hidden" name="worker" value="{{worker}}">
-                <div class="container prop-table">
-                    {% set el_props = elements[worker]["properties"] %}
-                    {% for prop in el_props %}
-                        <div class="row">
-                            <div class="col-2">
-                                {{prop}}
-                            </div>
-                            <div class="col">
-                                {% if el_props[prop]|length == 0 %}
-                                    {% if prop in checks %}
-                                        <input type="text" name="{{prop}}" value="{{checks[prop]["value"]}}"
-                                            placeholder="{{prop}}" size="12" required>
-                                        {% if "check" in checks[prop] %}
-                                            {% if checks[prop]["check"] %}
-                                                <span class="ok">ok</span>
-                                            {% else %}
-                                                <span class="wrong">wrong</span>
-                                            {% endif %}
-                                        {% endif %}
-                                    {% else %}
-                                        <input type="text" name="{{prop}}" placeholder="{{prop}}" size="12" required>
-                                    {% endif %}
-                                {% else %}
-                                    {% if prop in checks %}
-                                        <input type="text" name="{{prop}}" value="{{checks[prop]["value"]}}"
-                                            placeholder="{{prop}}" size="12" required>
-                                        {% if "check" in checks[prop] %}
-                                            {% if checks[prop]["check"] %}
-                                                <span class="ok">ok</span>
-                                            {% else %}
-                                                <span class="wrong">wrong</span>
-                                            {% endif %}
-                                        {% endif %}
-                                    {% else %}
-                                        <select name="{{prop}}">
-                                            {% for value in el_props[prop] %}
-                                                <option value="{{value}}">{{value}}</option>
-                                            {% endfor %}
-                                        </select>
-                                    {% endif %}
-                                {% endif %}
-                            </div>
-                        </div>
-                    {% endfor %}
-                    <div class="row">
-                        <div class="col">
-                            <input type="submit" class="btn btn-info add-button" value="Add">
-                        </div>
-                    </div>
-                </div><!-- container -->
-            </form>
-        {% else %}
-            <div class="none">
-                {{elements[worker]["properties"]}}
-            </div>
-        {% endif %}
-        <!-- Add workers from the VPN configuration -->
-        {% if elements[worker]["vpn"]|length > 0 %}
-            <div class="ml-1 mt-3 text-info">
-                <b>From VPN Configuration</b>
-            </div>
-            <table class="ml-3">
-                <thead>
-                    <tr>
-                        <th scope="col" class="vpn-large">
-                            Name
-                        </th>
-                        <th scope="col" class="vpn-small text-center">
-                            Ip
-                        </th>
-                        <th scope="col" class="vpn-small text-center">
-                            Port
-                        </th>
-                        <th scope="col" class="vpn-large text-center">
-                            Token
-                        </th>
-                        <th scope="col" class="vpn-small text-center">
-                            Add
-                        </th>
-                </thead>
-                <tbody>
-                    {% for key in elements[worker]["vpn"] %}
-                        {% set key_props = elements[worker]["vpn"][key] %}
+            <!-- Add workers from the VPN configuration -->
+            {% if elements[worker]["vpn"]|length > 0 %}
+                <div class="ml-1 mt-3 text-info">
+                    <b>From VPN Configuration</b>
+                </div>
+                <table class="ml-3">
+                    <thead>
                         <tr>
-                            <td>
-                                {{key}}
-                            </td>
-                            <td class="text-center">
-                                {{key_props["ip"]}}
-                            </td>
-                            <td class="text-center">
-                                <input type="text" size="3">
-                            </td>
-                            <td class="text-center">
-                                <input type="text">
-                            </td>
-                            <td class="text-center">
-                                <a href="javascript:addVPNWoker('{{key}}')" class="btn btn-info delete-button">&#x002B;</a>
-                            </td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        {% endif %}
+                            <th scope="col" class="vpn-large">
+                                Name
+                            </th>
+                            <th scope="col" class="vpn-small text-center">
+                                Ip
+                            </th>
+                            <th scope="col" class="vpn-small text-center">
+                                Port
+                            </th>
+                            <th scope="col" class="vpn-large text-center">
+                                Token
+                            </th>
+                            <th scope="col" class="vpn-small text-center">
+                                Add
+                            </th>
+                    </thead>
+                    <tbody>
+                        {% for key in elements[worker]["vpn"] %}
+                            {% set key_props = elements[worker]["vpn"][key] %}
+                            <tr>
+                                <td>
+                                    {{key}}
+                                </td>
+                                <td class="text-center">
+                                    {{key_props["ip"]}}
+                                </td>
+                                <td class="text-center">
+                                    <input type="text" size="3">
+                                </td>
+                                <td class="text-center">
+                                    <input type="text">
+                                </td>
+                                <td class="text-center">
+                                    <a href="javascript:addVPNWoker('{{key}}')" class="btn btn-info delete-button">&#x002B;</a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% endif %}
+        </div><!-- worker-div -->
     {% endfor %}
     <div class="bg-info rounded-right title">Existing {{ elem_type[0]|upper}}{{elem_type[1:] }}s</div>
     {% if elements|length == 0 %}
         <div class="none">None</span>
     {% else %}
         {% for worker in elements %}
-            {% if elements[worker]["existing"]|length == 0 %}
-                <div id="{{worker}}-existing" class="none">
-                    None
-                </div>
-            {% else %}
-                {% set existing = elements[worker]["existing"] %}
-                <table class="table text-center">
-                    <thead>
-                        <tr>
-                            {% for prop in existing.values()|first %}
-                                <th scope="col">
-                                    {{ prop[0]|upper}}{{prop[1:] }}
-                                </th>
-                            {% endfor %}
-                            <th scope="col">
-                                Delete {{ elem_type[0]|upper}}{{elem_type[1:] }}
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for elem in existing %}
+            <!-- The class 'worker-div' is used by JS to hide the div -->
+            <div id="{{worker}}-existing" class="worker-div">
+                {% if elements[worker]["existing"]|length == 0 %}
+                    <div id="{{worker}}-existing" class="none">
+                        None
+                    </div>
+                {% else %}
+                    {% set existing = elements[worker]["existing"] %}
+                    <table class="table text-center">
+                        <thead>
                             <tr>
-                                {% for prop in existing[elem] %}
-                                    {% set elem_str = existing[elem][prop]|string %}
-                                    {% if elem_str|length > 18 %}
-                                        <td title="{{elem_str}}">
-                                            {{ elem_str[:18] }}...
-                                    {% else %}
-                                        <td>
-                                            {{ elem_str }}
-                                    {% endif %}
-                                    </td>
+                                {% for prop in existing.values()|first %}
+                                    <th scope="col">
+                                        {{ prop[0]|upper}}{{prop[1:] }}
+                                    </th>
                                 {% endfor %}
-                                <td>
-                                    {% if elem_type == "client" %}
-                                        <a href="/admin/delete/{{elem_type}}/{{worker}}/{{existing[elem]["ip"]}}" class="btn btn-warning
-                                            delete-button">&#x2212;</a>
-                                    {% else %}
-                                        <a href="/admin/delete/{{elem_type}}/{{worker}}/{{existing[elem]["name"]}}" class="btn btn-warning
-                                            delete-button">&#x2212;</a>
-                                    {% endif %}
-                                </td>
+                                <th scope="col">
+                                    Delete {{ elem_type[0]|upper}}{{elem_type[1:] }}
+                                </th>
                             </tr>
-                        {% endfor %}
-                        </tr>
-                    </tbody>
-                </table>
-            {% endif %}
+                        </thead>
+                        <tbody>
+                            {% for elem in existing %}
+                                <tr>
+                                    {% for prop in existing[elem] %}
+                                        {% set elem_str = existing[elem][prop]|string %}
+                                        {% if elem_str|length > 18 %}
+                                            <td title="{{elem_str}}">
+                                                {{ elem_str[:18] }}...
+                                        {% else %}
+                                            <td>
+                                                {{ elem_str }}
+                                        {% endif %}
+                                        </td>
+                                    {% endfor %}
+                                    <td>
+                                        {% if elem_type == "client" %}
+                                            <a href="/admin/delete/{{elem_type}}/{{worker}}/{{existing[elem]["ip"]}}" class="btn btn-warning
+                                                delete-button">&#x2212;</a>
+                                        {% else %}
+                                            <a href="/admin/delete/{{elem_type}}/{{worker}}/{{existing[elem]["name"]}}" class="btn btn-warning
+                                                delete-button">&#x2212;</a>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                            </tr>
+                        </tbody>
+                    </table>
+                {% endif %}
+            </div><!-- worker-div -->
         {% endfor %}
     {% endif %}
     {% if elem_type == "switch" %}
         <div class="bg-info rounded-right title">Switch Management</div>
-        <div class="none">
-            Select the switch to manage:
-            <select id="switch-list" onchange="displayTable(this)">
-                <option value="-">-</option>
-                {% for worker in elements %}
-                    {% for switch in elements[worker]["existing"] %}
-                        <option value="{{worker}}-{{switch}}">
-                            {{switch}}
-                        </option>
-                    {% endfor %}
-                {% endfor %}
-            </select>
-        </div>
         {% for worker in elements %}
-            {% for switch in elements[worker]["existing"].values() %}
-                <input id="{{switch["name"]}}-worker" type="hidden" value="{{worker}}">
-                <div id="{{worker}}-{{switch["name"]}}" class="switch-table">
-                    <div class="switch-title">Switch: {{switch["name"]}}</div>
-                    <div id="{{switch['name']}}-table" class="container">
-                        {% for n in range(0, switch["port_nb"]|int) %}
-                            {% if n % 4 == 0 %}
-                                <div class="row">
-                            {% endif %}
-                            <div class="col port-node unknown">
-                                <div>{{n+1}}:</div>
-                                <input type="checkbox" name="{{switch["name"]}}-{{n+1}}">
-                            </div>
-                            {% if n % 4 == 3 %}
-                                </div><!-- row -->
-                            {% endif %}
+            <!-- The class 'worker-div' is used by JS to hide the div -->
+            <div id="{{worker}}-switch" class="worker-div">
+                <div class="none">
+                    Select the switch to manage:
+                    <select id="{{worker}}-switch-list" onchange="displayTable(this)">
+                        <option value="-">-</option>
+                        {% for switch in elements[worker]["existing"] %}
+                            <option value="{{worker}}-{{switch}}">
+                                {{switch}}
+                            </option>
                         {% endfor %}
-                    </div>
-                    <div class="switch-buttons">
-                        <div>
-                            <select id="{{switch['name']}}-actions" name="switch-action" onchange="loadInfo(this)">
-                                <option value="turn_on">Turn On Ports</option>
-                                <option value="turn_off">Turn Off Ports</option>
-                                <option value="port_status">Port Status</option>
-                                <option value="detect_nodes">Detect Nodes</option>
-                            </select>
-                            <div class="btn btn-info"
-                                onclick="reconfigure('{{switch['name']}}')">Execute</div>
-                        </div>
-                        <div id="action-desc">
-                            Turn the <b>selected</b> ports on. If there are shutdown nodes on these ports, they will be powered on.
-                        </div>
-                    </div>
+                    </select>
                 </div>
-            {% endfor %}
+                {% for switch in elements[worker]["existing"].values() %}
+                    <input id="{{switch["name"]}}-worker" type="hidden" value="{{worker}}">
+                    <div id="{{worker}}-{{switch["name"]}}" class="switch-table">
+                        <div class="switch-title">Switch: {{switch["name"]}}</div>
+                        <div id="{{switch['name']}}-table" class="container">
+                            {% for n in range(0, switch["port_nb"]|int) %}
+                                {% if n % 4 == 0 %}
+                                    <div class="row">
+                                {% endif %}
+                                <div class="col port-node unknown">
+                                    <div>{{n+1}}:</div>
+                                    <input type="checkbox" name="{{switch["name"]}}-{{n+1}}">
+                                </div>
+                                {% if n % 4 == 3 %}
+                                    </div><!-- row -->
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                        <div class="switch-buttons">
+                            <div>
+                                <select id="{{switch['name']}}-actions" name="switch-action" onchange="loadInfo(this)">
+                                    <option value="turn_on">Turn On Ports</option>
+                                    <option value="turn_off">Turn Off Ports</option>
+                                    <option value="port_status">Port Status</option>
+                                    <option value="detect_nodes">Detect Nodes</option>
+                                </select>
+                                <div class="btn btn-info"
+                                    onclick="reconfigure('{{switch['name']}}')">Execute</div>
+                            </div>
+                            <div id="action-desc">
+                                Turn the <b>selected</b> ports on. If there are shutdown nodes on these ports, they will be powered on.
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+                <div class="rounded switch-console">
+                </div>
+            </div><!-- worker-div -->
         {% endfor %}
-        <div class="rounded switch-console">
-        </div>
     {% endif %}<!-- elem_type == "switch" -->
 </div>
 {% endblock %}

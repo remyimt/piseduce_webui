@@ -48,6 +48,10 @@
     padding-left: 6px;
 }
 
+.admin .worker-div {
+    display: none;
+}
+
 .admin .ok {
     color: green;
 }

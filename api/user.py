@@ -17,7 +17,7 @@ def node_list():
     db = open_session()
     for worker in db.query(Worker).all():
         try:
-            r = requests.post(url = "http://%s:%s/v1/user/node/prop" % (worker.ip, worker.port), timeout=2,
+            r = requests.post(url = "http://%s:%s/v1/user/node/prop" % (worker.ip, worker.port), timeout = 6,
                 json = { "token": worker.token })
             if r.status_code == 200:
                 r_json = r.json()
@@ -53,7 +53,7 @@ def node_configuring():
     db = open_session()
     for worker in db.query(Worker).all():
         try:
-            r = requests.post(url = "http://%s:%s/v1/user/configure" % (worker.ip, worker.port), timeout=2,
+            r = requests.post(url = "http://%s:%s/v1/user/configure" % (worker.ip, worker.port), timeout = 6,
                 json = { "token": worker.token, "user": current_user.email })
             if r.status_code == 200 and worker.type in result:
                 # Add the worker name to the node information
@@ -82,7 +82,7 @@ def node_deploying():
     db = open_session()
     for worker in db.query(Worker).all():
         try:
-            r = requests.post(url = "http://%s:%s/v1/user/node/mine" % (worker.ip, worker.port), timeout=2,
+            r = requests.post(url = "http://%s:%s/v1/user/node/mine" % (worker.ip, worker.port), timeout = 6,
                 json = { "token": worker.token, "user": current_user.email })
             if r.status_code == 200:
                 json_data = r.json()
@@ -120,7 +120,7 @@ def node_updating():
     db = open_session()
     for worker in db.query(Worker).all():
         try:
-            r = requests.post(url = "http://%s:%s/v1/user/node/status" % (worker.ip, worker.port), timeout=2,
+            r = requests.post(url = "http://%s:%s/v1/user/node/status" % (worker.ip, worker.port), timeout = 6,
                 json = { "token": worker.token, "user": current_user.email })
             if r.status_code == 200:
                 json_data = r.json()
@@ -156,7 +156,7 @@ def make_reserve():
         if worker_type is not None and len(worker_type) > 0:
             for worker in db.query(Worker).filter(Worker.type == worker_type).all():
                 # Get the nodes with at least one of requested properties
-                r = requests.post(url = "http://%s:%s/v1/user/node/list" % (worker.ip, worker.port), timeout=2,
+                r = requests.post(url = "http://%s:%s/v1/user/node/list" % (worker.ip, worker.port), timeout = 6,
                     json = { "token": worker.token, "properties": prop })
                 if r.status_code == 200:
                     r_json = r.json()
@@ -169,7 +169,7 @@ def make_reserve():
                 logging.info("Macthing nodes: %s" % matching_nodes)
                 # Check the status of the nodes (we only want 'available' nodes)
                 if len(matching_nodes) > 0:
-                    r = requests.post(url = "http://%s:%s/v1/user/node/status" % (worker.ip, worker.port), timeout=2,
+                    r = requests.post(url = "http://%s:%s/v1/user/node/status" % (worker.ip, worker.port), timeout = 6,
                         json = { "token": worker.token, "nodes": matching_nodes })
                     if r.status_code == 200:
                         for node, props in r.json()["nodes"].items():
@@ -179,7 +179,7 @@ def make_reserve():
                         logging.error("node reservation failure: can not get the node status from the worker '%s'" % worker.name)
                 # Make the reservation
                 if len(available_nodes) > 0:
-                    r = requests.post(url = "http://%s:%s/v1/user/reserve" % (worker.ip, worker.port), timeout=2,
+                    r = requests.post(url = "http://%s:%s/v1/user/reserve" % (worker.ip, worker.port), timeout = 6,
                             json = { "token": worker.token, "nodes": available_nodes, "user": current_user.email })
                     if r.status_code == 200:
                         result["nodes"] += available_nodes
@@ -223,7 +223,7 @@ def make_deploy():
     db = open_session()
     for worker_name in result:
         worker = db.query(Worker).filter(Worker.name == worker_name).first()
-        r = requests.post(url = "http://%s:%s/v1/user/deploy" % (worker.ip, worker.port), timeout=2,
+        r = requests.post(url = "http://%s:%s/v1/user/deploy" % (worker.ip, worker.port), timeout = 6,
                 json = { "token": worker.token, "nodes": result[worker_name], "user": current_user.email })
         if r.status_code == 200:
             json_result.update(r.json())
@@ -247,7 +247,7 @@ def make_exec():
         db = open_session()
         for worker_name in json_data["nodes"]:
             worker = db.query(Worker).filter(Worker.name == worker_name).first()
-            r = requests.post(url = "http://%s:%s/v1/user/%s" % (worker.ip, worker.port, json_data["reconfiguration"]), timeout=2,
+            r = requests.post(url = "http://%s:%s/v1/user/%s" % (worker.ip, worker.port, json_data["reconfiguration"]), timeout = 6,
                     json = { "token": worker.token, "nodes": json_data["nodes"][worker_name], "user": current_user.email })
             if r.status_code == 200:
                 json_answer = r.json()

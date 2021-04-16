@@ -167,7 +167,8 @@ def add_worker():
         else:
             worker_type = r.json()["type"]
         # Test the authentication token
-        r = requests.post(url = "http://%s:%s/v1/debug/auth" % (worker_ip, worker_port), json = { "token": worker_token })
+        r = requests.post(url = "http://%s:%s/v1/debug/auth" % (worker_ip, worker_port), timeout=2,
+            json = { "token": worker_token })
         if r.status_code != 200 or "auth" not in r.json():
             msg = "wrong token for the worker '%s:%s'" % (worker_ip, worker_port)
         # Add the worker to my database
@@ -210,7 +211,7 @@ def rename_nodes(worker_name, new_name):
     worker = db.query(Worker).filter(Worker.name == worker_name).first()
     if worker is not None:
         try:
-            r = requests.post(url = "http://%s:%s/v1/admin/node/rename" % (worker.ip, worker.port),
+            r = requests.post(url = "http://%s:%s/v1/admin/node/rename" % (worker.ip, worker.port), timeout=2,
                 json = { "token": worker.token, "base_name": new_name })
             if r.status_code != 200:
                 msg = "wrong return code %d from the worker '%s'" % (r.status_code, worker.name)
@@ -247,7 +248,8 @@ def get(el_type, error=None):
         result[w.name] = { "properties": [], "existing": {} }
         try:
             # Get the element properties to register new elements
-            r = requests.post(url = "http://%s:%s/v1/admin/add/%s" % (w.ip, w.port, el_type), json = { "token": w.token })
+            r = requests.post(url = "http://%s:%s/v1/admin/add/%s" % (w.ip, w.port, el_type), timeout=2,
+                json = { "token": w.token })
             if r.status_code != 200 or "missing" not in r.json():
                 result["errors"].append("wrong answer from the worker '%s'" % w.name)
             else:
@@ -256,7 +258,8 @@ def get(el_type, error=None):
                     if "no_values" in result[w.name]["properties"][prop]:
                         result[w.name]["properties"] = "Missing '%s' elements to create '%s' elements." % (prop, el_type)
             # Get the existing elements
-            r = requests.post(url = "http://%s:%s/v1/user/%s/list" % (w.ip, w.port, el_type), json = { "token": w.token })
+            r = requests.post(url = "http://%s:%s/v1/user/%s/list" % (w.ip, w.port, el_type), timeout=2,
+                json = { "token": w.token })
             if r.status_code != 200:
                 result["errors"].append("can not get the list of %ss from the worker '%s'" % (el_type, w.name))
             else:
@@ -299,7 +302,8 @@ def add(el_type):
                 json_args[prop] = flask.request.form[prop]
         json_args["token"] = worker.token
         # Register the element to the worker
-        r = requests.post(url = "http://%s:%s/v1/admin/add/%s" % (worker.ip, worker.port, el_type), json = json_args)
+        r = requests.post(url = "http://%s:%s/v1/admin/add/%s" % (worker.ip, worker.port, el_type), timeout=2,
+            json = json_args)
         if r.status_code != 200:
             msg = "can not add the %s '%s' to the worker '%s'" % (el_type, flask.request.form["name"], worker.name)
         elif el_type not in r.json():
@@ -330,7 +334,8 @@ def delete(el_type, worker_name, el_name):
     msg = ""
     try:
         # Delete the element to the worker
-        r = requests.post(url = "http://%s:%s/v1/admin/delete/%s" % (worker_ip, worker_port, el_type), json = json_args)
+        r = requests.post(url = "http://%s:%s/v1/admin/delete/%s" % (worker_ip, worker_port, el_type), timeout=2,
+            json = json_args)
         if r.status_code != 200:
             msg = "can not delete the %s '%s' to the worker '%s:%s'" % (el_type, el_name, worker_ip, worker_port)
         elif "delete" not in r.json():
@@ -378,7 +383,8 @@ def switch_nodes(worker_name, switch_name):
     close_session(db)
     try:
         # Get the PoE status of all switch ports
-        r = requests.post(url = "http://%s:%s/v1/admin/switch/nodes/%s" % (worker_ip, worker_port, switch_name), json = json_args)
+        r = requests.post(url = "http://%s:%s/v1/admin/switch/nodes/%s" % (worker_ip, worker_port, switch_name), timeout=2,
+            json = json_args)
         if r.status_code == 200:
             result = r.json()
     except:
@@ -402,7 +408,8 @@ def turn_off(worker_name, switch_name):
     close_session(db)
     try:
         # Turn off switch ports
-        r = requests.post(url = "http://%s:%s/v1/admin/switch/turn_off/%s" % (worker_ip, worker_port, switch_name), json = json_args)
+        r = requests.post(url = "http://%s:%s/v1/admin/switch/turn_off/%s" % (worker_ip, worker_port, switch_name), timeout=2,
+            json = json_args)
         if r.status_code == 200:
             result = r.json()
     except:
@@ -426,7 +433,8 @@ def turn_on(worker_name, switch_name):
     close_session(db)
     try:
         # Turn on switch ports
-        r = requests.post(url = "http://%s:%s/v1/admin/switch/turn_on/%s" % (worker_ip, worker_port, switch_name), json = json_args)
+        r = requests.post(url = "http://%s:%s/v1/admin/switch/turn_on/%s" % (worker_ip, worker_port, switch_name), timeout=2,
+            json = json_args)
         if r.status_code == 200:
             result = r.json()
     except:
@@ -449,7 +457,8 @@ def init_detect(worker_name, switch_name):
     worker_port = worker.port
     close_session(db)
     try:
-        r = requests.post(url = "http://%s:%s/v1/admin/switch/init_detect/%s" % (worker_ip, worker_port, switch_name), json = json_args)
+        r = requests.post(url = "http://%s:%s/v1/admin/switch/init_detect/%s" % (worker_ip, worker_port, switch_name), timeout=2,
+            json = json_args)
         if r.status_code == 200:
             result = r.json()
     except:
@@ -476,7 +485,8 @@ def dhcp_conf(worker_name, switch_name):
     worker_port = worker.port
     close_session(db)
     try:
-        r = requests.post(url = "http://%s:%s/v1/admin/switch/dhcp_conf/%s" % (worker_ip, worker_port, switch_name), json = json_args)
+        r = requests.post(url = "http://%s:%s/v1/admin/switch/dhcp_conf/%s" % (worker_ip, worker_port, switch_name), timeout=2,
+            json = json_args)
         if r.status_code == 200:
             result = r.json()
     except:
@@ -502,7 +512,8 @@ def dhcp_conf_del(worker_name, switch_name):
     worker_port = worker.port
     close_session(db)
     try:
-        r = requests.post(url = "http://%s:%s/v1/admin/switch/dhcp_conf/%s/del" % (worker_ip, worker_port, switch_name), json = json_args)
+        r = requests.post(url = "http://%s:%s/v1/admin/switch/dhcp_conf/%s/del" % (worker_ip, worker_port, switch_name), timeout=2,
+            json = json_args)
         if r.status_code == 200:
             result = r.json()
     except:
@@ -528,7 +539,8 @@ def node_conf(worker_name, switch_name):
     worker_port = worker.port
     close_session(db)
     try:
-        r = requests.post(url = "http://%s:%s/v1/admin/switch/node_conf/%s" % (worker_ip, worker_port, switch_name), json = json_args)
+        r = requests.post(url = "http://%s:%s/v1/admin/switch/node_conf/%s" % (worker_ip, worker_port, switch_name), timeout=2,
+            json = json_args)
         if r.status_code == 200:
             result = r.json()
         else:
@@ -552,7 +564,8 @@ def clean_detect(worker_name):
     worker_port = worker.port
     close_session(db)
     try:
-        r = requests.post(url = "http://%s:%s/v1/admin/switch/clean_detect" % (worker_ip, worker_port), json = json_args)
+        r = requests.post(url = "http://%s:%s/v1/admin/switch/clean_detect" % (worker_ip, worker_port), timeout=2,
+            json = json_args)
         if r.status_code == 200:
             result = r.json()
         else:

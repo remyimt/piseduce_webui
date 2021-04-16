@@ -180,6 +180,11 @@
                                         {{ prop[0]|upper}}{{prop[1:] }}
                                     </th>
                                 {% endfor %}
+                                {% if elem_type == "worker" %}
+                                    <th scope="col">
+                                        Rename nodes
+                                    </th>
+                                {% endif %}
                                 <th scope="col">
                                     Delete {{ elem_type[0]|upper}}{{elem_type[1:] }}
                                 </th>
@@ -199,13 +204,24 @@
                                         {% endif %}
                                         </td>
                                     {% endfor %}
+                                    {% if elem_type == "worker" %}
+                                        <td>
+                                            <a href="/admin/node/rename/{{existing[elem]["name"]}}/{{existing[elem]["name"]}}"
+                                                class="btn btn-info delete-button">&#9673;</a>
+                                        </td>
+                                    {% endif %}
                                     <td>
                                         {% if elem_type == "client" %}
                                             <a href="/admin/delete/{{elem_type}}/{{worker}}/{{existing[elem]["ip"]}}" class="btn btn-warning
                                                 delete-button">&#x2212;</a>
                                         {% else %}
-                                            <a href="/admin/delete/{{elem_type}}/{{worker}}/{{existing[elem]["name"]}}" class="btn btn-warning
-                                                delete-button">&#x2212;</a>
+                                            {% if elem_type == "worker" %}
+                                                <a href="/admin/delete/{{elem_type}}/{{existing[elem]["name"]}}" class="btn btn-warning
+                                                    delete-button">&#x2212;</a>
+                                            {% else %}
+                                                <a href="/admin/delete/{{elem_type}}/{{worker}}/{{existing[elem]["name"]}}" class="btn btn-warning
+                                                    delete-button">&#x2212;</a>
+                                            {% endif %}
                                         {% endif %}
                                     </td>
                                 </tr>

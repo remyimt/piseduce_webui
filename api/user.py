@@ -13,7 +13,7 @@ b_user = flask.Blueprint("user", __name__, template_folder="templates/")
 @b_user.route("/node/list")
 @login_required
 def node_list():
-    result = { "errors": [], "nodes": {} }
+    result = { "errors": [], "nodes": {}, "duplicated": [] }
     db = open_session()
     for worker in db.query(Worker).all():
         try:
@@ -28,9 +28,14 @@ def node_list():
                     else:
                         result["nodes"][node] = r_json[node]
                 if len(duplicated_names) > 0:
-                    result["errors"].append("on worker '%s', duplicated names: %s" % (worker.name, duplicated_names))
+                    result["duplicated"] += duplicated_names
+                    error_msg = "on worker '%s', duplicated names: %s" % (worker.name, duplicated_names)
+                    result["errors"].append(error_msg)
+                    logging.error(error_msg)
             else:
-                result["errors"].append("on worker '%s', connection error with return code %d" % (worker.name, r.status_code))
+                error_msg = "on worker '%s', connection error with return code %d" % (worker.name, r.status_code)
+                result["errors"].append(error_msg)
+                logging.error(error_msg)
         except:
             error_msg = "connection failure from the worker '%s'" %  worker.name
             result["errors"].append(error_msg)
@@ -301,8 +306,9 @@ def user_ssh():
 @b_user.route("/reserve")
 @login_required
 def reserve():
+    result = json.loads(node_list())
     return flask.render_template("reserve.html", admin = current_user.is_admin, active_btn = "user_reserve",
-        nodes = json.loads(node_list())["nodes"])
+        nodes = result["nodes"], duplicated = result["duplicated"])
 
 
 @b_user.route("/configure")

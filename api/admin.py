@@ -201,12 +201,41 @@ def delete_worker(worker_name):
 
 
 # Other element management
+@b_admin.route("/node/rename/<worker_name>/<new_name>")
+@login_required
+@admin_required
+def rename_nodes(worker_name, new_name):
+    msg = ""
+    db = open_session()
+    worker = db.query(Worker).filter(Worker.name == worker_name).first()
+    if worker is not None:
+        try:
+            r = requests.post(url = "http://%s:%s/v1/admin/node/rename" % (worker.ip, worker.port),
+                json = { "token": worker.token, "base_name": new_name })
+            if r.status_code != 200:
+                msg = "wrong return code %d from the worker '%s'" % (r.status_code, worker.name)
+            else:
+                r_json = r.json()
+                if "nodes" in r_json:
+                    msg = "%d node names updated" % len(r_json["nodes"])
+                if "error" in r_json:
+                    msg = r_json["error"]
+        except:
+            msg = "connection failure to the worker '%s'" % worker_name
+            logging.exception(msg)
+    else:
+        msg = "worker '%s' not found" % worker_name
+        logging.error(msg)
+    close_session(db)
+    return list_worker(msg)
+
+
 @b_admin.route("/get/<el_type>")
 @b_admin.route("/get/<el_type>/<error>")
 @login_required
 @admin_required
 def get(el_type, error=None):
-    result = { "errors": []}
+    result = { "errors": [] }
     worker_types = load_config()["%s_provider" % el_type]
     if worker_types is None or len(worker_types) == 0:
         error = "missing '%s_provider' property in the configuration file" % el_type

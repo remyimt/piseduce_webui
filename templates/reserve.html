@@ -28,6 +28,11 @@
     </div><!-- filters -->
     <div class="bg-info rounded-right title">Available Nodes</div>
     <div class="title-text">Click on the nodes to select them</div>
+    {% if duplicated|length > 0 %}
+        <div class="ml-2 text-danger">
+            Name conflicts detected. {{duplicated|length}} nodes are missing!
+        </div>
+    {% endif %}
     <div class="default-view">
         <div class="nodeitems">
             {% for node in nodes %}

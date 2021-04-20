@@ -232,7 +232,7 @@ function dhcpConf(worker, switchName, ports, portIdx, existingMACs, network, ipO
             dataType: 'json',
             contentType: 'application/json',
             async: false,
-            data: JSON.stringify({"port": ports[portIdx], "macs": existingMACs, "network": network, "ip_offset": ipOffset }),
+            data: JSON.stringify({"port": ports[portIdx], "macs": existingMACs, "base_name": worker, "network": network, "ip_offset": ipOffset }),
             success: function (data) {
                 if(data["errors"].length > 0) {
                     cleanDetect(worker, switchName);
@@ -281,7 +281,7 @@ function nodeConf(worker, switchName, ports, portIdx, existingMACs, network, ipO
         dataType: 'json',
         contentType: 'application/json',
         async: false,
-        data: JSON.stringify( {"port": ports[portIdx], "node_ip": nodeIp} ),
+        data: JSON.stringify( {"port": ports[portIdx], "node_ip": nodeIp, "base_name": worker} ),
         success: function (data) {
             if(data["errors"].length > 0) {
                 cleanDetect(worker, switchName);

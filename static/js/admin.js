@@ -1,6 +1,5 @@
 // When loading the admin switch page, get the nodes connected to the switches
 $(document).ready(function () {
-    updateSwitchNodes();
     var workerSelector = $("#worker-selector");
     if(workerSelector && Object.keys(workerSelector).length > 0) {
         // The element type is not worker
@@ -24,36 +23,36 @@ function workerSelect(select) {
     }
 }
 
-function updateSwitchNodes() {
-    $("#switch-list").children("option").each(function(useless, option) {
-        var switchName = option.text;
-        if(switchName != "-") {
-            var worker = $("#" + switchName + "-worker").val();
-            $.ajax({
-                type: "POST",
-                url: WEBUI + "/admin/switch/" + worker + "/" + switchName + "/nodes",
-                dataType: 'json',
-                contentType: 'application/json',
-                async: false,
-                success: function (data) {
-                    $("#" + switchName + "-table").find(".col").each(function(idx, col) {
-                        var idx_str = String(idx + 1);
-                        if(idx_str in data["nodes"]) {
-                            $(col).children("div").html(idx_str + ": " + data["nodes"][idx_str]);
-                        }
-                    });
-                },
-                error: function () {
-                    alert("Error: can not send the request");
-                },
-            });
-        }
-    });
+// switchInfo = workerName + "-" + switchName
+function updateSwitchNodes(switchInfo) {
+    if(switchInfo != "-") {
+        $("#" + switchInfo).show()
+        var switchWorker = switchInfo.split("-")[0];
+        var switchName = switchInfo.split("-")[1];
+        $.ajax({
+            type: "POST",
+            url: WEBUI + "/admin/switch/" + switchWorker + "/" + switchName + "/nodes",
+            dataType: 'json',
+            contentType: 'application/json',
+            async: false,
+            success: function (data) {
+                $("#" + switchName + "-table").find(".col").each(function(idx, col) {
+                    var idx_str = String(idx + 1);
+                    if(idx_str in data["nodes"]) {
+                        $(col).children("div").html(idx_str + ": " + data["nodes"][idx_str]);
+                    }
+                });
+            },
+            error: function () {
+                alert("Error: can not send the request");
+            },
+        });
+    }
 }
 
 function displayTable(select) {
     $(".switch-table").hide();
-    $("#" + $(select).val()).show()
+    updateSwitchNodes($(select).val());
 }
 
 function hourString(str) {
@@ -236,7 +235,7 @@ function dhcpConf(worker, switchName, ports, portIdx, existingMACs, network, ipO
             data: JSON.stringify({"port": ports[portIdx], "macs": existingMACs, "network": network, "ip_offset": ipOffset }),
             success: function (data) {
                 if(data["errors"].length > 0) {
-                    cleanDetect(worker);
+                    cleanDetect(worker, switchName);
                     for(error of data["errors"]) {
                         if(error.includes("DHCP configuration")) {
                             error = error + " <a href=\"javascript:deleteDHCPRule('" + switchName + "', '" +
@@ -260,7 +259,7 @@ function dhcpConf(worker, switchName, ports, portIdx, existingMACs, network, ipO
                                 dhcpConf(worker, switchName, ports, portIdx, existingMACs, network, ipOffset, loopNb);
                             }, 10000);
                         } else {
-                            cleanDetect(worker);
+                            cleanDetect(worker, switchName);
                             switchMessage("No IP detects for the node on the port " + ports[portIdx] +
                                 ". Check the node MAC address is not already in the DHCP configuration.", "text-danger");
                         }
@@ -285,7 +284,7 @@ function nodeConf(worker, switchName, ports, portIdx, existingMACs, network, ipO
         data: JSON.stringify( {"port": ports[portIdx], "node_ip": nodeIp} ),
         success: function (data) {
             if(data["errors"].length > 0) {
-                cleanDetect(worker);
+                cleanDetect(worker, switchName);
                 for(error of data["errors"]) {
                     switchMessage(error, "text-danger");
                 }
@@ -304,7 +303,7 @@ function nodeConf(worker, switchName, ports, portIdx, existingMACs, network, ipO
                         bootNode(worker, switchName, ports, portIdx, existingMACs, network, ipOffset);
                     } else {
                         switchMessage("All nodes are configured. Cleaning the TFTP directory..");
-                        cleanDetect(worker);
+                        cleanDetect(worker, switchName);
                     }
                 } else {
                     if(loopNb < 8) {
@@ -314,7 +313,7 @@ function nodeConf(worker, switchName, ports, portIdx, existingMACs, network, ipO
                         }, 10000);
                     } else {
                         switchMessage("Can not get the node information. The node is not configured!", "text-danger");
-                        cleanDetect(worker);
+                        cleanDetect(worker, switchName);
                     }
                 }
             }
@@ -325,7 +324,7 @@ function nodeConf(worker, switchName, ports, portIdx, existingMACs, network, ipO
     });
 }
 
-function cleanDetect(worker) {
+function cleanDetect(worker, switchName) {
     $.ajax({
         type: "POST",
         url: WEBUI + "/admin/switch/" + worker + "/clean_detect",
@@ -336,7 +335,7 @@ function cleanDetect(worker) {
             if(data["errors"].length > 0) {
                 alert(data["errors"]);
             }
-            updateSwitchNodes();
+            updateSwitchNodes(worker + "-" + switchName);
         },
         error: function () {
             alert("Error: can not send the request");

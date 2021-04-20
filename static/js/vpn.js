@@ -1,19 +1,19 @@
-function workerVPNKey(name) {
+function agentVPNKey(name) {
     var subnet = "";
     if(name.length == 0) {
-        name = $("#worker-name").val();
-        subnet = $("#worker-subnet").val();
+        name = $("#agent-name").val();
+        subnet = $("#agent-subnet").val();
     } else {
         subnet = $("#" + name + "-subnet").val();
     }
     if(name.length == 0) {
         alert("Name field is required");
-        $("#worker-name").focus();
+        $("#agent-name").focus();
         return;
     }
     if(subnet.length == 0) {
         alert("Subnet field is required");
-        $("#worker-subnet").focus();
+        $("#agent-subnet").focus();
         return;
     }
     subnet_array = subnet.split(".");

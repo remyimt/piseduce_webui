@@ -19,14 +19,14 @@
     {% endif %}
     <!-- Remove the errors field -->
     {% set useless = elements.pop("errors") %}
-    {% if elem_type != "worker" %}
-        <div class="bg-info rounded-right title">Worker Selection</div>
+    {% if elem_type != "agent" %}
+        <div class="bg-info rounded-right title">Agent Selection</div>
         {% if elements|length == 0 %}
-            <div id="worker-selector" class="none">No available worker</div>
+            <div id="agent-selector" class="none">No available agent</div>
         {% else %}
-            <select id="worker-selector" name="worker" onchange="workerSelect(this)">
-                {% for worker in elements %}
-                    <option value="{{worker}}">{{worker}}</option>
+            <select id="agent-selector" name="agent" onchange="agentSelect(this)">
+                {% for agent in elements %}
+                    <option value="{{agent}}">{{agent}}</option>
                 {% endfor %}
             </select>
         {% endif %}
@@ -35,21 +35,21 @@
         Add {{elem_type[0]|upper}}{{elem_type[1:]}}
     </div>
     {% if elements|length == 0 %}
-        <div class="none">No available worker</div>
+        <div class="none">No available agent</div>
     {% endif %}
-    {% for worker in elements %}
-        <!-- The class 'worker-div' is used by JS to hide the div -->
-        <div id="{{worker}}-add" class="worker-div">
-            {% if elements[worker]["properties"] is mapping %}
-                {% if elem_type == "worker" %}
+    {% for agent in elements %}
+        <!-- The class 'agent-div' is used by JS to hide the div -->
+        <div id="{{agent}}-add" class="agent-div">
+            {% if elements[agent]["properties"] is mapping %}
+                {% if elem_type == "agent" %}
                     <div class="ml-1 mt-3 text-info">
                         <b>From Manual Configuration</b>
                     </div>
                 {% endif %}
-                <form id="{{worker}}-form" action="/admin/add/{{elem_type}}" method="post" class="ml-3">
-                    <input type="hidden" name="worker" value="{{worker}}">
+                <form id="{{agent}}-form" action="/admin/add/{{elem_type}}" method="post" class="ml-3">
+                    <input type="hidden" name="agent" value="{{agent}}">
                     <div class="container prop-table">
-                        {% set el_props = elements[worker]["properties"] %}
+                        {% set el_props = elements[agent]["properties"] %}
                         {% for prop in el_props %}
                             <div class="row">
                                 <div class="col-2">
@@ -100,17 +100,17 @@
                     </div><!-- container -->
                 </form>
             {% else %}
-                <!-- List properties to add worker elements -->
+                <!-- List properties to add agent elements -->
                 <div class="none">
-                    {% if elements[worker]["properties"]|length == 0 %}
+                    {% if elements[agent]["properties"]|length == 0 %}
                         No properties
                     {% else %}
-                        {{elements[worker]["properties"]}}
+                        {{elements[agent]["properties"]}}
                     {% endif %}
                 </div>
             {% endif %}
-            <!-- Add workers from the VPN configuration -->
-            {% if elements[worker]["vpn"]|length > 0 %}
+            <!-- Add agents from the VPN configuration -->
+            {% if elements[agent]["vpn"]|length > 0 %}
                 <div class="ml-1 mt-3 text-info">
                     <b>From VPN Configuration</b>
                 </div>
@@ -134,8 +134,8 @@
                             </th>
                     </thead>
                     <tbody>
-                        {% for key in elements[worker]["vpn"] %}
-                            {% set key_props = elements[worker]["vpn"][key] %}
+                        {% for key in elements[agent]["vpn"] %}
+                            {% set key_props = elements[agent]["vpn"][key] %}
                             <tr>
                                 <td>
                                     {{key}}
@@ -150,28 +150,28 @@
                                     <input type="text">
                                 </td>
                                 <td class="text-center">
-                                    <a href="javascript:addVPNWoker('{{key}}')" class="btn btn-info delete-button">&#x002B;</a>
+                                    <a href="javascript:addVPNAgent('{{key}}')" class="btn btn-info delete-button">&#x002B;</a>
                                 </td>
                             </tr>
                         {% endfor %}
                     </tbody>
                 </table>
             {% endif %}
-        </div><!-- worker-div -->
+        </div><!-- agent-div -->
     {% endfor %}
     <div class="bg-info rounded-right title">Existing {{ elem_type[0]|upper}}{{elem_type[1:] }}s</div>
     {% if elements|length == 0 %}
         <div class="none">None</span>
     {% else %}
-        {% for worker in elements %}
-            <!-- The class 'worker-div' is used by JS to hide the div -->
-            <div id="{{worker}}-existing" class="worker-div">
-                {% if elements[worker]["existing"]|length == 0 %}
-                    <div id="{{worker}}-existing" class="none">
+        {% for agent in elements %}
+            <!-- The class 'agent-div' is used by JS to hide the div -->
+            <div id="{{agent}}-existing" class="agent-div">
+                {% if elements[agent]["existing"]|length == 0 %}
+                    <div id="{{agent}}-existing" class="none">
                         None
                     </div>
                 {% else %}
-                    {% set existing = elements[worker]["existing"] %}
+                    {% set existing = elements[agent]["existing"] %}
                     <table class="table text-center">
                         <thead>
                             <tr>
@@ -180,7 +180,7 @@
                                         {{ prop[0]|upper}}{{prop[1:] }}
                                     </th>
                                 {% endfor %}
-                                {% if elem_type == "worker" %}
+                                {% if elem_type == "agent" %}
                                     <th scope="col">
                                         Rename nodes
                                     </th>
@@ -204,7 +204,7 @@
                                         {% endif %}
                                         </td>
                                     {% endfor %}
-                                    {% if elem_type == "worker" %}
+                                    {% if elem_type == "agent" %}
                                         <td>
                                             <a href="/admin/node/rename/{{existing[elem]["name"]}}/{{existing[elem]["name"]}}"
                                                 class="btn btn-info delete-button">&#9673;</a>
@@ -212,14 +212,14 @@
                                     {% endif %}
                                     <td>
                                         {% if elem_type == "client" %}
-                                            <a href="/admin/delete/{{elem_type}}/{{worker}}/{{existing[elem]["ip"]}}" class="btn btn-warning
+                                            <a href="/admin/delete/{{elem_type}}/{{agent}}/{{existing[elem]["ip"]}}" class="btn btn-warning
                                                 delete-button">&#x2212;</a>
                                         {% else %}
-                                            {% if elem_type == "worker" %}
+                                            {% if elem_type == "agent" %}
                                                 <a href="/admin/delete/{{elem_type}}/{{existing[elem]["name"]}}" class="btn btn-warning
                                                     delete-button">&#x2212;</a>
                                             {% else %}
-                                                <a href="/admin/delete/{{elem_type}}/{{worker}}/{{existing[elem]["name"]}}" class="btn btn-warning
+                                                <a href="/admin/delete/{{elem_type}}/{{agent}}/{{existing[elem]["name"]}}" class="btn btn-warning
                                                     delete-button">&#x2212;</a>
                                             {% endif %}
                                         {% endif %}
@@ -230,28 +230,28 @@
                         </tbody>
                     </table>
                 {% endif %}
-            </div><!-- worker-div -->
+            </div><!-- agent-div -->
         {% endfor %}
     {% endif %}
     {% if elem_type == "switch" %}
         <div class="bg-info rounded-right title">Switch Management</div>
-        {% for worker in elements %}
-            <!-- The class 'worker-div' is used by JS to hide the div -->
-            <div id="{{worker}}-switch" class="worker-div">
+        {% for agent in elements %}
+            <!-- The class 'agent-div' is used by JS to hide the div -->
+            <div id="{{agent}}-switch" class="agent-div">
                 <div class="none">
                     Select the switch to manage:
-                    <select id="{{worker}}-switch-list" onchange="displayTable(this)">
+                    <select id="{{agent}}-switch-list" onchange="displayTable(this)">
                         <option value="-">-</option>
-                        {% for switch in elements[worker]["existing"] %}
-                            <option value="{{worker}}-{{switch}}">
+                        {% for switch in elements[agent]["existing"] %}
+                            <option value="{{agent}}-{{switch}}">
                                 {{switch}}
                             </option>
                         {% endfor %}
                     </select>
                 </div>
-                {% for switch in elements[worker]["existing"].values() %}
-                    <input id="{{switch["name"]}}-worker" type="hidden" value="{{worker}}">
-                    <div id="{{worker}}-{{switch["name"]}}" class="switch-table">
+                {% for switch in elements[agent]["existing"].values() %}
+                    <input id="{{switch["name"]}}-agent" type="hidden" value="{{agent}}">
+                    <div id="{{agent}}-{{switch["name"]}}" class="switch-table">
                         <div class="switch-title">Switch: {{switch["name"]}}</div>
                         <div id="{{switch['name']}}-table" class="container">
                             {% for n in range(0, switch["port_nb"]|int) %}
@@ -286,7 +286,7 @@
                 {% endfor %}
                 <div class="rounded switch-console">
                 </div>
-            </div><!-- worker-div -->
+            </div><!-- agent-div -->
         {% endfor %}
     {% endif %}<!-- elem_type == "switch" -->
 </div>

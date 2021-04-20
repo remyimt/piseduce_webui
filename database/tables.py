@@ -34,8 +34,8 @@ class User(Base):
         return False
 
 
-class Worker(Base):
-    __tablename__ = "worker"
+class Agent(Base):
+    __tablename__ = "agent"
     name = Column(Text, primary_key=True)
     type = Column(Text)
     ip = Column(Text)

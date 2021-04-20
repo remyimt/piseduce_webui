@@ -67,12 +67,12 @@
                                 <!-- Remove the 'name' and 'duration' property (common deployment properties) -->
                                 {% set useless = node_data.pop("node_bin") %}
                                 {% set useless = node_data.pop("duration") %}
-                                {% set worker = node_data.pop("worker") %}
+                                {% set agent = node_data.pop("agent") %}
                                 <!-- configure the number of columns per row -->
                                 {% set nb_col = 3 %}
                                 {% set extra_col = (nb_col - node_data|length % nb_col) % nb_col %}
-                                <!-- Send the worker name in the form -->
-                                <input type="hidden" name="{{node_name}}-worker" value="{{worker}}">
+                                <!-- Send the agent name in the form -->
+                                <input type="hidden" name="{{node_name}}-agent" value="{{agent}}">
                                 <div class="card">
                                     <div id="heading-{{node_name}}" class="card-header">
                                         {% if loop.index == 1 %}

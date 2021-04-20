@@ -1,6 +1,6 @@
 from api.tool import sort_by_name
 from database.connector import open_session, close_session
-from database.tables import User, Worker
+from database.tables import User, Agent
 from flask_login import current_user, login_required
 from werkzeug.security import generate_password_hash
 import flask, json, logging, os, requests
@@ -9,16 +9,16 @@ import flask, json, logging, os, requests
 b_user = flask.Blueprint("user", __name__, template_folder="templates/")
 
 
-# REST API to connect the web UI and the workers
+# REST API to connect the web UI and the agents
 @b_user.route("/node/list")
 @login_required
 def node_list():
     result = { "errors": [], "nodes": {}, "duplicated": [] }
     db = open_session()
-    for worker in db.query(Worker).all():
+    for agent in db.query(Agent).all():
         try:
-            r = requests.post(url = "http://%s:%s/v1/user/node/prop" % (worker.ip, worker.port), timeout = 6,
-                json = { "token": worker.token })
+            r = requests.post(url = "http://%s:%s/v1/user/node/prop" % (agent.ip, agent.port), timeout = 6,
+                json = { "token": agent.token })
             if r.status_code == 200:
                 r_json = r.json()
                 duplicated_names = []
@@ -29,15 +29,15 @@ def node_list():
                         result["nodes"][node] = r_json[node]
                 if len(duplicated_names) > 0:
                     result["duplicated"] += duplicated_names
-                    error_msg = "on worker '%s', duplicated names: %s" % (worker.name, duplicated_names)
+                    error_msg = "on agent '%s', duplicated names: %s" % (agent.name, duplicated_names)
                     result["errors"].append(error_msg)
                     logging.error(error_msg)
             else:
-                error_msg = "on worker '%s', connection error with return code %d" % (worker.name, r.status_code)
+                error_msg = "on agent '%s', connection error with return code %d" % (agent.name, r.status_code)
                 result["errors"].append(error_msg)
                 logging.error(error_msg)
         except:
-            error_msg = "connection failure from the worker '%s'" %  worker.name
+            error_msg = "connection failure from the agent '%s'" %  agent.name
             result["errors"].append(error_msg)
             logging.error(error_msg)
     close_session(db)
@@ -51,21 +51,21 @@ def node_list():
 def node_configuring():
     result = { "errors": [], "raspberry": {}, "sensor": {}, "server": {}, "fake": {} }
     db = open_session()
-    for worker in db.query(Worker).all():
+    for agent in db.query(Agent).all():
         try:
-            r = requests.post(url = "http://%s:%s/v1/user/configure" % (worker.ip, worker.port), timeout = 6,
-                json = { "token": worker.token, "user": current_user.email })
-            if r.status_code == 200 and worker.type in result:
-                # Add the worker name to the node information
+            r = requests.post(url = "http://%s:%s/v1/user/configure" % (agent.ip, agent.port), timeout = 6,
+                json = { "token": agent.token, "user": current_user.email })
+            if r.status_code == 200 and agent.type in result:
+                # Add the agent name to the node information
                 json_data = r.json()
                 for node in json_data:
-                    json_data[node]["worker"] = worker.name
-                result[worker.type].update(json_data)
+                    json_data[node]["agent"] = agent.name
+                result[agent.type].update(json_data)
             else:
-                logging.error("configuring error: wrong answer from the worker '%s'" % worker.name)
+                logging.error("configuring error: wrong answer from the agent '%s'" % agent.name)
 
         except:
-            error_msg = "connection failure from the worker '%s'" %  worker.name
+            error_msg = "connection failure from the agent '%s'" %  agent.name
             result["errors"].append(error_msg)
             logging.error(error_msg)
     close_session(db)
@@ -80,33 +80,33 @@ def node_configuring():
 def node_deploying():
     result = { "errors": [], "nodes": {}, "states": [] }
     db = open_session()
-    for worker in db.query(Worker).all():
+    for agent in db.query(Agent).all():
         try:
-            r = requests.post(url = "http://%s:%s/v1/user/node/mine" % (worker.ip, worker.port), timeout = 6,
-                json = { "token": worker.token, "user": current_user.email })
+            r = requests.post(url = "http://%s:%s/v1/user/node/mine" % (agent.ip, agent.port), timeout = 6,
+                json = { "token": agent.token, "user": current_user.email })
             if r.status_code == 200:
                 json_data = r.json()
                 result["states"] = { "raspberry": [], "sensor": [], "server": [], "fake": [] }
-                result["states"][worker.type] = json_data["states"]
+                result["states"][agent.type] = json_data["states"]
                 for node in json_data["nodes"]:
                     # Sort the nodes by bin
                     bin_name = json_data["nodes"][node].pop("bin")
                     del json_data["nodes"][node]["type"]
-                    # Add the worker name to the node information
-                    json_data["nodes"][node]["worker"] = worker.name
+                    # Add the agent name to the node information
+                    json_data["nodes"][node]["agent"] = agent.name
                     # No bin for nodes in 'configuring' state
                     if len(bin_name) > 0:
                         # Sort nodes by bin name
                         if bin_name not in result["nodes"]:
                             result["nodes"][bin_name] = { "raspberry": [], "sensor": [], "server": [], "fake": [] }
-                        result["nodes"][bin_name][worker.type].append(json_data["nodes"][node])
+                        result["nodes"][bin_name][agent.type].append(json_data["nodes"][node])
             else:
-                error_msg = "deploying error: wrong answer from the worker '%s' (return code %d)" % (
-                    worker.name, r.status_code)
+                error_msg = "deploying error: wrong answer from the agent '%s' (return code %d)" % (
+                    agent.name, r.status_code)
                 logging.error(error_msg)
                 result["errors"].append(error_msg)
         except:
-            error_msg = "connection failure from the worker '%s'" %  worker.name
+            error_msg = "connection failure from the agent '%s'" %  agent.name
             result["errors"].append(error_msg)
             logging.error(error_msg)
     close_session(db)
@@ -118,10 +118,10 @@ def node_deploying():
 def node_updating():
     result = { "errors": [] }
     db = open_session()
-    for worker in db.query(Worker).all():
+    for agent in db.query(Agent).all():
         try:
-            r = requests.post(url = "http://%s:%s/v1/user/node/status" % (worker.ip, worker.port), timeout = 6,
-                json = { "token": worker.token, "user": current_user.email })
+            r = requests.post(url = "http://%s:%s/v1/user/node/status" % (agent.ip, agent.port), timeout = 6,
+                json = { "token": agent.token, "user": current_user.email })
             if r.status_code == 200:
                 json_data = r.json()
                 for node in json_data["nodes"]:
@@ -131,9 +131,9 @@ def node_updating():
                         # Sort nodes by bin name
                         if bin_name not in result:
                             result[bin_name] = { "raspberry": [], "sensor": [], "server": [], "fake": [] }
-                        result[bin_name][worker.type].append(json_data["nodes"][node])
+                        result[bin_name][agent.type].append(json_data["nodes"][node])
         except:
-            error_msg = "connection failure from the worker '%s'" %  worker.name
+            error_msg = "connection failure from the agent '%s'" %  agent.name
             result["errors"].append(error_msg)
             logging.error(error_msg)
     close_session(db)
@@ -150,14 +150,14 @@ def make_reserve():
         matching_nodes = []
         available_nodes = []
         nb_nodes = int(prop["nb_nodes"])
-        worker_type = prop["type"]
+        agent_type = prop["type"]
         del prop["nb_nodes"]
         del prop["type"]
-        if worker_type is not None and len(worker_type) > 0:
-            for worker in db.query(Worker).filter(Worker.type == worker_type).all():
+        if agent_type is not None and len(agent_type) > 0:
+            for agent in db.query(Agent).filter(Agent.type == agent_type).all():
                 # Get the nodes with at least one of requested properties
-                r = requests.post(url = "http://%s:%s/v1/user/node/list" % (worker.ip, worker.port), timeout = 6,
-                    json = { "token": worker.token, "properties": prop })
+                r = requests.post(url = "http://%s:%s/v1/user/node/list" % (agent.ip, agent.port), timeout = 6,
+                    json = { "token": agent.token, "properties": prop })
                 if r.status_code == 200:
                     r_json = r.json()
                     for node, node_props in r_json.items():
@@ -165,31 +165,31 @@ def make_reserve():
                         if len(prop) == 0 or len(prop) == len(node_props):
                             matching_nodes.append(node)
                 else:
-                    logging.error("node reservation failure: can not get the node list from the worker '%s'" % worker.name)
+                    logging.error("node reservation failure: can not get the node list from the agent '%s'" % agent.name)
                 logging.info("Macthing nodes: %s" % matching_nodes)
                 # Check the status of the nodes (we only want 'available' nodes)
                 if len(matching_nodes) > 0:
-                    r = requests.post(url = "http://%s:%s/v1/user/node/status" % (worker.ip, worker.port), timeout = 6,
-                        json = { "token": worker.token, "nodes": matching_nodes })
+                    r = requests.post(url = "http://%s:%s/v1/user/node/status" % (agent.ip, agent.port), timeout = 6,
+                        json = { "token": agent.token, "nodes": matching_nodes })
                     if r.status_code == 200:
                         for node, props in r.json()["nodes"].items():
                             if props["status"] == "available" and len(available_nodes) < nb_nodes:
                                 available_nodes.append(node)
                     else:
-                        logging.error("node reservation failure: can not get the node status from the worker '%s'" % worker.name)
+                        logging.error("node reservation failure: can not get the node status from the agent '%s'" % agent.name)
                 # Make the reservation
                 if len(available_nodes) > 0:
-                    r = requests.post(url = "http://%s:%s/v1/user/reserve" % (worker.ip, worker.port), timeout = 6,
-                            json = { "token": worker.token, "nodes": available_nodes, "user": current_user.email })
+                    r = requests.post(url = "http://%s:%s/v1/user/reserve" % (agent.ip, agent.port), timeout = 6,
+                            json = { "token": agent.token, "nodes": available_nodes, "user": current_user.email })
                     if r.status_code == 200:
                         result["nodes"] += available_nodes
                     else:
                         logging.error("can not reserve nodes: wrong return code %d from '%s'" % (
-                            r.status_code, worker.name))
+                            r.status_code, agent.name))
                         result["errors"] += available_nodes
                 else:
-                    logging.error("No available node from the worker '%s'. Matching nodes: %s" % (
-                        worker.name, matching_nodes))
+                    logging.error("No available node from the agent '%s'. Matching nodes: %s" % (
+                        agent.name, matching_nodes))
         else:
             logging.error("node reservation failure: no 'type' property in the JSON content")
     close_session(db)
@@ -211,24 +211,24 @@ def make_deploy():
             duration = form_data[prop]
         else:
             node_name, _, prop_name = prop.rpartition("-")
-            if prop_name == "worker":
-                last_worker = form_data[prop]
-                if last_worker not in result:
-                    result[last_worker] = {}
-                result[last_worker][node_name] = { "node_bin": bin_name, "duration": duration }
+            if prop_name == "agent":
+                last_agent = form_data[prop]
+                if last_agent not in result:
+                    result[last_agent] = {}
+                result[last_agent][node_name] = { "node_bin": bin_name, "duration": duration }
             else:
-                result[last_worker][node_name][prop_name] = form_data[prop]
+                result[last_agent][node_name][prop_name] = form_data[prop]
     if len(result) == 0:
         return flask.redirect("/user/configure?msg=%s" % "No data available to deploy nodes")
     db = open_session()
-    for worker_name in result:
-        worker = db.query(Worker).filter(Worker.name == worker_name).first()
-        r = requests.post(url = "http://%s:%s/v1/user/deploy" % (worker.ip, worker.port), timeout = 6,
-                json = { "token": worker.token, "nodes": result[worker_name], "user": current_user.email })
+    for agent_name in result:
+        agent = db.query(Agent).filter(Agent.name == agent_name).first()
+        r = requests.post(url = "http://%s:%s/v1/user/deploy" % (agent.ip, agent.port), timeout = 6,
+                json = { "token": agent.token, "nodes": result[agent_name], "user": current_user.email })
         if r.status_code == 200:
             json_result.update(r.json())
         else:
-            json_result["errors"].append("wrong answer from the worker '%s'" % worker_name)
+            json_result["errors"].append("wrong answer from the agent '%s'" % agent_name)
     close_session(db)
     if len(json_result["errors"]) > 0:
         return flask.redirect("/user/configure?msg=%s" % ",".join(json_result["errors"]))
@@ -242,13 +242,13 @@ def make_deploy():
 def make_exec():
     result = { "errors": [] }
     json_data = flask.request.json
-    # Use the function 'init_action_process' of worker_exec
+    # Use the function 'init_action_process' of agent_exec
     if "nodes" in json_data and "reconfiguration" in json_data:
         db = open_session()
-        for worker_name in json_data["nodes"]:
-            worker = db.query(Worker).filter(Worker.name == worker_name).first()
-            r = requests.post(url = "http://%s:%s/v1/user/%s" % (worker.ip, worker.port, json_data["reconfiguration"]), timeout = 6,
-                    json = { "token": worker.token, "nodes": json_data["nodes"][worker_name], "user": current_user.email })
+        for agent_name in json_data["nodes"]:
+            agent = db.query(Agent).filter(Agent.name == agent_name).first()
+            r = requests.post(url = "http://%s:%s/v1/user/%s" % (agent.ip, agent.port, json_data["reconfiguration"]), timeout = 6,
+                    json = { "token": agent.token, "nodes": json_data["nodes"][agent_name], "user": current_user.email })
             if r.status_code == 200:
                 json_answer = r.json()
                 failure = []
@@ -260,9 +260,9 @@ def make_exec():
                 else:
                     result.update(json_answer)
             else:
-                logging.error("reconfiguration failure: the worker '%s' fails to execute '%s'" % (
-                    worker_name, json_data["reconfiguration"]))
-                result["errors"].append("wrong answer from the worker '%s'" % worker_name)
+                logging.error("reconfiguration failure: the agent '%s' fails to execute '%s'" % (
+                    agent_name, json_data["reconfiguration"]))
+                result["errors"].append("wrong answer from the agent '%s'" % agent_name)
         close_session(db)
     return json.dumps(result)
 

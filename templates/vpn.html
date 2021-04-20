@@ -73,18 +73,18 @@
             </tbody>
         </table>
         <div class="bg-info rounded-right title">
-            Create VPN keys for workers
+            Create VPN keys for agents
         </div>
         <table>
             <thead>
                 <tr>
-                    <th scope="col">Worker Name</th>
-                    <th scope="col">Worker Subnet</th>
+                    <th scope="col">Agent Name</th>
+                    <th scope="col">Agent Subnet</th>
                     <th scope="col" class="col-button">Generate</th>
                 </tr>
             </thead>
             <tbody>
-                {% for c in clients["worker"] %}
+                {% for c in clients["agent"] %}
                         <tr>
                             <td>
                                 {{c}}
@@ -101,20 +101,20 @@
                                     <input id="{{c}}-subnet" type="text">
                                 </td>
                                 <td class="text-center">
-                                    <a href="javascript:workerVPNKey('{{c}}')" class="btn btn-info">&#x002B;</a>
+                                    <a href="javascript:agentVPNKey('{{c}}')" class="btn btn-info">&#x002B;</a>
                                 </td>
                             {% endif %}
                         </tr>
                 {% endfor %}
                 <tr>
                     <td>
-                        <input id="worker-name" size="30" type="text">
+                        <input id="agent-name" size="30" type="text">
                     </td>
                     <td>
-                        <input id="worker-subnet" type="text">
+                        <input id="agent-subnet" type="text">
                     </td>
                     <td class="text-center">
-                        <a href="javascript:workerVPNKey('')" class="btn btn-info">&#x002B;</a>
+                        <a href="javascript:agentVPNKey('')" class="btn btn-info">&#x002B;</a>
                     </td>
                 </tr>
             </tbody>

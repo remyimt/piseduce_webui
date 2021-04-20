@@ -82,11 +82,11 @@ function reconfigure(binName) {
             $(accordion).find(".node-name").each(function(idx, name) {
                 var imgName = name.parentNode.children[2].src.split("/");
                 if(imgName[imgName.length - 1].startsWith("enabled")) {
-                    var worker = $("#" + name.innerHTML + "-worker").val();
-                    if(!(worker in nodeNames)) {
-                        nodeNames[worker] = []
+                    var agent = $("#" + name.innerHTML + "-agent").val();
+                    if(!(agent in nodeNames)) {
+                        nodeNames[agent] = []
                     }
-                    nodeNames[worker].push(name.innerHTML);
+                    nodeNames[agent].push(name.innerHTML);
                 }
             });
         }
@@ -124,11 +124,11 @@ function destroyBin(binName) {
             if(accordion.length > 0) {
                 accordion.find(".node-name").each(function(useless, node) {
                     var nodeName = node.innerHTML;
-                    var worker = $("#" + nodeName + "-worker").val();
-                    if(!(worker in nodeNames)) {
-                        nodeNames[worker] = []
+                    var agent = $("#" + nodeName + "-agent").val();
+                    if(!(agent in nodeNames)) {
+                        nodeNames[agent] = []
                     }
-                    nodeNames[worker].push(nodeName);
+                    nodeNames[agent].push(nodeName);
                 });
             }
         }

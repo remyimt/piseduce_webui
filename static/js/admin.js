@@ -1,19 +1,19 @@
 // When loading the admin switch page, get the nodes connected to the switches
 $(document).ready(function () {
-    var workerSelector = $("#worker-selector");
-    if(workerSelector && Object.keys(workerSelector).length > 0) {
-        // The element type is not worker
-        workerSelect(workerSelector);
+    var agentSelector = $("#agent-selector");
+    if(agentSelector && Object.keys(agentSelector).length > 0) {
+        // The element type is not agent
+        agentSelect(agentSelector);
     } else {
-        // The element type is worker, show the div
-        $("#worker_key-add").show();
-        $("#worker_key-existing").show();
+        // The element type is agent, show the div
+        $("#agent_key-add").show();
+        $("#agent_key-existing").show();
     }
 });
 
 // Functions
-function workerSelect(select) {
-    $(".worker-div").hide();
+function agentSelect(select) {
+    $(".agent-div").hide();
     $("#" + $(select).val() + "-add").show()
     $("#" + $(select).val() + "-existing").show()
     $("#" + $(select).val() + "-switch").show()
@@ -23,15 +23,15 @@ function workerSelect(select) {
     }
 }
 
-// switchInfo = workerName + "-" + switchName
+// switchInfo = agentName + "-" + switchName
 function updateSwitchNodes(switchInfo) {
     if(switchInfo != "-") {
         $("#" + switchInfo).show()
-        var switchWorker = switchInfo.split("-")[0];
+        var switchAgent = switchInfo.split("-")[0];
         var switchName = switchInfo.split("-")[1];
         $.ajax({
             type: "POST",
-            url: WEBUI + "/admin/switch/" + switchWorker + "/" + switchName + "/nodes",
+            url: WEBUI + "/admin/switch/" + switchAgent + "/" + switchName + "/nodes",
             dataType: 'json',
             contentType: 'application/json',
             async: false,
@@ -78,7 +78,7 @@ function switchMessage(msg, colorClass = "") {
 }
 
 function reconfigure(switchName) {
-    var worker = $("#" + switchName + "-worker").val();
+    var agent = $("#" + switchName + "-agent").val();
     var ports = [];
     var conf_name = $("#" + switchName + "-actions").val();
     $("#" + switchName + "-table").find("input:checked").each(function(useless, port_str) {
@@ -88,10 +88,10 @@ function reconfigure(switchName) {
     if(conf_name == "port_status" || ports.length > 0) {
         switch(conf_name) {
             case "detect_nodes":
-                initDetect(worker, switchName, ports);
+                initDetect(agent, switchName, ports);
                 break;
             case "port_status":
-                $.get(WEBUI + "/admin/switch/" + worker + "/" + switchName, function(data) {
+                $.get(WEBUI + "/admin/switch/" + agent + "/" + switchName, function(data) {
                     var data = JSON.parse(data);
                     $("#" + switchName + "-table").find(".col").each(function(idx, port) {
                         $(port).attr("class", "col port-node " + data[switchName][idx]);
@@ -99,10 +99,10 @@ function reconfigure(switchName) {
                 });
                 break;
             case "turn_off":
-                turnOff(worker, switchName, ports);
+                turnOff(agent, switchName, ports);
                 break;
             case "turn_on":
-                turnOn(worker, switchName, ports);
+                turnOn(agent, switchName, ports);
                 break;
         }
     } else {
@@ -110,10 +110,10 @@ function reconfigure(switchName) {
     }
 }
 
-function turnOff(worker, switchName, ports) {
+function turnOff(agent, switchName, ports) {
     $.ajax({
         type: "POST",
-        url: WEBUI + "/admin/switch/" + worker + "/" + switchName + "/turn_off",
+        url: WEBUI + "/admin/switch/" + agent + "/" + switchName + "/turn_off",
         dataType: 'json',
         contentType: 'application/json',
         async: false,
@@ -134,10 +134,10 @@ function turnOff(worker, switchName, ports) {
     });
 }
 
-function turnOn(worker, switchName, ports) {
+function turnOn(agent, switchName, ports) {
     $.ajax({
         type: "POST",
-        url: WEBUI + "/admin/switch/" + worker + "/" + switchName + "/turn_on",
+        url: WEBUI + "/admin/switch/" + agent + "/" + switchName + "/turn_on",
         dataType: 'json',
         contentType: 'application/json',
         async: false,
@@ -156,13 +156,13 @@ function turnOn(worker, switchName, ports) {
 }
 
 // Functions for the detect_nodes action
-function initDetect(worker, switchName, ports) {
+function initDetect(agent, switchName, ports) {
     $(".switch-console").empty();
     $(".switch-console").show();
     switchMessage("Preparing the NFS boot for nodes on ports " + ports);
     $.ajax({
         type: "POST",
-        url: WEBUI + "/admin/switch/" + worker + "/" + switchName + "/init_detect",
+        url: WEBUI + "/admin/switch/" + agent + "/" + switchName + "/init_detect",
         dataType: 'json',
         contentType: 'application/json',
         async: false,
@@ -179,8 +179,8 @@ function initDetect(worker, switchName, ports) {
                 }
             } else {
                 switchMessage("Turn off nodes on the selected ports");
-                turnOff(worker, switchName, ports);
-                bootNode(worker, switchName, ports, 0, data["macs"], data["network"], data["ip_offset"]);
+                turnOff(agent, switchName, ports);
+                bootNode(agent, switchName, ports, 0, data["macs"], data["network"], data["ip_offset"]);
             }
         },
         error: function () {
@@ -192,7 +192,7 @@ function initDetect(worker, switchName, ports) {
 function deleteDHCPRule(switchName, ip_mac) {
     var ip = "";
     var mac = "";
-    var worker = $("#" + switchName + "-worker").val();
+    var agent = $("#" + switchName + "-agent").val();
     if(ip_mac.includes(":")) {
         mac = ip_mac;
     } else {
@@ -200,7 +200,7 @@ function deleteDHCPRule(switchName, ip_mac) {
     }
     $.ajax({
         type: "POST",
-        url: WEBUI + "/admin/switch/" + worker + "/" + switchName + "/dhcp_conf/del",
+        url: WEBUI + "/admin/switch/" + agent + "/" + switchName + "/dhcp_conf/del",
         dataType: 'json',
         contentType: 'application/json',
         async: false,
@@ -214,28 +214,28 @@ function deleteDHCPRule(switchName, ip_mac) {
     });
 }
 
-function bootNode(worker, switchName, ports, portIdx, existingMACs, network, ipOffset) {
+function bootNode(agent, switchName, ports, portIdx, existingMACs, network, ipOffset) {
     switchMessage("Turn on the node on port " + ports[portIdx], "text-warning");
-    turnOn(worker, switchName, [ ports[portIdx] ]);
+    turnOn(agent, switchName, [ ports[portIdx] ]);
     switchMessage("The node on port " + ports[portIdx] + " is booting");
     switchMessage("Capturing DHCP requests, waiting 60s");
     setTimeout(function() {
-        dhcpConf(worker, switchName, ports, portIdx, existingMACs, network, ipOffset, 0);
+        dhcpConf(agent, switchName, ports, portIdx, existingMACs, network, ipOffset, 0);
     }, 30000);
 }
 
-function dhcpConf(worker, switchName, ports, portIdx, existingMACs, network, ipOffset, loopNb) {
+function dhcpConf(agent, switchName, ports, portIdx, existingMACs, network, ipOffset, loopNb) {
         switchMessage("Capturing DHCP requests, waiting " + (60 - 30 - loopNb * 10) + "s");
         $.ajax({
             type: "POST",
-            url: WEBUI + "/admin/switch/" + worker + "/" + switchName + "/dhcp_conf",
+            url: WEBUI + "/admin/switch/" + agent + "/" + switchName + "/dhcp_conf",
             dataType: 'json',
             contentType: 'application/json',
             async: false,
-            data: JSON.stringify({"port": ports[portIdx], "macs": existingMACs, "base_name": worker, "network": network, "ip_offset": ipOffset }),
+            data: JSON.stringify({"port": ports[portIdx], "macs": existingMACs, "base_name": agent, "network": network, "ip_offset": ipOffset }),
             success: function (data) {
                 if(data["errors"].length > 0) {
-                    cleanDetect(worker, switchName);
+                    cleanDetect(agent, switchName);
                     for(error of data["errors"]) {
                         if(error.includes("DHCP configuration")) {
                             error = error + " <a href=\"javascript:deleteDHCPRule('" + switchName + "', '" +
@@ -250,16 +250,16 @@ function dhcpConf(worker, switchName, ports, portIdx, existingMACs, network, ipO
                         switchMessage("Rebooting the node");
                         switchMessage("Configuring the node on the port " + ports[portIdx] + ", waiting 120s");
                         setTimeout(function() {
-                            nodeConf(worker, switchName, ports, portIdx, existingMACs, network, ipOffset, data["node_ip"], 0);
+                            nodeConf(agent, switchName, ports, portIdx, existingMACs, network, ipOffset, data["node_ip"], 0);
                         }, 40000);
                     } else {
                         if(loopNb < 3) {
                             loopNb++;
                             setTimeout(function() {
-                                dhcpConf(worker, switchName, ports, portIdx, existingMACs, network, ipOffset, loopNb);
+                                dhcpConf(agent, switchName, ports, portIdx, existingMACs, network, ipOffset, loopNb);
                             }, 10000);
                         } else {
-                            cleanDetect(worker, switchName);
+                            cleanDetect(agent, switchName);
                             switchMessage("No IP detects for the node on the port " + ports[portIdx] +
                                 ". Check the node MAC address is not already in the DHCP configuration.", "text-danger");
                         }
@@ -273,18 +273,18 @@ function dhcpConf(worker, switchName, ports, portIdx, existingMACs, network, ipO
 }
 
 
-function nodeConf(worker, switchName, ports, portIdx, existingMACs, network, ipOffset, nodeIp, loopNb) {
+function nodeConf(agent, switchName, ports, portIdx, existingMACs, network, ipOffset, nodeIp, loopNb) {
     switchMessage("Configuring the node on the port " + ports[portIdx] + ", waiting " + (120 - 40 - loopNb * 10) + "s");
     $.ajax({
         type: "POST",
-        url: WEBUI + "/admin/switch/" + worker + "/" + switchName + "/node_conf",
+        url: WEBUI + "/admin/switch/" + agent + "/" + switchName + "/node_conf",
         dataType: 'json',
         contentType: 'application/json',
         async: false,
-        data: JSON.stringify( {"port": ports[portIdx], "node_ip": nodeIp, "base_name": worker} ),
+        data: JSON.stringify( {"port": ports[portIdx], "node_ip": nodeIp, "base_name": agent} ),
         success: function (data) {
             if(data["errors"].length > 0) {
-                cleanDetect(worker, switchName);
+                cleanDetect(agent, switchName);
                 for(error of data["errors"]) {
                     switchMessage(error, "text-danger");
                 }
@@ -300,20 +300,20 @@ function nodeConf(worker, switchName, ports, portIdx, existingMACs, network, ipO
                     // Detecting the next selected node
                     portIdx++;
                     if(portIdx < ports.length) {
-                        bootNode(worker, switchName, ports, portIdx, existingMACs, network, ipOffset);
+                        bootNode(agent, switchName, ports, portIdx, existingMACs, network, ipOffset);
                     } else {
                         switchMessage("All nodes are configured. Cleaning the TFTP directory..");
-                        cleanDetect(worker, switchName);
+                        cleanDetect(agent, switchName);
                     }
                 } else {
                     if(loopNb < 8) {
                         loopNb++;
                         setTimeout(function() {
-                            nodeConf(worker, switchName, ports, portIdx, existingMACs, network, ipOffset, nodeIp, loopNb);
+                            nodeConf(agent, switchName, ports, portIdx, existingMACs, network, ipOffset, nodeIp, loopNb);
                         }, 10000);
                     } else {
                         switchMessage("Can not get the node information. The node is not configured!", "text-danger");
-                        cleanDetect(worker, switchName);
+                        cleanDetect(agent, switchName);
                     }
                 }
             }
@@ -324,10 +324,10 @@ function nodeConf(worker, switchName, ports, portIdx, existingMACs, network, ipO
     });
 }
 
-function cleanDetect(worker, switchName) {
+function cleanDetect(agent, switchName) {
     $.ajax({
         type: "POST",
-        url: WEBUI + "/admin/switch/" + worker + "/clean_detect",
+        url: WEBUI + "/admin/switch/" + agent + "/clean_detect",
         dataType: 'json',
         contentType: 'application/json',
         async: false,
@@ -335,7 +335,7 @@ function cleanDetect(worker, switchName) {
             if(data["errors"].length > 0) {
                 alert(data["errors"]);
             }
-            updateSwitchNodes(worker + "-" + switchName);
+            updateSwitchNodes(agent + "-" + switchName);
         },
         error: function () {
             alert("Error: can not send the request");

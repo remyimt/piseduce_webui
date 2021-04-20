@@ -38,13 +38,13 @@
             {% for node in nodes %}
                 {% if nodes[node]["status"] == "available" %}
                     <div id="{{node}}" class="node free" onclick="addNameFilter(this)">
-                        <img src="/static/img/rpi4b.png" width="30px">
+                        <img src="/static/img/rpi.png" height="28px">
                         <div>{{node}}</div>
                         <div class="btn-color" onclick="showInfoView('{{node}}')">info</div>
                     </div>
                 {% else %}
                     <div id="{{node}}" class="node reserved">
-                        <img src="/static/img/rpi4b.png" width="30px">
+                        <img src="/static/img/rpi.png" height="28px">
                         <div>{{node}}</div>
                         <div class="btn-color" onclick="showInfoView('{{node}}')">info</div>
                     </div>

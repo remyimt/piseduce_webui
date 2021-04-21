@@ -33,12 +33,24 @@ $(document).ready(function () {
 
 // Functions
 function updateNodeStatus() {
+    // Get the number of nodes in the page
     $.ajax({
         type: "GET",
         url: WEBUI + "/user/node/updating",
         dataType: 'json',
         success: function (data) {
             delete data["errors"];
+            var uiNbNodes = $(".card-header").length;
+            var dataNbNodes = 0;
+            for (bin in data) {
+                for (nodeType in data[bin]) {
+                    dataNbNodes += data[bin][nodeType].length
+                }
+            }
+            if(uiNbNodes != dataNbNodes) {
+                location.reload();
+                return;
+            }
             for (bin in data) {
                 for (nodeType in data[bin]) {
                     for (node of data[bin][nodeType]) {

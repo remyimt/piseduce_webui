@@ -128,13 +128,20 @@ def list_agent(error=None):
         }
     }
     db = open_session()
-    for w in db.query(Agent).all():
-        result["agent_key"]["existing"][w.name] = {
-            "name": w.name,
-            "type": w.type,
-            "ip": w.ip,
-            "port": w.port,
-            "token": w.token
+    pimaster_ip = "undefined"
+    for a in db.query(Agent).all():
+        r = requests.post(url = "http://%s:%s/v1/admin/node/pimaster" % (a.ip, a.port), timeout = 6,
+            json = { "token": a.token })
+        if r.status_code == 200:
+            logging.info(r.json())
+            pimaster_ip = r.json()["ip"]
+        result["agent_key"]["existing"][a.name] = {
+            "name": a.name,
+            "type": a.type,
+            "ip": a.ip,
+            "private_ip": pimaster_ip,
+            "port": a.port,
+            "token": a.token
         }
     close_session(db)
     key_list = vpn_key_list()

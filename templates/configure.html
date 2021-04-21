@@ -72,7 +72,7 @@
                                 {% set nb_col = 3 %}
                                 {% set extra_col = (nb_col - node_data|length % nb_col) % nb_col %}
                                 <!-- Send the agent name in the form -->
-                                <input type="hidden" name="{{node_name}}-agent" value="{{agent}}">
+                                <input type="hidden" id="{{node_name}}-agent" name="{{node_name}}-agent" value="{{agent}}">
                                 <div class="card">
                                     <div id="heading-{{node_name}}" class="card-header">
                                         {% if loop.index == 1 %}

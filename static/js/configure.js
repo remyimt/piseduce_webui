@@ -30,7 +30,35 @@ $(document).ready(function () {
 
 // Functions
 function cancelReservation() {
-    alert("Not implemented yet");
+    var nodeNames = {};
+    $(".card-header > a").each(function(idx, header) {
+        var nodeName = $(header).html().replace(/\s/g,'');
+        var agent = $("#" + nodeName + "-agent").val();
+        if(!(agent in nodeNames)) {
+            nodeNames[agent] = []
+        }
+        nodeNames[agent].push(nodeName);
+    });
+    if(Object.keys(nodeNames).length > 0) {
+        $.ajax({
+            type: "POST",
+            url: WEBUI + "/user/make/exec",
+            dataType: 'json',
+            contentType: 'application/json',
+            async: false,
+            data: JSON.stringify({"reconfiguration": "destroy", "nodes": nodeNames}),
+            success: function (data) {
+                if(data["errors"].length > 0) {
+                    alert("Reconfigurations error: " + data["errors"]);
+                } else {
+                    window.location.reload(false);
+                }
+            },
+            error: function () {
+                alert("internal error: reconfiguration is canceled");
+            },
+        });
+    }
 }
 
 function copyConfiguration(nodeName) {

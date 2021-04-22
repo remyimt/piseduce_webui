@@ -26,7 +26,9 @@ def node_list():
                     if node in result["nodes"]:
                         duplicated_names.append(node)
                     else:
-                        result["nodes"][node] = r_json[node]
+                        node_info = r_json[node]
+                        node_info["type"] = agent.type
+                        result["nodes"][node] = node_info
                 if len(duplicated_names) > 0:
                     result["duplicated"] += duplicated_names
                     error_msg = "on agent '%s', duplicated names: %s" % (agent.name, duplicated_names)
@@ -39,7 +41,7 @@ def node_list():
         except:
             error_msg = "connection failure from the agent '%s'" %  agent.name
             result["errors"].append(error_msg)
-            logging.error(error_msg)
+            logging.exception(error_msg)
     close_session(db)
     if len(result["errors"]) == 0:
         result["nodes"] = sort_by_name(result["nodes"])
@@ -67,7 +69,7 @@ def node_configuring():
         except:
             error_msg = "connection failure from the agent '%s'" %  agent.name
             result["errors"].append(error_msg)
-            logging.error(error_msg)
+            logging.exception(error_msg)
     close_session(db)
     for node_type in result:
         if node_type != "errors":
@@ -91,7 +93,6 @@ def node_deploying():
                 for node in json_data["nodes"]:
                     # Sort the nodes by bin
                     bin_name = json_data["nodes"][node].pop("bin")
-                    del json_data["nodes"][node]["type"]
                     # Add the agent name to the node information
                     json_data["nodes"][node]["agent"] = agent.name
                     # No bin for nodes in 'configuring' state
@@ -108,7 +109,7 @@ def node_deploying():
         except:
             error_msg = "connection failure from the agent '%s'" %  agent.name
             result["errors"].append(error_msg)
-            logging.error(error_msg)
+            logging.exception(error_msg)
     close_session(db)
     return json.dumps(result)
 
@@ -135,7 +136,7 @@ def node_updating():
         except:
             error_msg = "connection failure from the agent '%s'" %  agent.name
             result["errors"].append(error_msg)
-            logging.error(error_msg)
+            logging.exception(error_msg)
     close_session(db)
     return json.dumps(result)
 

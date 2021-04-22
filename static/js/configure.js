@@ -51,7 +51,7 @@ function cancelReservation() {
                 if(data["errors"].length > 0) {
                     alert("Reconfigurations error: " + data["errors"]);
                 } else {
-                    window.location.reload(false);
+                    window.location.href = WEBUI + "/user/reserve";
                 }
             },
             error: function () {

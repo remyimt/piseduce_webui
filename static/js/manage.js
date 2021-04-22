@@ -40,20 +40,30 @@ function updateNodeStatus() {
         dataType: 'json',
         success: function (data) {
             delete data["errors"];
+            // Compute the number of nodes displayed in the HTML page
             var uiNbNodes = $(".card-header").length;
+            // Compute the number of nodes described in the agent data
             var dataNbNodes = 0;
             for (bin in data) {
                 for (nodeType in data[bin]) {
                     dataNbNodes += data[bin][nodeType].length
                 }
             }
+            console.log(data);
+            // Reload the page to remove destroyed nodes
             if(uiNbNodes != dataNbNodes) {
                 location.reload();
                 return;
             }
+            // Update the status
             for (bin in data) {
                 for (nodeType in data[bin]) {
                     for (node of data[bin][nodeType]) {
+                        osPwd = $("#" + node["name"] + "-os_password");
+                        if(Object.keys(osPwd).length == 0 && "os_password" in node) {
+                            // Reload the page to display the password
+                            location.reload();
+                        }
                         var oldStatus = $("#" + node["name"] + "-status");
                         if(oldStatus.html() != node["status"]) {
                             oldStatus.html(node["status"]);
@@ -62,7 +72,7 @@ function updateNodeStatus() {
                         }
                     }
                 }
-           }
+            }
         },
         error: function () {
             alert("error: can not send the request");

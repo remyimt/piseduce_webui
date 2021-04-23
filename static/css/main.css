@@ -52,6 +52,14 @@
     display: none;
 }
 
+.admin .add-element input {
+    width: 180px;
+}
+
+.admin .add-element select {
+    width: 180px;
+}
+
 .admin .ok {
     color: green;
 }

@@ -46,58 +46,62 @@
                         <b>From Manual Configuration</b>
                     </div>
                 {% endif %}
-                <form id="{{agent}}-form" action="/admin/add/{{elem_type}}" method="post" class="ml-3">
+                <form id="{{agent}}-form" action="/admin/add/{{elem_type}}" method="post" class="text-center">
                     <input type="hidden" name="agent" value="{{agent}}">
-                    <div class="container prop-table">
-                        {% set el_props = elements[agent]["properties"] %}
-                        {% for prop in el_props %}
-                            <div class="row">
-                                <div class="col-2">
-                                    {{prop}}
-                                </div>
-                                <div class="col">
-                                    {% if el_props[prop]|length == 0 %}
-                                        {% if prop in checks %}
-                                            <input type="text" name="{{prop}}" value="{{checks[prop]["value"]}}"
-                                                placeholder="{{prop}}" size="12" required>
-                                            {% if "check" in checks[prop] %}
-                                                {% if checks[prop]["check"] %}
-                                                    <span class="ok">ok</span>
-                                                {% else %}
-                                                    <span class="wrong">wrong</span>
+                    {% set el_props = elements[agent]["properties"] %}
+                    <table class="table add-element">
+                        <thead>
+                            <tr>
+                                {% for prop in el_props %}
+                                    <th scope="col">
+                                        {{prop}}
+                                    </th>
+                                {% endfor %}
+                            <tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                {% for prop in el_props %}
+                                    <td>
+                                        {% if el_props[prop]|length == 0 %}
+                                            {% if prop in checks %}
+                                                <input type="text" name="{{prop}}" value="{{checks[prop]["value"]}}"
+                                                    placeholder="{{prop}}" required>
+                                                {% if "check" in checks[prop] %}
+                                                    {% if checks[prop]["check"] %}
+                                                        <span class="ok">ok</span>
+                                                    {% else %}
+                                                        <span class="wrong">wrong</span>
+                                                    {% endif %}
                                                 {% endif %}
+                                            {% else %}
+                                                <input type="text" name="{{prop}}" placeholder="{{prop}}" required>
                                             {% endif %}
                                         {% else %}
-                                            <input type="text" name="{{prop}}" placeholder="{{prop}}" size="12" required>
-                                        {% endif %}
-                                    {% else %}
-                                        {% if prop in checks %}
-                                            <input type="text" name="{{prop}}" value="{{checks[prop]["value"]}}"
-                                                placeholder="{{prop}}" size="12" required>
-                                            {% if "check" in checks[prop] %}
-                                                {% if checks[prop]["check"] %}
-                                                    <span class="ok">ok</span>
-                                                {% else %}
-                                                    <span class="wrong">wrong</span>
+                                            {% if prop in checks %}
+                                                <input type="text" name="{{prop}}" value="{{checks[prop]["value"]}}"
+                                                    placeholder="{{prop}}" required>
+                                                {% if "check" in checks[prop] %}
+                                                    {% if checks[prop]["check"] %}
+                                                        <span class="ok">ok</span>
+                                                    {% else %}
+                                                        <span class="wrong">wrong</span>
+                                                    {% endif %}
                                                 {% endif %}
+                                            {% else %}
+                                                <select name="{{prop}}">
+                                                    {% for value in el_props[prop] %}
+                                                        <option value="{{value}}">{{value}}</option>
+                                                    {% endfor %}
+                                                </select>
                                             {% endif %}
-                                        {% else %}
-                                            <select name="{{prop}}">
-                                                {% for value in el_props[prop] %}
-                                                    <option value="{{value}}">{{value}}</option>
-                                                {% endfor %}
-                                            </select>
                                         {% endif %}
-                                    {% endif %}
-                                </div>
-                            </div>
-                        {% endfor %}
-                        <div class="row">
-                            <div class="col">
-                                <input type="submit" class="btn btn-info add-button" value="Add">
-                            </div>
-                        </div>
-                    </div><!-- container -->
+                                    </td>
+                                {% endfor %}
+                            </tr>
+                        </tbody>
+                    </table>
+                    <input type="submit" class="btn btn-info add-button" value="Add">
                 </form>
             {% else %}
                 <!-- List properties to add agent elements -->

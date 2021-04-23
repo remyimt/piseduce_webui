@@ -292,11 +292,19 @@
 .info-view {
     width: 800px;
     height: 284px;
+    padding: 6px;
     color: #fff;
-    opacity: 0.7;
+    opacity: 0.9;
     display: none;
     position: relative;
     top: -276px;
+}
+
+.close-view {
+    width: 300px;
+    text-align: center;
+    margin: auto;
+    cursor: pointer;
 }
 
 .reserve .nodeitems {

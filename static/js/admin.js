@@ -362,3 +362,18 @@ function loadInfo(select) {
     }
     $(select).parent().parent().find("#action-desc").html(info);
 }
+
+function copyToClipboard(div_tag) {
+    var toCopy = div_tag.parentNode.getAttribute('title');
+    // Beautiful animation
+    $(div_tag.parentNode).fadeTo("fast", 0.2, function() {
+        $(div_tag.parentNode).fadeTo("slow", 1);
+    });
+    // Copy the text to the clipboard
+    const el = document.createElement('textarea');
+    el.value = toCopy;
+    document.body.appendChild(el);
+    el.select();
+    document.execCommand('copy');
+    document.body.removeChild(el);
+}

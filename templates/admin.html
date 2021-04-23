@@ -205,6 +205,9 @@
                                         {% if elem_str|length > 18 %}
                                             <td title="{{elem_str}}">
                                                 {{ elem_str[:18] }}...
+                                                <div onclick="copyToClipboard(this)" class="text-info copy-button">
+                                                    Copy
+                                                </div>
                                         {% else %}
                                             <td>
                                                 {% if elem_str == "disconnected" %}

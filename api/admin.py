@@ -130,17 +130,25 @@ def list_agent(error=None):
     db = open_session()
     pimaster_ip = "undefined"
     for a in db.query(Agent).all():
-        r = requests.post(url = "http://%s:%s/v1/admin/node/pimaster" % (a.ip, a.port), timeout = 6,
-            json = { "token": a.token })
-        if r.status_code == 200:
-            logging.info(r.json())
-            pimaster_ip = r.json()["ip"]
+        if a.status == "connected":
+            # Get the pimaster IP
+            try:
+                r = requests.post(url = "http://%s:%s/v1/admin/node/pimaster" % (a.ip, a.port), timeout = 6,
+                    json = { "token": a.token })
+                if r.status_code == 200:
+                    pimaster_ip = r.json()["ip"]
+            except:
+                pimaster_ip = "unknown"
+                logging.error("the agent '%s' does not respond" % a.name)
+        else:
+            pimaster_ip = "unknown"
         result["agent_key"]["existing"][a.name] = {
             "name": a.name,
             "type": a.type,
             "ip": a.ip,
             "private_ip": pimaster_ip,
             "port": a.port,
+            "status": a.status,
             "token": a.token
         }
     close_session(db)
@@ -187,11 +195,39 @@ def add_agent():
             new_agent.ip = agent_ip
             new_agent.port = agent_port
             new_agent.token = agent_token
+            new_agent.status = "connected"
             db.add(new_agent)
             close_session(db)
     except:
-        logging.exception("add agent failure")
         msg = "can not add the agent '%s:%s'" % (agent_ip, agent_port)
+        logging.exception(msg)
+    return list_agent(msg)
+
+
+@b_admin.route("/reconnect/agent/<agent_name>")
+@login_required
+@admin_required
+def resync_agent(agent_name):
+    msg = ""
+    if agent_name is not None:
+        db = open_session()
+        agent = db.query(Agent).filter(Agent.name == agent_name).first()
+        if agent is not None:
+            try:
+                # Test the connection to the agent
+                r = requests.get(url = "http://%s:%s/v1/debug/status" % (agent.ip, agent.port))
+                if r.status_code != 200 or "status" not in r.json():
+                    msg = "wrong answer from the agent '%s'" % agent.name
+                elif "type" in r.json():
+                    agent.status = "connected"
+                else:
+                    msg = "no 'type' property in the answer of the agent '%s'" % agent.name
+            except:
+                msg = "can not reconnect the agent '%s'" % agent.name
+                logging.exception(msg)
+        close_session(db)
+    else:
+        msg = "no agent '%s' in the database" % agent.name
     return list_agent(msg)
 
 
@@ -208,7 +244,7 @@ def delete_agent(agent_name):
     return list_agent()
 
 
-# Other element management
+# Rename nodes of the agent 'agent_name'
 @b_admin.route("/node/rename/<agent_name>/<new_name>")
 @login_required
 @admin_required
@@ -250,7 +286,7 @@ def get(el_type, error=None):
         return flask.render_template("admin.html", admin = current_user.is_admin, active_btn = "admin_%s" % el_type,
             elem_type = el_type, elements = result, msg = error)
     db = open_session()
-    agents = db.query(Agent).filter(Agent.type.in_(agent_types)).all()
+    agents = db.query(Agent).filter(Agent.type.in_(agent_types)).filter(Agent.status == "connected").all()
     for w in agents:
         result[w.name] = { "properties": [], "existing": {} }
         try:
@@ -620,7 +656,7 @@ def network():
     db = open_session()
     for u in db.query(User).all():
         vpn_clients["user"].append(u.email.replace("@", "_"))
-    for w in db.query(Agent).all():
+    for w in db.query(Agent).filter(Agent.status == "connected").all():
         vpn_clients["agent"].append(w.name)
     close_session(db)
     # Render the beautiful page

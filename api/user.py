@@ -2,6 +2,7 @@ from api.tool import sort_by_name
 from database.connector import open_session, close_session
 from database.tables import User, Agent
 from flask_login import current_user, login_required
+from requests.exceptions import ConnectTimeout, ConnectionError
 from werkzeug.security import generate_password_hash
 import flask, json, logging, os, requests
 
@@ -15,7 +16,7 @@ b_user = flask.Blueprint("user", __name__, template_folder="templates/")
 def node_list():
     result = { "errors": [], "nodes": {}, "duplicated": [] }
     db = open_session()
-    for agent in db.query(Agent).all():
+    for agent in db.query(Agent).filter(Agent.status == "connected").all():
         try:
             r = requests.post(url = "http://%s:%s/v1/user/node/prop" % (agent.ip, agent.port), timeout = 6,
                 json = { "token": agent.token })
@@ -38,8 +39,14 @@ def node_list():
                 error_msg = "on agent '%s', connection error with return code %d" % (agent.name, r.status_code)
                 result["errors"].append(error_msg)
                 logging.error(error_msg)
-        except:
-            error_msg = "connection failure from the agent '%s'" %  agent.name
+        except (ConnectionError, ConnectTimeout):
+            agent.status = "disconnected"
+            error_msg = "agent '%s' does not respond" %  agent.name
+            result["errors"].append(error_msg)
+            logging.exception(error_msg)
+        except Exception as e:
+            logging.info(e.__class__.__name__)
+            error_msg = "connection failure to the agent '%s'" %  agent.name
             result["errors"].append(error_msg)
             logging.exception(error_msg)
     close_session(db)
@@ -53,7 +60,7 @@ def node_list():
 def node_configuring():
     result = { "errors": [], "raspberry": {}, "sensor": {}, "server": {}, "fake": {} }
     db = open_session()
-    for agent in db.query(Agent).all():
+    for agent in db.query(Agent).filter(Agent.status == "connected").all():
         try:
             r = requests.post(url = "http://%s:%s/v1/user/configure" % (agent.ip, agent.port), timeout = 6,
                 json = { "token": agent.token, "user": current_user.email })
@@ -66,8 +73,13 @@ def node_configuring():
             else:
                 logging.error("configuring error: wrong answer from the agent '%s'" % agent.name)
 
+        except (ConnectionError, ConnectTimeout):
+            agent.status = "disconnected"
+            error_msg = "agent '%s' does not respond" %  agent.name
+            result["errors"].append(error_msg)
+            logging.exception(error_msg)
         except:
-            error_msg = "connection failure from the agent '%s'" %  agent.name
+            error_msg = "connection failure to the agent '%s'" %  agent.name
             result["errors"].append(error_msg)
             logging.exception(error_msg)
     close_session(db)
@@ -82,7 +94,7 @@ def node_configuring():
 def node_deploying():
     result = { "errors": [], "nodes": {}, "states": [] }
     db = open_session()
-    for agent in db.query(Agent).all():
+    for agent in db.query(Agent).filter(Agent.status == "connected").all():
         try:
             r = requests.post(url = "http://%s:%s/v1/user/node/mine" % (agent.ip, agent.port), timeout = 6,
                 json = { "token": agent.token, "user": current_user.email })
@@ -106,8 +118,13 @@ def node_deploying():
                     agent.name, r.status_code)
                 logging.error(error_msg)
                 result["errors"].append(error_msg)
+        except (ConnectionError, ConnectTimeout):
+            agent.status = "disconnected"
+            error_msg = "agent '%s' does not respond" %  agent.name
+            result["errors"].append(error_msg)
+            logging.exception(error_msg)
         except:
-            error_msg = "connection failure from the agent '%s'" %  agent.name
+            error_msg = "connection failure to the agent '%s'" %  agent.name
             result["errors"].append(error_msg)
             logging.exception(error_msg)
     close_session(db)
@@ -119,7 +136,7 @@ def node_deploying():
 def node_updating():
     result = { "errors": [] }
     db = open_session()
-    for agent in db.query(Agent).all():
+    for agent in db.query(Agent).filter(Agent.status == "connected").all():
         try:
             r = requests.post(url = "http://%s:%s/v1/user/node/status" % (agent.ip, agent.port), timeout = 6,
                 json = { "token": agent.token, "user": current_user.email })
@@ -134,7 +151,7 @@ def node_updating():
                             result[bin_name] = { "raspberry": [], "sensor": [], "server": [], "fake": [] }
                         result[bin_name][agent.type].append(json_data["nodes"][node])
         except:
-            error_msg = "connection failure from the agent '%s'" %  agent.name
+            error_msg = "connection failure to the agent '%s'" %  agent.name
             result["errors"].append(error_msg)
             logging.exception(error_msg)
     close_session(db)
@@ -155,7 +172,7 @@ def make_reserve():
         del prop["nb_nodes"]
         del prop["type"]
         if agent_type is not None and len(agent_type) > 0:
-            for agent in db.query(Agent).filter(Agent.type == agent_type).all():
+            for agent in db.query(Agent).filter(Agent.type == agent_type).filter(Agent.status == "connected").all():
                 # Get the nodes with at least one of requested properties
                 r = requests.post(url = "http://%s:%s/v1/user/node/list" % (agent.ip, agent.port), timeout = 6,
                     json = { "token": agent.token, "properties": prop })

@@ -184,6 +184,9 @@
                                     <th scope="col">
                                         Rename nodes
                                     </th>
+                                    <th scope="col">
+                                        Reconnect
+                                    </th>
                                 {% endif %}
                                 <th scope="col">
                                     Delete {{ elem_type[0]|upper}}{{elem_type[1:] }}
@@ -200,14 +203,22 @@
                                                 {{ elem_str[:18] }}...
                                         {% else %}
                                             <td>
-                                                {{ elem_str }}
+                                                {% if elem_str == "disconnected" %}
+                                                    <span class="text-danger">disconnected</span>
+                                                {% else %}
+                                                    {{ elem_str }}
+                                                {% endif %}
                                         {% endif %}
                                         </td>
                                     {% endfor %}
                                     {% if elem_type == "agent" %}
                                         <td>
-                                            <a href="/admin/node/rename/{{existing[elem]["name"]}}/{{existing[elem]["name"]}}"
+                                            <a href="/admin/node/rename/{{ existing[elem]["name"] }}/{{ existing[elem]["name"] }}"
                                                 class="btn btn-info delete-button">&#9673;</a>
+                                        </td>
+                                        <td>
+                                            <a href="/admin/reconnect/agent/{{ existing[elem]["name"] }}"
+                                                class="btn btn-info delete-button">&#8635;</a>
                                         </td>
                                     {% endif %}
                                     <td>

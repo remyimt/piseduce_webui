@@ -300,6 +300,16 @@
     top: -276px;
 }
 
+.info-view > div:first-child {
+    height: 240px;
+    overflow-y: auto;
+}
+
+.info-prop {
+    width: 50%;
+    display: inline-block;
+}
+
 .close-view {
     width: 300px;
     text-align: center;

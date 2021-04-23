@@ -12,7 +12,7 @@ $(document).ready(function () {
 function showInfoView(nodeName) {
     $("#info-node").empty();
     for (var prop in NODES[nodeName]) {
-        $("#info-node").append($("<span>" + prop + ": " + NODES[nodeName][prop] + "</span><br/>"));
+        $("#info-node").append($("<div class='info-prop'>" + prop + ": " + NODES[nodeName][prop] + "</div>"));
     }
     $(".info-view").fadeIn(200);
     event.stopPropagation();

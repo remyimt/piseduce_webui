@@ -345,13 +345,16 @@ def add(el_type):
                 json_args[prop] = flask.request.form[prop]
         json_args["token"] = agent.token
         # Register the element to the agent
-        r = requests.post(url = "http://%s:%s/v1/admin/add/%s" % (agent.ip, agent.port, el_type), timeout = 6,
+        r = requests.post(url = "http://%s:%s/v1/admin/add/%s" % (agent.ip, agent.port, el_type), timeout = 60,
             json = json_args)
+        logging.error(r.json())
         if r.status_code != 200:
             msg = "can not add the %s '%s' to the agent '%s'" % (el_type, flask.request.form["name"], agent.name)
         elif el_type not in r.json():
             if "check" in r.json():
                 msg = r.json()["check"]
+            elif "error" in r.json():
+                msg = r.json()["error"]
             else:
                 msg = "wrong answer from '%s' for the %s '%s'"% (agent.name, el_type, flask.request.form["name"])
         else:

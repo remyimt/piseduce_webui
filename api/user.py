@@ -240,6 +240,11 @@ def make_deploy():
         return flask.redirect("/user/configure?msg=%s" % "No data available to deploy nodes")
     db = open_session()
     for agent_name in result:
+        # Send the user SSH key to the agent
+        user_db = db.query(User).filter(User.email == current_user.email).first()
+        if len(user_db.ssh_key) > 256:
+            for node in result[agent_name]:
+                result[agent_name][node]["account_ssh_key"] = user_db.ssh_key
         agent = db.query(Agent).filter(Agent.name == agent_name).first()
         r = requests.post(url = "http://%s:%s/v1/user/deploy" % (agent.ip, agent.port), timeout = 6,
                 json = { "token": agent.token, "nodes": result[agent_name], "user": current_user.email })

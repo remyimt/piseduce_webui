@@ -4,25 +4,7 @@ var PROPERTIES = {}
 
 // Configure the global variables and display the nodes
 $(document).ready(function () {
-    updateNodes();
-    filterNodes();
-});
-
-// Functions
-function showInfoView(nodeName) {
-    $("#info-node").empty();
-    for (var prop in NODES[nodeName]) {
-        $("#info-node").append($("<div class='info-prop'>" + prop + ": " + NODES[nodeName][prop] + "</div>"));
-    }
-    $(".info-view").fadeIn(200);
-    event.stopPropagation();
-}
-
-function hideInfoView() {
-    $(".info-view").fadeOut(400);
-}
-
-function updateNodes() {
+    // Compute the node property list used to create filters
     $.ajax({
         type: "GET",
         url: WEBUI + "/user/node/list",
@@ -53,6 +35,54 @@ function updateNodes() {
             console.log("error: can not send the request");
         },
     });
+    // Set default values
+    filterNodes();
+    // Update the status every 10s
+    setInterval(updateNodeStatus, 10000);
+});
+
+// Functions
+function updateNodeStatus() {
+    $.ajax({
+        type: "GET",
+        url: WEBUI + "/user/node/list",
+        dataType: 'json',
+        success: function (data) {
+            var current = data["nodes"]
+            updated = false;
+            for (var node in current) {
+                // Update the status property
+                if(NODES[node]["status"] != current[node]["status"]) {
+                    updated = true;
+                    NODES[node]["status"] = current[node]["status"];
+                    if(NODES[node]["status"] == "available") {
+                        $("#" + node).attr("class", "node free");
+                    } else {
+                        $("#" + node).attr("class", "node reserved");
+                    }
+                }
+            }
+            if(updated) {
+                filterNodes();
+            }
+        },
+        error: function() {
+            console.log("error: can not send the request");
+        }
+    });
+}
+
+function showInfoView(nodeName) {
+    $("#info-node").empty();
+    for (var prop in NODES[nodeName]) {
+        $("#info-node").append($("<div class='info-prop'>" + prop + ": " + NODES[nodeName][prop] + "</div>"));
+    }
+    $(".info-view").fadeIn(200);
+    event.stopPropagation();
+}
+
+function hideInfoView() {
+    $(".info-view").fadeOut(400);
 }
 
 function displayPropValues() {

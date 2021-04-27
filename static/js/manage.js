@@ -49,7 +49,6 @@ function updateNodeStatus() {
                     dataNbNodes += data[bin][nodeType].length
                 }
             }
-            console.log(data);
             // Reload the page to remove destroyed nodes
             if(uiNbNodes != dataNbNodes) {
                 location.reload();
@@ -75,7 +74,7 @@ function updateNodeStatus() {
             }
         },
         error: function () {
-            alert("error: can not send the request");
+            console.log("error: can not send the request");
         }
     });
 }

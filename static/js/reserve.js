@@ -50,7 +50,7 @@ function updateNodes() {
             }
         },
         error: function () {
-            alert("error: can not send the request");
+            console.log("error: can not send the request");
         },
     });
 }
@@ -129,7 +129,6 @@ function filterNodes() {
 function updateNbPrint(inputField) {
     $("#nb_print").html($(inputField).val());
 }
-
 
 function addFilterSelection() {
     var filtersHTML = $(".filters .filter div:first-child");

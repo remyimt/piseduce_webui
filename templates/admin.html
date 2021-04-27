@@ -19,6 +19,7 @@
     {% endif %}
     <!-- Remove the errors field -->
     {% set useless = elements.pop("errors") %}
+    <!-- Select the agent -->
     {% if elem_type != "agent" %}
         <div class="bg-info rounded-right title">Agent Selection</div>
         {% if elements|length == 0 %}
@@ -31,6 +32,28 @@
             </select>
         {% endif %}
     {% endif %}
+    <!-- For DHCP clients, change the IP of both the agent and the DHCP server -->
+    {% if elem_type == "client" %}
+        <div class="bg-info rounded-right title">Change Agent IP</div>
+        <form action="/admin/changeip/agent" method="post" class="pl-3 ip-form">
+            <div class="mb-4">
+                Change the internal IP of the agent, the IP range of the DHCP server and
+                the IP of the DHCP clients. If the agent is connected to the VPN, do not
+                forget to <b>update the VPN server routes.</b><br/>
+                <b>WARNING</b>: Some DHCP clients (e.g., switches) may need to reboot to
+                update their IP!
+            </div>
+            <input id="agent-name" type="hidden" name="agent" value="{{agent}}">
+            <span class="mr-2">New Agent IP</span>
+            <input type="text" name="new_ip" required><span class="mr-4">/24</span>
+            <input id="changeip-button" type="submit" class="btn btn-info" value="Change IP">
+            <div class="text-danger">
+                After the IP modification you need to manually reboot the pimaster and/or the
+                switch to apply the new IP configuration.
+            </div>
+        </form>
+    {% endif %}
+    <!-- Add element form -->
     <div class="bg-info rounded-right title">
         Add {{elem_type[0]|upper}}{{elem_type[1:]}}
     </div>

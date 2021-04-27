@@ -207,7 +207,7 @@ def add_agent():
 @b_admin.route("/reconnect/agent/<agent_name>")
 @login_required
 @admin_required
-def resync_agent(agent_name):
+def reconnect_agent(agent_name):
     msg = ""
     if agent_name is not None:
         db = open_session()
@@ -229,6 +229,36 @@ def resync_agent(agent_name):
     else:
         msg = "no agent '%s' in the database" % agent.name
     return list_agent(msg)
+
+
+@b_admin.route("/changeip/agent", methods=[ "POST" ])
+@login_required
+@admin_required
+def changeip_agent():
+    msg = ""
+    agent_name =  flask.request.form["agent"]
+    new_ip = flask.request.form["new_ip"]
+    if agent_name is not None:
+        db = open_session()
+        agent = db.query(Agent).filter(Agent.name == agent_name).first()
+        if agent is not None:
+            try:
+                r = requests.post(url = "http://%s:%s/v1/admin/pimaster/changeip" % (agent.ip, agent.port), timeout = 6,
+                    json = { "token": agent.token, "new_ip":  new_ip })
+                if r.status_code != 200:
+                    msg = "wrong answer from the agent '%s'" % agent.name
+                else:
+                    if "msg" in r.json():
+                        msg = r.json()["msg"]
+                    else:
+                        msg = "the expected 'msg' field is missing (agent: '%s')" % agent.name
+            except:
+                msg = "can not reconnect the agent '%s'" % agent.name
+                logging.exception(msg)
+        close_session(db)
+    else:
+        msg = "no agent '%s' in the database" % agent.name
+    return flask.redirect("/admin/get/client/%s" % msg)
 
 
 @b_admin.route("/delete/agent/<agent_name>")

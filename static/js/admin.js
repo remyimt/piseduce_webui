@@ -13,11 +13,19 @@ $(document).ready(function () {
 
 // Functions
 function agentSelect(select) {
+    var agentName = $(select).val();
     $(".agent-div").hide();
-    $("#" + $(select).val() + "-add").show()
-    $("#" + $(select).val() + "-existing").show()
-    $("#" + $(select).val() + "-switch").show()
-    var switchSelector = $("#" + $(select).val() + "-switch-list");
+    $("#" + agentName + "-add").show()
+    $("#" + agentName + "-existing").show()
+    $("#" + agentName + "-switch").show()
+    // Update the hidden field that only exists for 'client' elements
+    var formAgent = $("#agent-name");
+    if(formAgent && Object.keys(formAgent).length > 0) {
+        formAgent.val(agentName);
+        $("#changeip-button").val("Change '" + agentName + "' agent IP")
+    }
+    // Update the 'select' tag that only exists for 'switch' elements
+    var switchSelector = $("#" + agentName + "-switch-list");
     if(switchSelector && Object.keys(switchSelector).length > 0) {
         displayTable(switchSelector);
     }

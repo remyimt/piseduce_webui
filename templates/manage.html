@@ -93,10 +93,16 @@
                                                             {{ name[0]|upper}}{{name[1:] }}
                                                         {% endfor %}
                                                     </div>
-                                                    {% if prop[1]|string|length > 0 %}
-                                                        <div id="{{node_name}}-{{prop[0]}}">{{prop[1]}}</div>
+                                                    {% if prop[0] == "url" %}
+                                                            <div id="{{node_name}}-{{prop[0]}}">
+                                                                <a href="{{prop[1]}}" target="_blank">node UI</a>
+                                                            </div>
                                                     {% else %}
-                                                        <div id="{{node_name}}-{{prop[0]}}">None</div>
+                                                        {% if prop[1]|string|length > 0 %}
+                                                            <div id="{{node_name}}-{{prop[0]}}">{{prop[1]}}</div>
+                                                        {% else %}
+                                                            <div id="{{node_name}}-{{prop[0]}}">None</div>
+                                                        {% endif %}
                                                     {% endif %}
                                                 </div>
                                                 {% if loop.index % nb_col == 0 %}

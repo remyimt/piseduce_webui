@@ -63,6 +63,14 @@ function updateNodeStatus() {
                             // Reload the page to display the password
                             location.reload();
                         }
+                        var nameDiv = $("#" + node["name"] + "-name");
+                        if("percent" in node && node["status"] == "env_check") {
+                            nameDiv.html(node["name"] + " - " + node["percent"] + "%");
+                        } else {
+                            if(nameDiv.html() != node["name"]) {
+                                nameDiv.html(node["name"]);
+                            }
+                        }
                         var oldStatus = $("#" + node["name"] + "-status");
                         if(oldStatus.html() != node["status"]) {
                             oldStatus.html(node["status"]);

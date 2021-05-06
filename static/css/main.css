@@ -415,11 +415,32 @@
     overflow-y: auto;
 }
 
-.selectednodes > div:last-child {
+.reserve .date-picker {
+    padding-left: 6px;
+    padding-right: 6px;
+    padding-bottom: 10px;
+}
+
+.reserve .date-picker > div {
+    margin-bottom: 4px;
+}
+
+.reserve .date-picker .field {
+    width: 290px;
+    display: inline-block;
+}
+
+.reserve .date-picker .input-lg {
+    width: 140px;
+}
+
+.reserve .date-picker .input-sm {
+    width: 60px;
+}
+
+.reserve .date-picker .btn {
     width: 100%;
-    height: 40px;
-    margin-top: 16px;
-    padding-top: 7px;
+    margin-top: 20px;
 }
 
 /** Configure page **/

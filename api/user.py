@@ -60,6 +60,8 @@ def node_list():
 def node_configuring():
     result = { "errors": [], "raspberry": {}, "sensor": {}, "server": {}, "fake": {} }
     db = open_session()
+    duration = None
+    start_date = None
     for agent in db.query(Agent).filter(Agent.status == "connected").all():
         try:
             r = requests.post(url = "http://%s:%s/v1/user/configure" % (agent.ip, agent.port), timeout = 6,
@@ -67,12 +69,15 @@ def node_configuring():
             if r.status_code == 200 and agent.type in result:
                 # Add the agent name to the node information
                 json_data = r.json()
+                duration = json_data["duration"]
+                start_date = json_data["start_date"]
+                del json_data["duration"]
+                del json_data["start_date"]
                 for node in json_data:
                     json_data[node]["agent"] = agent.name
                 result[agent.type].update(json_data)
             else:
                 logging.error("configuring error: wrong answer from the agent '%s'" % agent.name)
-
         except (ConnectionError, ConnectTimeout):
             agent.status = "disconnected"
             error_msg = "agent '%s' does not respond" %  agent.name
@@ -86,6 +91,8 @@ def node_configuring():
     for node_type in result:
         if node_type != "errors":
             result[node_type] = sort_by_name(result[node_type])
+    result["duration"] = duration
+    result["start_date"] = start_date
     return json.dumps(result)
 
 
@@ -164,23 +171,23 @@ def make_reserve():
     result = { "nodes": [], "errors": [] }
     msg = ""
     db = open_session()
-    for prop in flask.request.json:
+    for f in flask.request.json["filters"]:
         matching_nodes = []
         available_nodes = []
-        nb_nodes = int(prop["nb_nodes"])
-        agent_type = prop["type"]
-        del prop["nb_nodes"]
-        del prop["type"]
+        nb_nodes = int(f["nb_nodes"])
+        agent_type = f["type"]
+        del f["nb_nodes"]
+        del f["type"]
         if agent_type is not None and len(agent_type) > 0:
             for agent in db.query(Agent).filter(Agent.type == agent_type).filter(Agent.status == "connected").all():
                 # Get the nodes with at least one of requested properties
                 r = requests.post(url = "http://%s:%s/v1/user/node/list" % (agent.ip, agent.port), timeout = 6,
-                    json = { "token": agent.token, "properties": prop })
+                    json = { "token": agent.token, "properties": f })
                 if r.status_code == 200:
                     r_json = r.json()
                     for node, node_props in r_json.items():
                         # Check the node have all requested properties
-                        if len(prop) == 0 or len(prop) == len(node_props):
+                        if len(f) == 0 or len(f) == len(node_props):
                             matching_nodes.append(node)
                 else:
                     logging.error("node reservation failure: can not get the node list from the agent '%s'" % agent.name)
@@ -198,7 +205,11 @@ def make_reserve():
                 # Make the reservation
                 if len(available_nodes) > 0:
                     r = requests.post(url = "http://%s:%s/v1/user/reserve" % (agent.ip, agent.port), timeout = 6,
-                            json = { "token": agent.token, "nodes": available_nodes, "user": current_user.email })
+                        json = {
+                            "token": agent.token, "nodes": available_nodes, "user": current_user.email,
+                            "start_date": flask.request.json["start_date"],
+                            "duration": flask.request.json["duration"]
+                        })
                     if r.status_code == 200:
                         result["nodes"] += available_nodes
                     else:
@@ -225,15 +236,13 @@ def make_deploy():
     for prop in form_data:
         if prop == "bin":
             bin_name = form_data[prop]
-        elif prop == "duration":
-            duration = form_data[prop]
         else:
             node_name, _, prop_name = prop.rpartition("-")
             if prop_name == "agent":
                 last_agent = form_data[prop]
                 if last_agent not in result:
                     result[last_agent] = {}
-                result[last_agent][node_name] = { "node_bin": bin_name, "duration": duration }
+                result[last_agent][node_name] = { "node_bin": bin_name }
             else:
                 result[last_agent][node_name][prop_name] = form_data[prop]
     if len(result) == 0:

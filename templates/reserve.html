@@ -69,6 +69,29 @@
     <div class="selectednodes">
         <div class="ready-nodes">
         </div>
+    </div>
+    <div class="bg-info rounded-right title">Deployment Date</div>
+    <div class="title-text">Choose the date and the duration</div>
+    <div class="date-picker">
+        <div>
+            <div class="field">
+                Beginning Date
+            </div>
+            <input type="date" id="start-date" class="input-lg">
+        </div>
+        <div>
+            <div class="field">
+                Beginning Hours
+            </div>
+            <input type="number" id="start-hours" min="0" max="23" class="input-sm">h
+            <input type="number" id="start-minutes" min="0" max="59" class="input-sm">
+        </div>
+        <div>
+            <div class="field">
+                Duration in hours (72 hours maximum)
+            </div>
+            <input type="number" id="duration" min="0" max="72" value="2" class="input-lg">
+        </div>
         <div class="btn btn-info rounded" onclick="reserveNodes()">Reserve</div>
     </div>
 </div>

@@ -21,7 +21,7 @@
             <div class="name">
                 <div class="container">
                     <div class="row">
-                        <div class="col">
+                        <div class="col-4">
                             <span>
                                 Node bin name
                             </span>
@@ -29,22 +29,27 @@
                         <div class="col">
                             <input type="text" name="bin" onfocus="showDesc(this)" onfocusout="$('.desc').empty()" required>
                         </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-4">
+                            Beginning date (UTC Time)
+                        </div>
                         <div class="col">
+                            {{ nodes["start_date"] }}
                         </div>
                     </div>
                     <div class="row">
-                        <div class="col">
-                            duration
+                        <div class="col-4">
+                            Duration
                         </div>
                         <div class="col">
-                            <input type="number" name="duration" min="0" max="72" value="2"
-                                onfocus="showDesc(this)" onfocusout="$('.desc').empty()" required>
-                        </div>
-                        <div class="col">
+                            {{ nodes["duration"] }}
                         </div>
                     </div>
                 </div>
             </div>
+            {% set useless = nodes.pop("duration") %}
+            {% set useless = nodes.pop("start_date") %}
             <div class="bg-info rounded-right title">
                 Nodes
             </div>

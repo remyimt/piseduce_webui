@@ -4,6 +4,14 @@ var PROPERTIES = {}
 
 // Configure the global variables and display the nodes
 $(document).ready(function () {
+    // Set today as the default date value of the reservation beginning date
+    var now = new Date()
+    var dateStr = now.toJSON().split("T")[0];
+    var hourStr = now.getHours();
+    var minuteStr = now.getMinutes();
+    $('#start-date').val(dateStr);
+    $('#start-hours').val(hourStr);
+    $('#start-minutes').val(minuteStr);
     // Compute the node property list used to create filters
     $.ajax({
         type: "GET",
@@ -212,10 +220,35 @@ function addNameFilter(node) {
     $(".selectednodes .ready-nodes").append(filter);
 }
 
+function leadingZero(number) {
+    return String(number).padStart(2, "0");
+}
+
 function reserveNodes() {
     var filters = []
-    if( $(".selectednodes .ready-nodes").children().length > 0) {
-        // Iterate over .filter elements
+    if($(".selectednodes .ready-nodes").children().length > 0) {
+        // Build the beginning date
+        var startDate = new Date($("#start-date").val());
+        startDate.setHours($("#start-hours").val());
+        startDate.setMinutes($("#start-minutes").val());
+        var startDateStr = startDate.getUTCFullYear() + "-" +
+            leadingZero(startDate.getUTCMonth() + 1) + "-" +
+            leadingZero(startDate.getUTCDate()) + " " +
+            leadingZero(startDate.getUTCHours()) + ":" +
+            leadingZero(startDate.getUTCMinutes()) + ":" +
+            leadingZero(startDate.getUTCSeconds());
+        // Today, 15 minutes earlier
+        var today = new Date(Date.now() - 15 * 60000);
+        if(startDate < today) {
+            alert("The beginning date is expired. Do not laugh at me!");
+            return;
+        }
+        var duration = parseInt($("#duration").val());
+        if(duration > 72) {
+            alert("The maximum duration for a reservation is 72 hours");
+            return;
+        }
+        // Iterate over .filter elements to add the nodes to the reservation
         $(".selectednodes .ready-nodes").children().each(function() {
             // Read the span tags to get the filter information
             $(this).children().each(function(idx, spanContainer) {
@@ -239,7 +272,7 @@ function reserveNodes() {
             dataType: 'json',
             contentType: 'application/json',
             async: false,
-            data: JSON.stringify(filters),
+            data: JSON.stringify({ "filters": filters, "start_date": startDateStr, "duration": duration}),
             success: function (data) {
                 if(data["errors"].length > 0) {
                     alert("Reservation error: " + data["errors"]);

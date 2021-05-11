@@ -36,19 +36,11 @@
     <div class="default-view">
         <div class="nodeitems">
             {% for node in nodes %}
-                {% if nodes[node]["status"] == "available" %}
-                    <div id="{{node}}" class="node free" onclick="addNameFilter(this)">
-                        <img src="/static/img/rpi.png" height="28px">
-                        <div>{{node}}</div>
-                        <div class="btn-color" onclick="showInfoView('{{node}}')">info</div>
-                    </div>
-                {% else %}
-                    <div id="{{node}}" class="node reserved">
-                        <img src="/static/img/rpi.png" height="28px">
-                        <div>{{node}}</div>
-                        <div class="btn-color" onclick="showInfoView('{{node}}')">info</div>
-                    </div>
-                {% endif %}
+                <div id="{{node}}" class="node free" onclick="addNameFilter(this)">
+                    <img src="/static/img/rpi.png" height="28px">
+                    <div>{{node}}</div>
+                    <div class="btn-color" onclick="showInfoView('{{node}}')">info</div>
+                </div>
             {% endfor %}
         </div>
         <div class="fuzzy">

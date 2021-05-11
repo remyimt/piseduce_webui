@@ -60,7 +60,7 @@
                     <div id="{{node_bin}}-{{node_type}}" class="accordion">
                         {% for node_data in nodes[node_bin][node_type] %}
                             {% set agent = node_data.pop("agent") %}
-                            {% set node_name = node_data.pop("name") %}
+                            {% set node_name = node_data.pop("node_name") %}
                             <!-- Send the agent name in the form -->
                             <input type="hidden" id="{{node_name}}-agent" value="{{agent}}">
                             <div class="card">

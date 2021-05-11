@@ -30,26 +30,8 @@
                             <input type="text" name="bin" onfocus="showDesc(this)" onfocusout="$('.desc').empty()" required>
                         </div>
                     </div>
-                    <div class="row">
-                        <div class="col-4">
-                            Beginning date (UTC Time)
-                        </div>
-                        <div class="col">
-                            {{ nodes["start_date"] }}
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-4">
-                            Duration
-                        </div>
-                        <div class="col">
-                            {{ nodes["duration"] }}
-                        </div>
-                    </div>
                 </div>
             </div>
-            {% set useless = nodes.pop("duration") %}
-            {% set useless = nodes.pop("start_date") %}
             <div class="bg-info rounded-right title">
                 Nodes
             </div>
@@ -69,9 +51,8 @@
                                 {% set node_data = nodes[node_type][node_name] %}
                                 <!-- Remember the loop iterator -->
                                 {% set node_loop = loop %}
-                                <!-- Remove the 'name' and 'duration' property (common deployment properties) -->
+                                <!-- Remove the 'node_bin' property (shared deployment properties) -->
                                 {% set useless = node_data.pop("node_bin") %}
-                                {% set useless = node_data.pop("duration") %}
                                 {% set agent = node_data.pop("agent") %}
                                 <!-- configure the number of columns per row -->
                                 {% set nb_col = 3 %}
@@ -100,6 +81,12 @@
                                                  aria-labelledby="heading-{{node_name}}" data-parent="#{{node_type}}">
                                         {% endif %}
                                         <div class="card-body">
+                                            <div class="text-info dates">
+                                                The reservation starts at <b>{{node_data["start_date"]}}</b> and
+                                                finishes at <b>{{node_data["end_date"]}}</b> (UTC Time).
+                                            </div>
+                                            {% set useless = node_data.pop("start_date") %}
+                                            {% set useless = node_data.pop("end_date") %}
                                             <div id="{{node_name}}-props" class="container properties">
                                                 {% for prop in node_data %}
                                                     {% if loop.index % nb_col == 1 %}

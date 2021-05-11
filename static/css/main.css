@@ -507,6 +507,10 @@
     overflow-y: scroll;
 }
 
+.configure .dates {
+    padding-left: 15px;
+}
+
 .configure .card-header a {
     width: 100%;
 }

@@ -68,7 +68,6 @@ function copyConfiguration(nodeName) {
     $(".card-body .properties").each(function(useless, node) {
         var myAccordion = $(node).parent().parent().parent().parent()[0];
         if(myAccordion.id == accordion.id) {
-            console.log(node.id.replace("-props", ""));
             $("#heading-" + node.id.replace("-props", "") + " a").removeClass("font-weight-bold");
             // Write the properties
             $(node).find(".col").children("input").each(function(idx, input) {

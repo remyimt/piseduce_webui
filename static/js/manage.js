@@ -39,6 +39,9 @@ function updateNodeStatus() {
         url: WEBUI + "/user/node/updating",
         dataType: 'json',
         success: function (data) {
+            if(data["errors"].length > 0) {
+                return;
+            }
             delete data["errors"];
             // Compute the number of nodes displayed in the HTML page
             var uiNbNodes = $(".card-header").length;

@@ -210,7 +210,7 @@ function addNameFilter(node) {
     var filter = $("<div class='filter'></div>");
     var filterProp = $("<div></div>");
     filterProp.append($("<span>name: " + nodeName + "</span>"));
-    var typeSpan = $("<span>type: " + NODES[nodeName]["type"] + "</span>");
+    var typeSpan = $("<span>agent: " + NODES[nodeName]["agent"] + "</span>");
     typeSpan.hide();
     filterProp.append(typeSpan);
     filterProp.append($("<br/>"));
@@ -248,6 +248,8 @@ function reserveNodes() {
             alert("The maximum duration for a reservation is 72 hours");
             return;
         }
+        // Total number of requested nodes
+        var total_requested = 0;
         // Iterate over .filter elements to add the nodes to the reservation
         $(".selectednodes .ready-nodes").children().each(function() {
             // Read the span tags to get the filter information
@@ -255,8 +257,9 @@ function reserveNodes() {
                 if(idx == 0) {
                     // Iterate over the span tags to build the filter
                     var spanArray = $(spanContainer).children("span").toArray();
-                    var nb_nodes = spanArray.pop().innerHTML.split(' ')[0];
+                    var nb_nodes = parseInt(spanArray.pop().innerHTML.split(' ')[0]);
                     var filter = { "nb_nodes": nb_nodes };
+                    total_requested += nb_nodes;
                     for (var span of spanArray) {
                         var prop = span.innerHTML.replace(" ", "").split(":");
                         filter[prop[0]] = prop[1];
@@ -274,9 +277,12 @@ function reserveNodes() {
             async: false,
             data: JSON.stringify({ "filters": filters, "start_date": startDateStr, "duration": duration}),
             success: function (data) {
-                if(data["errors"].length > 0) {
-                    alert("Reservation error: " + data["errors"]);
+                if(data["total_nodes"] == 0) {
+                    alert("The requested nodes are not available on this period!");
                 } else {
+                    if(data["total_nodes"] < total_requested) {
+                        alert("Some nodes are missing.\nConfigure the reserved nodes or cancel your reservation!");
+                    }
                     window.location.href = WEBUI + "/user/configure";
                 }
             },

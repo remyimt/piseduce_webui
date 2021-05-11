@@ -29,6 +29,7 @@ def node_list():
                     else:
                         node_info = r_json[node]
                         node_info["type"] = agent.type
+                        node_info["agent"] = agent.name
                         result["nodes"][node] = node_info
                 if len(duplicated_names) > 0:
                     result["duplicated"] += duplicated_names
@@ -60,8 +61,6 @@ def node_list():
 def node_configuring():
     result = { "errors": [], "raspberry": {}, "sensor": {}, "server": {}, "fake": {} }
     db = open_session()
-    duration = None
-    start_date = None
     for agent in db.query(Agent).filter(Agent.status == "connected").all():
         try:
             r = requests.post(url = "http://%s:%s/v1/user/configure" % (agent.ip, agent.port), timeout = 6,
@@ -69,10 +68,6 @@ def node_configuring():
             if r.status_code == 200 and agent.type in result:
                 # Add the agent name to the node information
                 json_data = r.json()
-                duration = json_data["duration"]
-                start_date = json_data["start_date"]
-                del json_data["duration"]
-                del json_data["start_date"]
                 for node in json_data:
                     json_data[node]["agent"] = agent.name
                 result[agent.type].update(json_data)
@@ -91,8 +86,6 @@ def node_configuring():
     for node_type in result:
         if node_type != "errors":
             result[node_type] = sort_by_name(result[node_type])
-    result["duration"] = duration
-    result["start_date"] = start_date
     return json.dumps(result)
 
 
@@ -168,59 +161,48 @@ def node_updating():
 @b_user.route("/make/reserve", methods=["POST"])
 @login_required
 def make_reserve():
-    result = { "nodes": [], "errors": [] }
+    result = { "total_nodes": 0, "wanted": 0, "errors": [] }
+    nb_wanted = 0
     msg = ""
     db = open_session()
     for f in flask.request.json["filters"]:
-        matching_nodes = []
-        available_nodes = []
-        nb_nodes = int(f["nb_nodes"])
-        agent_type = f["type"]
-        del f["nb_nodes"]
-        del f["type"]
-        if agent_type is not None and len(agent_type) > 0:
-            for agent in db.query(Agent).filter(Agent.type == agent_type).filter(Agent.status == "connected").all():
-                # Get the nodes with at least one of requested properties
-                r = requests.post(url = "http://%s:%s/v1/user/node/list" % (agent.ip, agent.port), timeout = 6,
-                    json = { "token": agent.token, "properties": f })
-                if r.status_code == 200:
-                    r_json = r.json()
-                    for node, node_props in r_json.items():
-                        # Check the node have all requested properties
-                        if len(f) == 0 or len(f) == len(node_props):
-                            matching_nodes.append(node)
-                else:
-                    logging.error("node reservation failure: can not get the node list from the agent '%s'" % agent.name)
-                logging.info("Macthing nodes: %s" % matching_nodes)
-                # Check the status of the nodes (we only want 'available' nodes)
-                if len(matching_nodes) > 0:
-                    r = requests.post(url = "http://%s:%s/v1/user/node/status" % (agent.ip, agent.port), timeout = 6,
-                        json = { "token": agent.token, "nodes": matching_nodes })
-                    if r.status_code == 200:
-                        for node, props in r.json()["nodes"].items():
-                            if props["status"] == "available" and len(available_nodes) < nb_nodes:
-                                available_nodes.append(node)
-                    else:
-                        logging.error("node reservation failure: can not get the node status from the agent '%s'" % agent.name)
+        result["wanted"] += f["nb_nodes"]
+        if "agent" in f:
+            agent = db.query(Agent).filter(Agent.name == f["agent"]).filter(Agent.status == "connected").first()
+            if agent is not None:
                 # Make the reservation
-                if len(available_nodes) > 0:
+                r = requests.post(url = "http://%s:%s/v1/user/reserve" % (agent.ip, agent.port), timeout = 6,
+                    json = {
+                        "token": agent.token, "filter": f, "user": current_user.email,
+                        "start_date": flask.request.json["start_date"],
+                        "duration": flask.request.json["duration"]
+                    })
+                if r.status_code == 200:
+                    result["total_nodes"] += len(r.json()["nodes"])
+                else:
+                    logging.error("can not reserve nodes: wrong return code %d from '%s'" % (r.status_code, agent.name))
+            else:
+                logging.error("can not find the agent '%s' (maybe it is disconnected)" % f["agent"])
+        elif "type" in f:
+            agent_type = f["type"]
+            del f["type"]
+            for agent in db.query(Agent).filter(Agent.type == agent_type).filter(Agent.status == "connected").all():
+                if f["nb_nodes"] > 0:
+                    # Make the reservation
                     r = requests.post(url = "http://%s:%s/v1/user/reserve" % (agent.ip, agent.port), timeout = 6,
                         json = {
-                            "token": agent.token, "nodes": available_nodes, "user": current_user.email,
+                            "token": agent.token, "filter": f, "user": current_user.email,
                             "start_date": flask.request.json["start_date"],
                             "duration": flask.request.json["duration"]
                         })
                     if r.status_code == 200:
-                        result["nodes"] += available_nodes
+                        nb_nodes = len(r.json()["nodes"])
+                        result["total_nodes"] += nb_nodes
+                        f["nb_nodes"] -= nb_nodes
                     else:
-                        logging.error("can not reserve nodes: wrong return code %d from '%s'" % (
-                            r.status_code, agent.name))
-                        result["errors"] += available_nodes
-                else:
-                    logging.error("No available node from the agent '%s'. Matching nodes: %s" % (
-                        agent.name, matching_nodes))
+                        logging.error("can not reserve nodes: wrong return code %d from '%s'" % (r.status_code, agent.name))
         else:
-            logging.error("node reservation failure: no 'type' property in the JSON content")
+            logging.error("node reservation failure: no 'type' property and no 'agent' property in the POST data")
     close_session(db)
     return json.dumps(result)
 
@@ -251,7 +233,7 @@ def make_deploy():
     for agent_name in result:
         # Send the user SSH key to the agent
         user_db = db.query(User).filter(User.email == current_user.email).first()
-        if len(user_db.ssh_key) > 256:
+        if user_db.ssh_key is not None and len(user_db.ssh_key) > 256:
             for node in result[agent_name]:
                 result[agent_name][node]["account_ssh_key"] = user_db.ssh_key
         agent = db.query(Agent).filter(Agent.name == agent_name).first()

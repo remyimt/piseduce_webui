@@ -59,7 +59,7 @@ def node_list():
 @b_user.route("/node/configuring")
 @login_required
 def node_configuring():
-    result = { "errors": [], "raspberry": {}, "sensor": {}, "server": {}, "fake": {} }
+    result = { "errors": [], "raspberry": {}, "sensor": {}, "server": {} }
     db = open_session()
     for agent in db.query(Agent).filter(Agent.status == "connected").all():
         try:
@@ -100,7 +100,7 @@ def node_deploying():
                 json = { "token": agent.token, "user": current_user.email })
             if r.status_code == 200:
                 json_data = r.json()
-                result["states"] = { "raspberry": [], "sensor": [], "server": [], "fake": [] }
+                result["states"] = { "raspberry": [], "sensor": [], "server": [] }
                 result["states"][agent.type] = json_data["states"]
                 for node in json_data["nodes"]:
                     # Sort the nodes by bin
@@ -111,7 +111,7 @@ def node_deploying():
                     if len(bin_name) > 0:
                         # Sort nodes by bin name
                         if bin_name not in result["nodes"]:
-                            result["nodes"][bin_name] = { "raspberry": [], "sensor": [], "server": [], "fake": [] }
+                            result["nodes"][bin_name] = { "raspberry": [], "sensor": [], "server": [] }
                         result["nodes"][bin_name][agent.type].append(json_data["nodes"][node])
             else:
                 error_msg = "deploying error: wrong answer from the agent '%s' (return code %d)" % (
@@ -148,7 +148,7 @@ def node_updating():
                     if len(bin_name) > 0:
                         # Sort nodes by bin name
                         if bin_name not in result:
-                            result[bin_name] = { "raspberry": [], "sensor": [], "server": [], "fake": [] }
+                            result[bin_name] = { "raspberry": [], "sensor": [], "server": [] }
                         result[bin_name][agent.type].append(json_data["nodes"][node])
         except:
             error_msg = "connection failure to the agent '%s'" %  agent.name

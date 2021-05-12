@@ -551,6 +551,12 @@
     margin: auto;
 }
 
+.manage .information {
+    width: 600px;
+    margin: auto;
+    margin-bottom: 20px;
+}
+
 .manage .legend {
     text-align: center;
     font-size: 0px;

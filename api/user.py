@@ -56,6 +56,33 @@ def node_list():
     return json.dumps(result)
 
 
+@b_user.route("/node/schedule")
+@login_required
+def node_schedule():
+    result = { "errors": [], "nodes": {} }
+    db = open_session()
+    for agent in db.query(Agent).filter(Agent.status == "connected").all():
+        try:
+            r = requests.post(url = "http://%s:%s/v1/user/node/schedule" % (agent.ip, agent.port), timeout = 6,
+                json = { "token": agent.token, "user": current_user.email })
+            if r.status_code == 200:
+                logging.info(r.json())
+                r_json = r.json()
+                result["nodes"].update(r_json["nodes"])
+            else:
+                logging.error("schedule error: wrong answer from the agent '%s'" % agent.name)
+        except (ConnectionError, ConnectTimeout):
+            error_msg = "agent '%s' does not respond" %  agent.name
+            result["errors"].append(error_msg)
+            logging.exception(error_msg)
+        except:
+            error_msg = "connection failure to the agent '%s'" %  agent.name
+            result["errors"].append(error_msg)
+            logging.exception(error_msg)
+    close_session(db)
+    return json.dumps(result)
+
+
 @b_user.route("/node/configuring")
 @login_required
 def node_configuring():

@@ -5,6 +5,105 @@
 {% block content %}
 <div class="shadow reserve">
     <center><h4>Node Reservation</h4></center>
+    <div class="bg-info rounded-right title">Available Nodes</div>
+    <div class="title-text">Click on names to select the nodes</div>
+    {% if duplicated|length > 0 %}
+        <div class="ml-2 text-danger">
+            Name conflicts detected. {{duplicated|length}} nodes are missing!
+        </div>
+    {% endif %}
+    <div class="default-view">
+        <div class="node-head">
+            <div class="names">
+                Node Names
+            </div>
+            <div id="d1" class="d1">
+            </div>
+            <div id="d2" class="d2">
+            </div>
+            <div class="text-info nav">
+                <a href="javascript:updateNodeSchedule(-48)">&#8882; Prev</a>
+                <a href="javascript:updateNodeSchedule(48)">Next &#8883;</a>
+            </div>
+        </div>
+        <div class="nodeitems">
+            {% for node in nodes %}
+                <div class="node-schedule">
+                    <div id="{{node}}" class="node-name" onclick="addNameFilter(this)">
+                        <img src="/static/img/rpi.png" height="28px">
+                        <span>{{node}}</span>
+                        <div class="btn-color" onclick="showInfoView('{{node}}')">info</div>
+                    </div>
+                    <div class="schedule">
+                        <div class="one-day">
+                            <div id="{{node}}-d1hour0" title="free: 0h-1h"   class="one-hour free"></div>
+                            <div id="{{node}}-d1hour1" title="free: 1h-2h"   class="one-hour free"></div>
+                            <div id="{{node}}-d1hour2" title="free: 2h-3h"   class="one-hour free"></div>
+                            <div id="{{node}}-d1hour3" title="free: 3h-4h"   class="one-hour free"></div>
+                            <div id="{{node}}-d1hour4" title="free: 4h-5h"   class="one-hour free"></div>
+                            <div id="{{node}}-d1hour5" title="free: 5h-6h"   class="one-hour free"></div>
+                            <div id="{{node}}-d1hour6" title="free: 6h-7h"   class="one-hour free"></div>
+                            <div id="{{node}}-d1hour7" title="free: 7h-8h"   class="one-hour free"></div>
+                            <div id="{{node}}-d1hour8" title="free: 8h-9h"   class="one-hour free"></div>
+                            <div id="{{node}}-d1hour9" title="free: 9h-10h"  class="one-hour free"></div>
+                            <div id="{{node}}-d1hour10" title="free: 10h-11h" class="one-hour free"></div>
+                            <div id="{{node}}-d1hour11" title="free: 11h-12h" class="one-hour free"></div>
+                            <div id="{{node}}-d1hour12" title="free: 12h-13h" class="one-hour free"></div>
+                            <div id="{{node}}-d1hour13" title="free: 13h-14h" class="one-hour free"></div>
+                            <div id="{{node}}-d1hour14" title="free: 14h-15h" class="one-hour free"></div>
+                            <div id="{{node}}-d1hour15" title="free: 15h-16h" class="one-hour free"></div>
+                            <div id="{{node}}-d1hour16" title="free: 16h-17h" class="one-hour free"></div>
+                            <div id="{{node}}-d1hour17" title="free: 17h-18h" class="one-hour free"></div>
+                            <div id="{{node}}-d1hour18" title="free: 18h-19h" class="one-hour free"></div>
+                            <div id="{{node}}-d1hour19" title="free: 19h-20h" class="one-hour free"></div>
+                            <div id="{{node}}-d1hour20" title="free: 20h-21h" class="one-hour free"></div>
+                            <div id="{{node}}-d1hour21" title="free: 21h-22h" class="one-hour free"></div>
+                            <div id="{{node}}-d1hour22" title="free: 22h-23h" class="one-hour free"></div>
+                            <div id="{{node}}-d1hour23" title="free: 23h-0h"  class="one-hour free"></div>
+                        </div>
+                        <div class="one-day">
+                            <div id="{{node}}-d2hour0" title="free: 0h-1h"   class="one-hour free"></div>
+                            <div id="{{node}}-d2hour1" title="free: 1h-2h"   class="one-hour free"></div>
+                            <div id="{{node}}-d2hour2" title="free: 2h-3h"   class="one-hour free"></div>
+                            <div id="{{node}}-d2hour3" title="free: 3h-4h"   class="one-hour free"></div>
+                            <div id="{{node}}-d2hour4" title="free: 4h-5h"   class="one-hour free"></div>
+                            <div id="{{node}}-d2hour5" title="free: 5h-6h"   class="one-hour free"></div>
+                            <div id="{{node}}-d2hour6" title="free: 6h-7h"   class="one-hour free"></div>
+                            <div id="{{node}}-d2hour7" title="free: 7h-8h"   class="one-hour free"></div>
+                            <div id="{{node}}-d2hour8" title="free: 8h-9h"   class="one-hour free"></div>
+                            <div id="{{node}}-d2hour9" title="free: 9h-10h"  class="one-hour free"></div>
+                            <div id="{{node}}-d2hour10" title="free: 10h-11h" class="one-hour free"></div>
+                            <div id="{{node}}-d2hour11" title="free: 11h-12h" class="one-hour free"></div>
+                            <div id="{{node}}-d2hour12" title="free: 12h-13h" class="one-hour free"></div>
+                            <div id="{{node}}-d2hour13" title="free: 13h-14h" class="one-hour free"></div>
+                            <div id="{{node}}-d2hour14" title="free: 14h-15h" class="one-hour free"></div>
+                            <div id="{{node}}-d2hour15" title="free: 15h-16h" class="one-hour free"></div>
+                            <div id="{{node}}-d2hour16" title="free: 16h-17h" class="one-hour free"></div>
+                            <div id="{{node}}-d2hour17" title="free: 17h-18h" class="one-hour free"></div>
+                            <div id="{{node}}-d2hour18" title="free: 18h-19h" class="one-hour free"></div>
+                            <div id="{{node}}-d2hour19" title="free: 19h-20h" class="one-hour free"></div>
+                            <div id="{{node}}-d2hour20" title="free: 20h-21h" class="one-hour free"></div>
+                            <div id="{{node}}-d2hour21" title="free: 21h-22h" class="one-hour free"></div>
+                            <div id="{{node}}-d2hour22" title="free: 22h-23h" class="one-hour free"></div>
+                            <div id="{{node}}-d2hour23" title="free: 23h-0h"  class="one-hour free"></div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+        <div class="fuzzy">
+            <div class="nb-nodes">
+                Select
+                <input type="number" min="1" max="10" value="1" onchange="updateNbPrint(this)">
+                of <span id="max-number"></span> nodes according to filters
+            </div>
+            <div class="btn btn-info rounded" onclick="addFilterSelection()">Add <span id="nb_print">1</span> node(s)</div>
+        </div>
+        <div class="shadow-lg bg-dark info-view">
+            <div id="info-node"></div>
+            <div class="bg-danger rounded close-view" onclick="hideInfoView()">close</div>
+        </div>
+    </div><!-- default-view -->
     <div class="bg-info rounded-right title">Filters</div>
     <div class="title-text">Adjust properties to select specific nodes</div>
     <div class="searchbar">
@@ -26,36 +125,6 @@
     </div><!-- searchbar -->
     <div class="filters">
     </div><!-- filters -->
-    <div class="bg-info rounded-right title">Available Nodes</div>
-    <div class="title-text">Click on the nodes to select them</div>
-    {% if duplicated|length > 0 %}
-        <div class="ml-2 text-danger">
-            Name conflicts detected. {{duplicated|length}} nodes are missing!
-        </div>
-    {% endif %}
-    <div class="default-view">
-        <div class="nodeitems">
-            {% for node in nodes %}
-                <div id="{{node}}" class="node free" onclick="addNameFilter(this)">
-                    <img src="/static/img/rpi.png" height="28px">
-                    <div>{{node}}</div>
-                    <div class="btn-color" onclick="showInfoView('{{node}}')">info</div>
-                </div>
-            {% endfor %}
-        </div>
-        <div class="fuzzy">
-            <div class="nb-nodes">
-                Select
-                <input type="number" min="1" max="10" value="1" onchange="updateNbPrint(this)">
-                of <span id="max-number"></span> nodes according to filters
-            </div>
-            <div class="btn btn-info rounded" onclick="addFilterSelection()">Add <span id="nb_print">1</span> node(s)</div>
-        </div>
-        <div class="shadow-lg bg-dark info-view">
-            <div id="info-node"></div>
-            <div class="bg-danger rounded close-view" onclick="hideInfoView()">close</div>
-        </div>
-    </div><!-- default-view -->
     <div class="bg-info rounded-right title">Selected Nodes</div>
     <div class="title-text">Click on reserve to use the nodes</div>
     <div class="selectednodes">

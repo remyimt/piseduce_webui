@@ -227,7 +227,7 @@
 
 /** Reserve page **/
 .reserve {
-    width: 800px;
+    width: 1000px;
     padding-top: 20px;
     background: #fff;
     margin: auto;
@@ -294,7 +294,7 @@
 }
 
 .filter > div:first-child {
-    width: 117px;
+    width: 150px;
     float: left;
 }
 
@@ -313,12 +313,12 @@
 }
 
 /* Set the height to avoid the next div to move when the info-view is shown */
-.default-view {
-    height: 250px;
+.reserve .default-view {
+    height: 405px;
 }
 
 .info-view {
-    width: 800px;
+    width: 1000px;
     height: 284px;
     padding: 6px;
     color: #fff;
@@ -345,27 +345,61 @@
     cursor: pointer;
 }
 
+.reserve .node-head {
+    padding-left: 6px;
+}
+
+.reserve .node-head div {
+    border-left: 1px solid black;
+    border-right: 1px solid black;
+    text-align: center;
+    display: inline-block;
+}
+
+.reserve .node-head .d1 {
+    width: 344px;
+}
+
+.reserve .node-head .d2 {
+    width: 345px;
+}
+
+.reserve .node-head .names {
+    width: 200px;
+}
+
+.reserve .node-head .nav {
+    width: 70px;
+    border: 0px;
+}
+
 .reserve .nodeitems {
-    height: 182px;
-    margin-top: 6px;
+    height: 300px;
     padding-left: 6px;
     overflow-y: auto;
 }
 
-.nodeitems .node {
-    width: 184px;
+.nodeitems .node-schedule {
+    width: 100%;
     height: 30px;
+    margin-bottom: 4px;
+}
+
+.nodeitems .node-name {
+    width: 200px;
+    height: 30px;
+    line-height: 30px;
+    margin-right: 4px;
     border: 1px solid green;
-    margin: 2px;
-    padding-left: 5px;
-    display: inline-block;
+    float: left;
+    cursor: pointer;
 }
 
-.nodeitems .node div {
-    display: inline-block;
+.nodeitems .node-name img {
+    padding-bottom: 3px;
 }
 
-.nodeitems .node div:last-child {
+.nodeitems .node-name div:last-child {
     width: 40px;
     height: 28px;
     background: green;
@@ -375,17 +409,40 @@
     cursor: pointer;
 }
 
-.nodeitems .free {
+.nodeitems .schedule {
+    height: 29px;
+    float: left;
     cursor: pointer;
 }
 
-.nodeitems .reserved {
-    background: #ffdfdf;
+.nodeitems .schedule .one-day {
+    height: 100%;
+    border-left: 1px solid black;
+    border-right: 1px solid black;
+    display: inline-block;
+}
+
+.nodeitems .schedule .one-hour {
+    width: 10px;
+    height: 100%;
+    background: yellow;
+    display: inline-block;
+}
+
+.reserve .one-day .free {
+    background: #f8fdbf;
+}
+
+.reserve .one-day .reserved {
+    background: #fdcdbf;
+}
+
+.reserve .one-day .now {
+    background: #bff2fd;
 }
 
 .reserve .fuzzy {
-    height: 46px;
-    margin-top: 16px;
+    margin-top: 6px;
 }
 
 .reserve .fuzzy input {
@@ -445,7 +502,7 @@
 
 /** Configure page **/
 .configure {
-    width: 800px;
+    width: 1000px;
     padding-top: 20px;
     background: #fff;
     margin: auto;
@@ -546,7 +603,7 @@
 
 /** Manage Page **/
 .manage {
-    width: 800px;
+    width: 1000px;
     padding-top: 20px;
     margin: auto;
 }
@@ -691,10 +748,11 @@
 
 /** Settings Page **/
 .settings {
-    width: 800px;
+    width: 1000px;
     height: 600px;
     padding-top: 20px;
     padding-left: 6px;
+    margin: auto;
     background: #fff;
 }
 

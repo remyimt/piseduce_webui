@@ -1,6 +1,7 @@
 // Global variables
 var NODES = {}
 var PROPERTIES = {}
+var MONTHES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Dec" ]
 
 // Configure the global variables and display the nodes
 $(document).ready(function () {
@@ -45,33 +46,163 @@ $(document).ready(function () {
     });
     // Set default values
     filterNodes();
-    // Update the status every 10s
-    setInterval(updateNodeStatus, 10000);
+    updateNodeSchedule();
+    // Update the status every 60s
+    setInterval(updateNodeSchedule, 60000);
 });
 
 // Functions
-function updateNodeStatus() {
+function convertHour(hourInt) {
+    var result = hourInt;
+    if(hourInt > 23) {
+        result = hourInt - 24;
+    }
+    if(hourInt < 0) {
+        result = hourInt + 24;
+    }
+    return String(result).padStart(2, "0");
+}
+
+// hoursAdded must be 48 (next two days) or -48 (previous 2 days)
+function updateNodeSchedule(hoursAdded=0) {
+    // Compute the date of the 2 days to display
+    var d1 = $("#d1");
+    var d1Html = d1.html().replace(/\s/g, "");
+    var firstDay;
+    if(d1Html.length == 0) {
+        hoursAdded = 48;
+        // Display the reserved dates from today
+        firstDay = new Date();
+    } else {
+        // Display the reserved dates from the next two days
+        firstDay = new Date($("#d1").html() + " 00:00:00 GMT");
+        firstDay.setHours(firstDay.getHours() + hoursAdded);
+    }
+    var secondDay = new Date(firstDay);
+    secondDay.setHours(secondDay.getHours() + 24);
+    // Display the dates
+    d1.html(firstDay.getDate() + " " + MONTHES[firstDay.getMonth()] + " " + firstDay.getFullYear());
+    $("#d2").html(secondDay.getDate() + " " + MONTHES[secondDay.getMonth()] + " " + secondDay.getFullYear());
+    // Mark the reserved hours in red
     $.ajax({
         type: "GET",
-        url: WEBUI + "/user/node/list",
+        url: WEBUI + "/user/node/schedule",
         dataType: 'json',
         success: function (data) {
-            var current = data["nodes"]
-            updated = false;
-            for (var node in current) {
-                // Update the status property
-                if(NODES[node]["status"] != current[node]["status"]) {
-                    updated = true;
-                    NODES[node]["status"] = current[node]["status"];
-                    if(NODES[node]["status"] == "available") {
-                        $("#" + node).attr("class", "node free");
-                    } else {
-                        $("#" + node).attr("class", "node reserved");
-                    }
+            // Reset the schedule
+            $(".one-hour").attr("class", "one-hour free");
+            $(".one-hour").each(function(idx, div) {
+                if(div.title.includes("reserved")) {
+                    var firstLine = div.title.split("\n")[0];
+                    div.title = firstLine.replace("reserved", "free");
                 }
+                if(div.title.includes("now")) {
+                    var firstLine = div.title.split("\n")[0];
+                    div.title = firstLine;
+                }
+            });
+            // Data processing: mark the reserved hours in red
+            data = data["nodes"];
+            var dayBefore = new Date(firstDay);
+            dayBefore.setHours(firstDay.getHours() - 24);
+            var dayBeforeUTC = dayBefore.toISOString().split("T")[0];
+            var firstDayUTC = firstDay.toISOString().split("T")[0];
+            var secondDayUTC = secondDay.toISOString().split("T")[0];
+            var dayAfter = new Date(secondDay);
+            dayAfter.setHours(secondDay.getHours() + 24);
+            var dayAfterUTC = dayAfter.toISOString().split("T")[0];
+            var hourUTCInt = parseInt(firstDay.toISOString().split("T")[1].substring(0, 2));
+            var offset = firstDay.getHours() - hourUTCInt;
+            // Colour the hour divs to indicate the current hour
+            var today = new Date();
+            if(firstDay.getFullYear() == today.getFullYear() &&
+                firstDay.getMonth() == today.getMonth() &&
+                firstDay.getDate() == today.getDate()) {
+                    $(".schedule").each(function(idx, div) {
+                        var nowDiv = $(div).find(".one-hour:nth-child(" + (today.getHours() + 1) + ")").first();
+                        nowDiv.attr("class", "one-hour now").attr("title", nowDiv.attr("title") + "\nnow");
+                    });
             }
-            if(updated) {
-                filterNodes();
+            // Detect the reserved hours for the first day and the second day
+            for (var node in NODES) {
+                var firstDayHours = [];
+                var secondDayHours = [];
+                if(node in data) {
+                    if(offset > 0 && dayBeforeUTC in data[node]) {
+                        // Check the UTC hours of the day before the first day that could be included in the first day
+                        for(hour of data[node][dayBeforeUTC]) {
+                            localHour = parseInt(hour) + offset;
+                            if(localHour > 23) {
+                                firstDayHours.push(localHour - 24);
+                            }
+                        }
+                    }
+                    if(firstDayUTC in data[node]) {
+                        for(hour of data[node][firstDayUTC]) {
+                            localHour = parseInt(hour) + offset;
+                            // Add the UTC hours of the first day
+                            if(localHour >= 0 && localHour < 24) {
+                                firstDayHours.push(localHour);
+                            }
+                            // Add the UTC hours of the second day
+                            if(localHour > 23) {
+                                secondDayHours.push(localHour - 24);
+                            }
+                        }
+                    }
+                    if(secondDayUTC in data[node]) {
+                        for(hour of data[node][secondDayUTC]) {
+                            localHour = parseInt(hour) + offset;
+                            // Add the UTC hours of the first day
+                            if(localHour < 0) {
+                                firstDayHours.push(localHour + 24);
+                            }
+                            // Add the UTC hours of the second day
+                            if(localHour >= 0 && localHour < 24) {
+                                secondDayHours.push(localHour);
+                            }
+                        }
+                    }
+                    if(offset < 0 && dayAfterUTC in data[node]) {
+                        // Check the UTC hours of the day after the second day that could be included in the second day
+                        for(hour of data[node][dayAfterUTC]) {
+                            localHour = parseInt(hour) + offset;
+                            if(localHour < 0) {
+                                secondDayHours.push(localHour + 24);
+                            }
+                        }
+                    }
+                    for (hour of firstDayHours) {
+                        // Display the reservation at the first day
+                        $("#" + node + "-d1hour" + hour).attr("class", "one-hour reserved");
+                        div = $("#" + node + "-d1hour" + hour);
+                        if(div.attr("title").includes("free")) {
+                            startH = convertHour(parseInt(data[node]["start_hour"].substring(0, 2)) + offset);
+                            endH = convertHour(parseInt(data[node]["end_hour"].substring(0, 2)) + offset);
+                            div.attr("title", div.attr("title").replace("free", "reserved") + "\n" +
+                                data[node]["owner"] + "\n" +
+                                startH + ":" + 
+                                data[node]["start_hour"].substring(3, 5) + " - " +
+                                endH + ":" + 
+                                data[node]["end_hour"].substring(3, 5));
+                        }
+                    }
+                    for (hour of secondDayHours) {
+                        // Display the reservation at the first day
+                        $("#" + node + "-d2hour" + hour).attr("class", "one-hour reserved");
+                        div = $("#" + node + "-d2hour" + hour);
+                        if(div.attr("title").includes("free")) {
+                            startH = convertHour(parseInt(data[node]["start_hour"].substring(0, 2)) + offset);
+                            endH = convertHour(parseInt(data[node]["end_hour"].substring(0, 2)) + offset);
+                            div.attr("title", div.attr("title").replace("free", "reserved") + "\n" +
+                                data[node]["owner"] + "\n" +
+                                startH + ":" + 
+                                data[node]["start_hour"].substring(3, 5) + " - " +
+                                endH + ":" + 
+                                data[node]["end_hour"].substring(3, 5));
+                        }
+                    }
+                }// node in data - if
             }
         },
         error: function() {
@@ -142,20 +273,16 @@ function filterNodes() {
                 }
             }
             if(hideNode) {
-                $("#" + node).hide();
+                $("#" + node).parent().hide();
             } else {
-                $("#" + node).show();
-                if(!$("#" + node).hasClass("reserved")) {
-                    nb_nodes++;
-                }
+                $("#" + node).parent().show();
+                nb_nodes++;
             }
         }
     } else {
-        $(".node").show();
-        $(".node").each(function() {
-            if(!$(this).hasClass("reserved")) {
-                nb_nodes++;
-            }
+        $(".node-schedule").show();
+        $(".node-schedule").each(function() {
+            nb_nodes++;
         });
     }
     $(".fuzzy input").val("1");
@@ -188,7 +315,7 @@ function addFilterSelection() {
         filterProp.append(span);
     });
     // Append the type of the first displayed node to the selection filter
-    var nodeName = nodeItems.first().children("div").first().html();
+    var nodeName = $(".node-name").first().children("span").html();
     var span = $("<span>type: " + NODES[nodeName]["type"] + "</span>");
     if(filterProp.children().length > 0) {
       span.hide();
@@ -206,7 +333,7 @@ function addFilterSelection() {
 }
 
 function addNameFilter(node) {
-    var nodeName = $(node).children("div").html();
+    var nodeName = $(node).children("span").html();
     var filter = $("<div class='filter'></div>");
     var filterProp = $("<div></div>");
     filterProp.append($("<span>name: " + nodeName + "</span>"));

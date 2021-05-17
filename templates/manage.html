@@ -103,6 +103,9 @@
                                                     <div>
                                                         {% for name in prop[0].split("_") %}
                                                             {{ name[0]|upper}}{{name[1:] }}
+                                                            {% if name == "date" %}
+                                                                (UTC Time)
+                                                            {% endif %}
                                                         {% endfor %}
                                                     </div>
                                                     {% if prop[0] == "url" %}

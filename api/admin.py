@@ -538,7 +538,7 @@ def init_detect(agent_name, switch_name):
         if r.status_code == 200:
             result = r.json()
     except:
-        logging.exception("configure node failure: agent: '%s', switch: '%s',  ports: %s" % (agent_name, switch_name, ports))
+        logging.exception("configure node failure: agent: '%s', switch: '%s'" % (agent_name, switch_name))
     return json.dumps(result)
 
 

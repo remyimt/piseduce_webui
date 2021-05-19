@@ -63,6 +63,14 @@ function convertHour(hourInt) {
     return String(result).padStart(2, "0");
 }
 
+function formatOwnerReservation(owner, res_obj, offset, localHour) {
+    startH = convertHour(parseInt(res_obj["start_hour"].substring(0, 2)) + offset) + ":" + 
+        res_obj["start_hour"].substring(3, 5); 
+    endH = convertHour(parseInt(res_obj["end_hour"].substring(0, 2)) + offset) + ":" +
+        res_obj["end_hour"].substring(3, 5);
+    return { "hour": localHour, "owner": owner, "start": startH, "end": endH }
+}
+
 // hoursAdded must be 48 (next two days) or -48 (previous 2 days)
 function updateNodeSchedule(hoursAdded=0) {
     // Compute the date of the 2 days to display
@@ -130,76 +138,80 @@ function updateNodeSchedule(hoursAdded=0) {
                 if(node in data) {
                     if(offset > 0 && dayBeforeUTC in data[node]) {
                         // Check the UTC hours of the day before the first day that could be included in the first day
-                        for(hour of data[node][dayBeforeUTC]) {
-                            localHour = parseInt(hour) + offset;
-                            if(localHour > 23) {
-                                firstDayHours.push(localHour - 24);
+                        for(owner in data[node][dayBeforeUTC]) {
+                            for(hour of data[node][dayBeforeUTC][owner]["hours"]) {
+                                localHour = parseInt(hour) + offset;
+                                if(localHour > 23) {
+                                    firstDayHours.push(
+                                        formatOwnerReservation(owner, data[node][dayBeforeUTC][owner], offset, localHour - 24));
+                                }
                             }
                         }
                     }
                     if(firstDayUTC in data[node]) {
-                        for(hour of data[node][firstDayUTC]) {
-                            localHour = parseInt(hour) + offset;
-                            // Add the UTC hours of the first day
-                            if(localHour >= 0 && localHour < 24) {
-                                firstDayHours.push(localHour);
-                            }
-                            // Add the UTC hours of the second day
-                            if(localHour > 23) {
-                                secondDayHours.push(localHour - 24);
+                        for(owner in data[node][firstDayUTC]) {
+                            for(hour of data[node][firstDayUTC][owner]["hours"]) {
+                                localHour = parseInt(hour) + offset;
+                                // Add the UTC hours of the first day
+                                if(localHour >= 0 && localHour < 24) {
+                                    firstDayHours.push(
+                                        formatOwnerReservation(owner, data[node][firstDayUTC][owner], offset, localHour));
+                                }
+                                // Add the UTC hours of the second day
+                                if(localHour > 23) {
+                                    secondDayHours.push(
+                                        formatOwnerReservation(owner, data[node][firstDayUTC][owner], offset, localHour - 24));
+                                }
                             }
                         }
                     }
                     if(secondDayUTC in data[node]) {
-                        for(hour of data[node][secondDayUTC]) {
-                            localHour = parseInt(hour) + offset;
-                            // Add the UTC hours of the first day
-                            if(localHour < 0) {
-                                firstDayHours.push(localHour + 24);
-                            }
-                            // Add the UTC hours of the second day
-                            if(localHour >= 0 && localHour < 24) {
-                                secondDayHours.push(localHour);
+                        for(owner in data[node][secondDayUTC]) {
+                            for(hour of data[node][secondDayUTC][owner]["hours"]) {
+                                localHour = parseInt(hour) + offset;
+                                // Add the UTC hours of the first day
+                                if(localHour < 0) {
+                                    firstDayHours.push(
+                                        formatOwnerReservation(owner, data[node][secondDayUTC][owner], offset, localHour + 24));
+                                }
+                                // Add the UTC hours of the second day
+                                if(localHour >= 0 && localHour < 24) {
+                                    secondDayHours.push(
+                                        formatOwnerReservation(owner, data[node][secondDayUTC][owner], offset, localHour));
+                                }
                             }
                         }
                     }
                     if(offset < 0 && dayAfterUTC in data[node]) {
                         // Check the UTC hours of the day after the second day that could be included in the second day
-                        for(hour of data[node][dayAfterUTC]) {
-                            localHour = parseInt(hour) + offset;
-                            if(localHour < 0) {
-                                secondDayHours.push(localHour + 24);
+                        for(owner in data[node][dayAfterUTC]) {
+                            for(hour of data[node][dayAfterUTC][owner]["hours"]) {
+                                localHour = parseInt(hour) + offset;
+                                if(localHour < 0) {
+                                    secondDayHours.push(
+                                        formatOwnerReservation(owner, data[node][dayAfterUTC][owner], offset, localHour + 24));
+                                }
                             }
                         }
                     }
-                    for (hour of firstDayHours) {
+                    for (hour_obj of firstDayHours) {
                         // Display the reservation at the first day
-                        $("#" + node + "-d1hour" + hour).attr("class", "one-hour reserved");
-                        div = $("#" + node + "-d1hour" + hour);
+                        $("#" + node + "-d1hour" + hour_obj.hour).attr("class", "one-hour reserved");
+                        div = $("#" + node + "-d1hour" + hour_obj.hour);
                         if(div.attr("title").includes("free")) {
-                            startH = convertHour(parseInt(data[node]["start_hour"].substring(0, 2)) + offset);
-                            endH = convertHour(parseInt(data[node]["end_hour"].substring(0, 2)) + offset);
                             div.attr("title", div.attr("title").replace("free", "reserved") + "\n" +
-                                data[node]["owner"] + "\n" +
-                                startH + ":" + 
-                                data[node]["start_hour"].substring(3, 5) + " - " +
-                                endH + ":" + 
-                                data[node]["end_hour"].substring(3, 5));
+                                hour_obj.owner + "\n" +
+                                hour_obj.start + " - " + hour_obj.end);
                         }
                     }
-                    for (hour of secondDayHours) {
+                    for (hour_obj of secondDayHours) {
                         // Display the reservation at the first day
-                        $("#" + node + "-d2hour" + hour).attr("class", "one-hour reserved");
-                        div = $("#" + node + "-d2hour" + hour);
+                        $("#" + node + "-d2hour" + hour_obj.hour).attr("class", "one-hour reserved");
+                        div = $("#" + node + "-d2hour" + hour_obj.hour);
                         if(div.attr("title").includes("free")) {
-                            startH = convertHour(parseInt(data[node]["start_hour"].substring(0, 2)) + offset);
-                            endH = convertHour(parseInt(data[node]["end_hour"].substring(0, 2)) + offset);
                             div.attr("title", div.attr("title").replace("free", "reserved") + "\n" +
-                                data[node]["owner"] + "\n" +
-                                startH + ":" + 
-                                data[node]["start_hour"].substring(3, 5) + " - " +
-                                endH + ":" + 
-                                data[node]["end_hour"].substring(3, 5));
+                                hour_obj.owner + "\n" +
+                                hour_obj.start + " - " + hour_obj.end);
                         }
                     }
                 }// node in data - if

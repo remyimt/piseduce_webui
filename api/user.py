@@ -18,7 +18,7 @@ def node_list():
     db = open_session()
     for agent in db.query(Agent).filter(Agent.state == "connected").all():
         try:
-            r = requests.post(url = "http://%s:%s/v1/user/node/prop" % (agent.ip, agent.port), timeout = 6,
+            r = requests.post(url = "http://%s:%s/v1/user/node/list" % (agent.ip, agent.port), timeout = 6,
                 json = { "token": agent.token })
             if r.status_code == 200:
                 r_json = r.json()

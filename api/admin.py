@@ -130,7 +130,7 @@ def list_agent(error=None):
     db = open_session()
     pimaster_ip = "undefined"
     for a in db.query(Agent).all():
-        if a.status == "connected":
+        if a.state == "connected":
             # Get the pimaster IP
             try:
                 r = requests.post(url = "http://%s:%s/v1/admin/node/pimaster" % (a.ip, a.port), timeout = 6,
@@ -148,7 +148,7 @@ def list_agent(error=None):
             "ip": a.ip,
             "private_ip": pimaster_ip,
             "port": a.port,
-            "status": a.status,
+            "state": a.state,
             "token": a.token
         }
     close_session(db)
@@ -176,8 +176,8 @@ def add_agent():
     msg = ""
     try:
         # Test the connection to the agent
-        r = requests.get(url = "http://%s:%s/v1/debug/status" % (agent_ip, agent_port))
-        if r.status_code != 200 or "status" not in r.json():
+        r = requests.get(url = "http://%s:%s/v1/debug/state" % (agent_ip, agent_port))
+        if r.status_code != 200 or "state" not in r.json():
             msg = "wrong answer from the agent '%s:%s'" % (agent_ip, agent_port)
         else:
             agent_type = r.json()["type"]
@@ -195,7 +195,7 @@ def add_agent():
             new_agent.ip = agent_ip
             new_agent.port = agent_port
             new_agent.token = agent_token
-            new_agent.status = "connected"
+            new_agent.state = "connected"
             db.add(new_agent)
             close_session(db)
     except:
@@ -215,11 +215,11 @@ def reconnect_agent(agent_name):
         if agent is not None:
             try:
                 # Test the connection to the agent
-                r = requests.get(url = "http://%s:%s/v1/debug/status" % (agent.ip, agent.port))
-                if r.status_code != 200 or "status" not in r.json():
+                r = requests.get(url = "http://%s:%s/v1/debug/state" % (agent.ip, agent.port))
+                if r.status_code != 200 or "state" not in r.json():
                     msg = "wrong answer from the agent '%s'" % agent.name
                 elif "type" in r.json():
-                    agent.status = "connected"
+                    agent.state = "connected"
                 else:
                     msg = "no 'type' property in the answer of the agent '%s'" % agent.name
             except:
@@ -316,7 +316,7 @@ def get(el_type, error=None):
         return flask.render_template("admin.html", admin = current_user.is_admin, active_btn = "admin_%s" % el_type,
             elem_type = el_type, elements = result, msg = error)
     db = open_session()
-    agents = db.query(Agent).filter(Agent.type.in_(agent_types)).filter(Agent.status == "connected").all()
+    agents = db.query(Agent).filter(Agent.type.in_(agent_types)).filter(Agent.state == "connected").all()
     for w in agents:
         result[w.name] = { "properties": [], "existing": {} }
         try:
@@ -689,7 +689,7 @@ def network():
     db = open_session()
     for u in db.query(User).all():
         vpn_clients["user"].append(u.email.replace("@", "_"))
-    for w in db.query(Agent).filter(Agent.status == "connected").all():
+    for w in db.query(Agent).filter(Agent.state == "connected").all():
         vpn_clients["agent"].append(w.name)
     close_session(db)
     # Render the beautiful page

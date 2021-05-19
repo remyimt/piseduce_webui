@@ -40,5 +40,5 @@ class Agent(Base):
     type = Column(Text)
     ip = Column(Text)
     port = Column(Integer)
-    status = Column(Text)
+    state = Column(Text)
     token = Column(Text)

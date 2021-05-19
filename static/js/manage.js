@@ -57,7 +57,7 @@ function updateNodeStatus() {
                 location.reload();
                 return;
             }
-            // Update the status
+            // Update the state
             for (bin in data) {
                 for (nodeType in data[bin]) {
                     for (node of data[bin][nodeType]) {
@@ -67,18 +67,18 @@ function updateNodeStatus() {
                             location.reload();
                         }
                         var nameDiv = $("#" + node["name"] + "-name");
-                        if("percent" in node && node["status"] == "env_check") {
+                        if("percent" in node && node["state"] == "env_check") {
                             nameDiv.html(node["name"] + " - " + node["percent"] + "%");
                         } else {
                             if(nameDiv.html() != node["name"]) {
                                 nameDiv.html(node["name"]);
                             }
                         }
-                        var oldStatus = $("#" + node["name"] + "-status");
-                        if(oldStatus.html() != node["status"]) {
-                            oldStatus.html(node["status"]);
-                            $("#" + node["name"] + "-circle").attr("class", "rounded-circle " + node["status"]);
-                            $("#" + node["name"] + "-circle").attr("title", node["status"]);
+                        var oldStatus = $("#" + node["name"] + "-state");
+                        if(oldStatus.html() != node["state"]) {
+                            oldStatus.html(node["state"]);
+                            $("#" + node["name"] + "-circle").attr("class", "rounded-circle " + node["state"]);
+                            $("#" + node["name"] + "-circle").attr("title", node["state"]);
                         }
                     }
                 }

@@ -16,7 +16,7 @@ b_user = flask.Blueprint("user", __name__, template_folder="templates/")
 def node_list():
     result = { "errors": [], "nodes": {}, "duplicated": [] }
     db = open_session()
-    for agent in db.query(Agent).filter(Agent.status == "connected").all():
+    for agent in db.query(Agent).filter(Agent.state == "connected").all():
         try:
             r = requests.post(url = "http://%s:%s/v1/user/node/prop" % (agent.ip, agent.port), timeout = 6,
                 json = { "token": agent.token })
@@ -41,7 +41,7 @@ def node_list():
                 result["errors"].append(error_msg)
                 logging.error(error_msg)
         except (ConnectionError, ConnectTimeout):
-            agent.status = "disconnected"
+            agent.state = "disconnected"
             error_msg = "agent '%s' does not respond" %  agent.name
             result["errors"].append(error_msg)
             logging.exception(error_msg)
@@ -61,7 +61,7 @@ def node_list():
 def node_schedule():
     result = { "errors": [], "nodes": {} }
     db = open_session()
-    for agent in db.query(Agent).filter(Agent.status == "connected").all():
+    for agent in db.query(Agent).filter(Agent.state == "connected").all():
         try:
             r = requests.post(url = "http://%s:%s/v1/user/node/schedule" % (agent.ip, agent.port), timeout = 6,
                 json = { "token": agent.token, "user": current_user.email })
@@ -88,7 +88,7 @@ def node_schedule():
 def node_configuring():
     result = { "errors": [], "raspberry": {}, "sensor": {}, "server": {} }
     db = open_session()
-    for agent in db.query(Agent).filter(Agent.status == "connected").all():
+    for agent in db.query(Agent).filter(Agent.state == "connected").all():
         try:
             r = requests.post(url = "http://%s:%s/v1/user/configure" % (agent.ip, agent.port), timeout = 6,
                 json = { "token": agent.token, "user": current_user.email })
@@ -101,7 +101,7 @@ def node_configuring():
             else:
                 logging.error("configuring error: wrong answer from the agent '%s'" % agent.name)
         except (ConnectionError, ConnectTimeout):
-            agent.status = "disconnected"
+            agent.state = "disconnected"
             error_msg = "agent '%s' does not respond" %  agent.name
             result["errors"].append(error_msg)
             logging.exception(error_msg)
@@ -121,7 +121,7 @@ def node_configuring():
 def node_deploying():
     result = { "errors": [], "nodes": {}, "states": [] }
     db = open_session()
-    for agent in db.query(Agent).filter(Agent.status == "connected").all():
+    for agent in db.query(Agent).filter(Agent.state == "connected").all():
         try:
             r = requests.post(url = "http://%s:%s/v1/user/node/mine" % (agent.ip, agent.port), timeout = 6,
                 json = { "token": agent.token, "user": current_user.email })
@@ -146,7 +146,7 @@ def node_deploying():
                 logging.error(error_msg)
                 result["errors"].append(error_msg)
         except (ConnectionError, ConnectTimeout):
-            agent.status = "disconnected"
+            agent.state = "disconnected"
             error_msg = "agent '%s' does not respond" %  agent.name
             result["errors"].append(error_msg)
             logging.exception(error_msg)
@@ -163,9 +163,9 @@ def node_deploying():
 def node_updating():
     result = { "errors": [] }
     db = open_session()
-    for agent in db.query(Agent).filter(Agent.status == "connected").all():
+    for agent in db.query(Agent).filter(Agent.state == "connected").all():
         try:
-            r = requests.post(url = "http://%s:%s/v1/user/node/status" % (agent.ip, agent.port), timeout = 6,
+            r = requests.post(url = "http://%s:%s/v1/user/node/state" % (agent.ip, agent.port), timeout = 6,
                 json = { "token": agent.token, "user": current_user.email })
             if r.status_code == 200:
                 json_data = r.json()
@@ -195,7 +195,7 @@ def make_reserve():
     for f in flask.request.json["filters"]:
         result["wanted"] += f["nb_nodes"]
         if "agent" in f:
-            agent = db.query(Agent).filter(Agent.name == f["agent"]).filter(Agent.status == "connected").first()
+            agent = db.query(Agent).filter(Agent.name == f["agent"]).filter(Agent.state == "connected").first()
             if agent is not None:
                 # Make the reservation
                 r = requests.post(url = "http://%s:%s/v1/user/reserve" % (agent.ip, agent.port), timeout = 6,
@@ -213,7 +213,7 @@ def make_reserve():
         elif "type" in f:
             agent_type = f["type"]
             del f["type"]
-            for agent in db.query(Agent).filter(Agent.type == agent_type).filter(Agent.status == "connected").all():
+            for agent in db.query(Agent).filter(Agent.type == agent_type).filter(Agent.state == "connected").all():
                 if f["nb_nodes"] > 0:
                     # Make the reservation
                     r = requests.post(url = "http://%s:%s/v1/user/reserve" % (agent.ip, agent.port), timeout = 6,

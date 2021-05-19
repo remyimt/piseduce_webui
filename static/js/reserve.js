@@ -47,7 +47,7 @@ $(document).ready(function () {
     // Set default values
     filterNodes();
     updateNodeSchedule();
-    // Update the status every 60s
+    // Update the state every 60s
     setInterval(updateNodeSchedule, 60000);
 });
 

@@ -93,14 +93,19 @@ function updateNodeStatus() {
 function loadInfo(select) {
     var info = "";
     switch($(select).val()) {
-        case "hard_reboot":
+        case "hardreboot":
             info = "Hard reboot nodes by turning off and on the power supply.";
             break;
-        case "deploy_again":
+        case "deployagain":
             info = "Deploy node environments again on nodes. All existing data will be erased.";
             break;
         case "destroy":
             info = "Free nodes by canceling reservations.";
+            break;
+        case "extend":
+            info = "Extend reservations by postponing the end date to a later date.<br/>" +
+                "The extend reconfiguration is only available <b>1 hour before</b>" +
+                " the end of the reservation (maximum duration: 7 days).";
             break;
     }
     $(select).parent().parent().find("#action-desc").html(info);

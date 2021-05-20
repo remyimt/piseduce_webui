@@ -1,7 +1,8 @@
 // Global variables
-var NODES = {}
-var PROPERTIES = {}
-var MONTHES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Dec" ]
+let NODES = {}
+let PROPERTIES = {}
+const MONTHES = [ "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Dec" ]
+const DAYS = [ "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" ]
 
 // Configure the global variables and display the nodes
 $(document).ready(function () {
@@ -89,8 +90,8 @@ function updateNodeSchedule(hoursAdded=0) {
     var secondDay = new Date(firstDay);
     secondDay.setHours(secondDay.getHours() + 24);
     // Display the dates
-    d1.html(firstDay.getDate() + " " + MONTHES[firstDay.getMonth()] + " " + firstDay.getFullYear());
-    $("#d2").html(secondDay.getDate() + " " + MONTHES[secondDay.getMonth()] + " " + secondDay.getFullYear());
+    d1.html(DAYS[firstDay.getDay()] + " " + firstDay.getDate() + " " + MONTHES[firstDay.getMonth()] + " " + firstDay.getFullYear());
+    $("#d2").html(DAYS[secondDay.getDay()] + " " + secondDay.getDate() + " " + MONTHES[secondDay.getMonth()] + " " + secondDay.getFullYear());
     // Mark the reserved hours in red
     $.ajax({
         type: "GET",

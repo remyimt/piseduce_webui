@@ -121,9 +121,6 @@ function showDesc(inputTag) {
         propName = propName[propName.length - 1];
     }
     switch(propName) {
-        case "duration":
-            desc = "The duration of the deployment in hours. The maximum value is 72 hours.";
-            break;
         case "environment":
             desc = "The environment to deploy on the node:<br/>" +
                 "<ul>" + 
@@ -147,6 +144,9 @@ function showDesc(inputTag) {
             break;
         case "update_os":
             desc = "Update the operating system during the deployment.";
+            break;
+        case "form_ssh_key":
+            desc = "The public SSH key will be used to configure the root SSH login. There is no password authentication for the root login.";
             break;
         default:
             desc = "Unknown property! Oooops ;)";

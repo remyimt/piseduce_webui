@@ -100,9 +100,16 @@
                                                                     onfocus="showDesc(this)" onfocusout="$('.desc').empty()"
                                                                     onchange="removeBold('heading{{node_loop.index}}')" required>
                                                             {% else %}
-                                                                <input name="{{node_name}}-{{prop}}" type="text"
-                                                                    onfocus="showDesc(this)" onfocusout="$('.desc').empty()"
-                                                                    onchange="removeBold('heading{{node_loop.index}}')">
+                                                                {% if "password" in prop %}
+                                                                    <input name="{{node_name}}-{{prop}}" type="text"
+                                                                        pattern="(?=.*\d)(?=.*[!@#$£%^|&~*°_=+';:.,{}<>?\\\/\(\)\[\]\-])(?=.*[a-z])(?=.*[A-Z]).{8,}"
+                                                                        onfocus="showDesc(this)" onfocusout="$('.desc').empty()"
+                                                                        onchange="removeBold('heading{{node_loop.index}}')">
+                                                                {% else %}
+                                                                    <input name="{{node_name}}-{{prop}}" type="text"
+                                                                        onfocus="showDesc(this)" onfocusout="$('.desc').empty()"
+                                                                        onchange="removeBold('heading{{node_loop.index}}')">
+                                                                {% endif %}
                                                             {% endif %}
                                                         {% else %}
                                                             {% if node_data[prop]["mandatory"] %}

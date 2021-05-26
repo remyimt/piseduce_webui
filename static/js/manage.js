@@ -3,6 +3,13 @@ $(document).ready(function () {
     var hideMe = false;
     var no_node = true;
     var activeButton = [];
+    // Convert UTC times to local times
+    $("div[id$='_date'").each(function(idx, divDate) {
+        let isoString = divDate.innerHTML.replace(" ", "T") + ".000Z";
+        let res_date = new Date(isoString);
+        divDate.innerHTML = res_date.toString().substring(0, 21);
+    });
+    // Show the nodes according to the selected type button (raspberry, sensor, server)
     $(".type-selection").children("div").each(function(idx, typeButton) {
         var accordionId = $(typeButton).attr("id").replace("-button", "");
         var accordion = $("#" + accordionId);

@@ -111,7 +111,7 @@ function loadInfo(select) {
             break;
         case "extend":
             info = "Extend reservations by postponing the end date to a later date.<br/>" +
-                "The extend reconfiguration is only available <b>1 hour before</b>" +
+                "The extend reconfiguration is only available <b>4 hours before</b>" +
                 " the end of the reservation (maximum duration: 7 days).";
             break;
     }

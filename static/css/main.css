@@ -319,17 +319,17 @@
 
 .info-view {
     width: 1000px;
-    height: 284px;
+    height: 340px;
     padding: 6px;
     color: #fff;
     opacity: 0.9;
     display: none;
     position: relative;
-    top: -276px;
+    top: -343px;
 }
 
 .info-view > div:first-child {
-    height: 240px;
+    height: 300px;
     overflow-y: auto;
 }
 

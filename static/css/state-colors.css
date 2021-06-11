@@ -19,19 +19,6 @@
     background-color: #a2ff9e;
 }
 
-/*** Fake states ***/
-.deploy1 {
-    background-color: #191970;
-}
-
-.deploy2 {
-    background-color: #9acd32;
-}
-
-.deploy3 {
-    background-color: #dda0dd;
-}
-
 /*** Raspberry states ***/
 /* 20 generated colors from https://mokole.com/palette.html */
 .boot_conf {
@@ -118,4 +105,17 @@
 
 .destroyed {
     background-color: #b67dff;
+}
+
+/*** G5k states ***/
+.wait_running {
+    background-color: #b22222;
+}
+
+.deploy {
+    background-color: #ff8c00;
+}
+
+.wait_deploying {
+    background-color: #ba55d3;
 }

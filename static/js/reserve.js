@@ -417,8 +417,12 @@ function reserveNodes() {
             async: false,
             data: JSON.stringify({ "filters": filters, "start_date": startDateStr, "duration": duration}),
             success: function (data) {
+                msg = ""
+                if(data["errors"].length > 0) {
+                    msg = "Error:" + data["errors"] + "\n";
+                }
                 if(data["total_nodes"] == 0) {
-                    alert("The requested nodes are not available on this period!");
+                    alert(msg + "The requested nodes are not available on this period!");
                 } else {
                     if(data["total_nodes"] < total_requested) {
                         alert("Some nodes are missing.\nConfigure the reserved nodes or cancel your reservation!");

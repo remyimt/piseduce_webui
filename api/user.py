@@ -8,6 +8,7 @@ import flask, json, logging, os, requests
 
 
 b_user = flask.Blueprint("user", __name__, template_folder="templates/")
+POST_TIMEOUT = 16
 
 
 # REST API to connect the web UI and the agents
@@ -18,7 +19,8 @@ def node_list():
     db = open_session()
     for agent in db.query(Agent).filter(Agent.state == "connected").all():
         try:
-            r = requests.post(url = "http://%s:%s/v1/user/node/list" % (agent.ip, agent.port), timeout = 6,
+            r = requests.post(url = "http://%s:%s/v1/user/node/list" % (agent.ip, agent.port),
+                timeout = POST_TIMEOUT,
                 json = { "token": agent.token })
             if r.status_code == 200:
                 r_json = r.json()
@@ -46,7 +48,6 @@ def node_list():
             result["errors"].append(error_msg)
             logging.exception(error_msg)
         except Exception as e:
-            logging.info(e.__class__.__name__)
             error_msg = "connection failure to the agent '%s'" %  agent.name
             result["errors"].append(error_msg)
             logging.exception(error_msg)
@@ -63,10 +64,10 @@ def node_schedule():
     db = open_session()
     for agent in db.query(Agent).filter(Agent.state == "connected").all():
         try:
-            r = requests.post(url = "http://%s:%s/v1/user/node/schedule" % (agent.ip, agent.port), timeout = 6,
+            r = requests.post(url = "http://%s:%s/v1/user/node/schedule" % (agent.ip, agent.port),
+                timeout = POST_TIMEOUT,
                 json = { "token": agent.token, "user": current_user.email })
             if r.status_code == 200:
-                logging.info(r.json())
                 r_json = r.json()
                 result["nodes"].update(r_json["nodes"])
             else:
@@ -86,11 +87,12 @@ def node_schedule():
 @b_user.route("/node/configuring")
 @login_required
 def node_configuring():
-    result = { "errors": [], "raspberry": {}, "sensor": {}, "server": {} }
+    result = { "errors": [], "raspberry": {}, "iot-lab": {}, "g5k": {} }
     db = open_session()
     for agent in db.query(Agent).filter(Agent.state == "connected").all():
         try:
-            r = requests.post(url = "http://%s:%s/v1/user/configure" % (agent.ip, agent.port), timeout = 6,
+            r = requests.post(url = "http://%s:%s/v1/user/configure" % (agent.ip, agent.port),
+                timeout = POST_TIMEOUT,
                 json = { "token": agent.token, "user": current_user.email })
             if r.status_code == 200 and agent.type in result:
                 # Add the agent name to the node information
@@ -123,11 +125,12 @@ def node_deploying():
     db = open_session()
     for agent in db.query(Agent).filter(Agent.state == "connected").all():
         try:
-            r = requests.post(url = "http://%s:%s/v1/user/node/mine" % (agent.ip, agent.port), timeout = 6,
+            r = requests.post(url = "http://%s:%s/v1/user/node/mine" % (agent.ip, agent.port),
+                timeout = POST_TIMEOUT,
                 json = { "token": agent.token, "user": current_user.email })
             if r.status_code == 200:
                 json_data = r.json()
-                result["states"] = { "raspberry": [], "sensor": [], "server": [] }
+                result["states"] = { "raspberry": [], "iot-lab": [], "g5k": [] }
                 result["states"][agent.type] = json_data["states"]
                 for node in json_data["nodes"]:
                     # Sort the nodes by bin
@@ -138,7 +141,7 @@ def node_deploying():
                     if len(bin_name) > 0:
                         # Sort nodes by bin name
                         if bin_name not in result["nodes"]:
-                            result["nodes"][bin_name] = { "raspberry": [], "sensor": [], "server": [] }
+                            result["nodes"][bin_name] = { "raspberry": [], "iot-lab": [], "g5k": [] }
                         result["nodes"][bin_name][agent.type].append(json_data["nodes"][node])
             else:
                 error_msg = "deploying error: wrong answer from the agent '%s' (return code %d)" % (
@@ -165,7 +168,8 @@ def node_updating():
     db = open_session()
     for agent in db.query(Agent).filter(Agent.state == "connected").all():
         try:
-            r = requests.post(url = "http://%s:%s/v1/user/node/state" % (agent.ip, agent.port), timeout = 6,
+            r = requests.post(url = "http://%s:%s/v1/user/node/state" % (agent.ip, agent.port),
+                timeout = POST_TIMEOUT,
                 json = { "token": agent.token, "user": current_user.email })
             if r.status_code == 200:
                 json_data = r.json()
@@ -175,7 +179,7 @@ def node_updating():
                     if len(bin_name) > 0:
                         # Sort nodes by bin name
                         if bin_name not in result:
-                            result[bin_name] = { "raspberry": [], "sensor": [], "server": [] }
+                            result[bin_name] = { "raspberry": [], "iot-lab": [], "g5k": [] }
                         result[bin_name][agent.type].append(json_data["nodes"][node])
         except:
             error_msg = "connection failure to the agent '%s'" %  agent.name
@@ -198,14 +202,19 @@ def make_reserve():
             agent = db.query(Agent).filter(Agent.name == f["agent"]).filter(Agent.state == "connected").first()
             if agent is not None:
                 # Make the reservation
-                r = requests.post(url = "http://%s:%s/v1/user/reserve" % (agent.ip, agent.port), timeout = 6,
+                r = requests.post(url = "http://%s:%s/v1/user/reserve" % (agent.ip, agent.port),
+                    timeout = POST_TIMEOUT,
                     json = {
                         "token": agent.token, "filter": f, "user": current_user.email,
                         "start_date": flask.request.json["start_date"],
                         "duration": flask.request.json["duration"]
                     })
                 if r.status_code == 200:
-                    result["total_nodes"] += len(r.json()["nodes"])
+                    r_json = r.json()
+                    if "nodes" in r_json:
+                        result["total_nodes"] += len(r.json()["nodes"])
+                    if "error" in r_json:
+                        result["errors"].append(r_json["error"])
                 else:
                     logging.error("can not reserve nodes: wrong return code %d from '%s'" % (r.status_code, agent.name))
             else:
@@ -216,7 +225,8 @@ def make_reserve():
             for agent in db.query(Agent).filter(Agent.type == agent_type).filter(Agent.state == "connected").all():
                 if f["nb_nodes"] > 0:
                     # Make the reservation
-                    r = requests.post(url = "http://%s:%s/v1/user/reserve" % (agent.ip, agent.port), timeout = 6,
+                    r = requests.post(url = "http://%s:%s/v1/user/reserve" % (agent.ip, agent.port),
+                        timeout = POST_TIMEOUT,
                         json = {
                             "token": agent.token, "filter": f, "user": current_user.email,
                             "start_date": flask.request.json["start_date"],
@@ -264,8 +274,9 @@ def make_deploy():
             for node in result[agent_name]:
                 result[agent_name][node]["account_ssh_key"] = user_db.ssh_key
         agent = db.query(Agent).filter(Agent.name == agent_name).first()
-        r = requests.post(url = "http://%s:%s/v1/user/deploy" % (agent.ip, agent.port), timeout = 6,
-                json = { "token": agent.token, "nodes": result[agent_name], "user": current_user.email })
+        r = requests.post(url = "http://%s:%s/v1/user/deploy" % (agent.ip, agent.port),
+            timeout = POST_TIMEOUT,
+            json = { "token": agent.token, "nodes": result[agent_name], "user": current_user.email })
         if r.status_code == 200:
             json_result.update(r.json())
         else:
@@ -288,8 +299,9 @@ def make_exec():
         db = open_session()
         for agent_name in json_data["nodes"]:
             agent = db.query(Agent).filter(Agent.name == agent_name).first()
-            r = requests.post(url = "http://%s:%s/v1/user/%s" % (agent.ip, agent.port, json_data["reconfiguration"]), timeout = 6,
-                    json = { "token": agent.token, "nodes": json_data["nodes"][agent_name], "user": current_user.email })
+            r = requests.post(url = "http://%s:%s/v1/user/%s" % (agent.ip, agent.port, json_data["reconfiguration"]),
+                timeout = POST_TIMEOUT,
+                json = { "token": agent.token, "nodes": json_data["nodes"][agent_name], "user": current_user.email })
             if r.status_code == 200:
                 json_answer = r.json()
                 failure = []

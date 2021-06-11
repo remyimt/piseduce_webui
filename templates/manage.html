@@ -106,9 +106,18 @@
                                                         {% endfor %}
                                                     </div>
                                                     {% if prop[0] == "url" %}
-                                                            <div id="{{node_name}}-{{prop[0]}}">
-                                                                <a href="{{prop[1]}}" target="_blank">node UI</a>
-                                                            </div>
+                                                        <div id="{{node_name}}-{{prop[0]}}">
+                                                            <a href="{{prop[1]}}" target="_blank">
+                                                                node UI
+                                                            </a>
+                                                        </div>
+                                                    {% elif prop[0] == "assigned_nodes" %}
+                                                        <div id="{{node_name}}-{{prop[0]}}">
+                                                            <a
+                                                                href="javascript:alert('{{prop[1]}}')">
+                                                                {{prop[1].split(",")|length}} nodes
+                                                            </a>
+                                                        </div>
                                                     {% else %}
                                                         {% if prop[1]|string|length > 0 %}
                                                             <div id="{{node_name}}-{{prop[0]}}">{{prop[1]}}</div>

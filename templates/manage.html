@@ -118,6 +118,10 @@
                                                                 {{prop[1].split(",")|length}} nodes
                                                             </a>
                                                         </div>
+                                                    {% elif "date" in prop[0] %}
+                                                        <div id="{{node_name}}-{{prop[0]}}">
+                                                            {{prop[1]|timestamp_to_date}}
+                                                        </div>
                                                     {% else %}
                                                         {% if prop[1]|string|length > 0 %}
                                                             <div id="{{node_name}}-{{prop[0]}}">{{prop[1]}}</div>

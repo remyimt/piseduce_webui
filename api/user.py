@@ -8,7 +8,7 @@ import flask, json, logging, os, requests
 
 
 b_user = flask.Blueprint("user", __name__, template_folder="templates/")
-POST_TIMEOUT = 16
+POST_TIMEOUT = 30
 
 
 # REST API to connect the web UI and the agents
@@ -304,14 +304,17 @@ def make_exec():
                 json = { "token": agent.token, "nodes": json_data["nodes"][agent_name], "user": current_user.email })
             if r.status_code == 200:
                 json_answer = r.json()
-                failure = []
-                for node in json_answer:
-                    if json_answer[node] != "success":
-                        failure.append(node)
-                if len(failure) > 0:
-                    result["errors"].append("nodes with failure: %s" % failure)
+                if "error" in json_answer:
+                    result["errors"].append(json_answer["error"])
                 else:
-                    result.update(json_answer)
+                    failure = []
+                    for node in json_answer:
+                        if json_answer[node] != "success":
+                            failure.append(node)
+                    if len(failure) > 0:
+                        result["errors"].append("nodes with failure: %s" % failure)
+                    else:
+                        result.update(json_answer)
             else:
                 logging.error("reconfiguration failure: the agent '%s' fails to execute '%s'" % (
                     agent_name, json_data["reconfiguration"]))

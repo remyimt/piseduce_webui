@@ -1,12 +1,14 @@
 from database.connector import open_session, close_session
 from database.tables import User
+from datetime import datetime
 from flask import Flask, render_template
 from flask_login import LoginManager, UserMixin
 from lib.config_loader import load_config
 from api.admin import b_admin
 from api.login import b_login
 from api.user import b_user
-import logging
+import jinja2, logging
+
 
 # Create the application
 webui = Flask(__name__)
@@ -15,6 +17,13 @@ webui.secret_key = load_config()["pwd_secret_key"]
 webui.register_blueprint(b_login)
 webui.register_blueprint(b_admin, url_prefix="/admin/")
 webui.register_blueprint(b_user, url_prefix="/user/")
+
+
+# Jinja filters to render templates
+@webui.template_filter()
+def timestamp_to_date(timestamp):
+    return datetime.fromtimestamp(timestamp)
+
 
 # Flask_login configuration (session manager)
 class LoginUser(UserMixin):

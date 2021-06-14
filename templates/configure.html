@@ -82,8 +82,10 @@
                                         {% endif %}
                                         <div class="card-body">
                                             <div class="text-info dates">
-                                                The reservation starts at <b>{{node_data["start_date"]}}</b> and
-                                                finishes at <b>{{node_data["end_date"]}}</b> (UTC Time).
+                                                The reservation starts at
+                                                <b>{{node_data["start_date"]|timestamp_to_date}}</b> and
+                                                finishes at
+                                                <b>{{node_data["end_date"]|timestamp_to_date}}</b>.
                                             </div>
                                             {% set useless = node_data.pop("start_date") %}
                                             {% set useless = node_data.pop("end_date") %}

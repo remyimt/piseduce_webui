@@ -1,22 +1,26 @@
 // Display nodes and configure type buttons
 $(document).ready(function () {
-    var hideMe = false;
-    var no_node = true;
-    var activeButton = [];
+    let hideMe = false;
+    let no_node = true;
+    let activeButton = [];
     // Show the nodes according to the selected type button (raspberry, sensor, server)
     $(".type-selection").children("div").each(function(idx, typeButton) {
-        var accordionId = $(typeButton).attr("id").replace("-button", "");
-        var accordion = $("#" + accordionId);
+        let accordionId = $(typeButton).attr("id").replace("-button", "");
+        let accordion = $("#" + accordionId);
+        let nodeType = $(typeButton).attr("id").split("-")[1];
+        let stateLegend = $("#" + nodeType + "-states");
         if(accordion.length > 0) {
             no_node = false;
-            var bin_name = accordionId.split("-")[0];
+            let bin_name = accordionId.split("-")[0];
             if(activeButton.includes(bin_name)) {
                 // A button is already active, hide the nodes
                 accordion.hide();
+                stateLegend.hide();
             } else {
                 // Active the button and show the nodes
                 $(typeButton).addClass("active");
                 activeButton.push(bin_name);
+                stateLegend.show();
             }
         } else {
             $(typeButton).addClass("disabled");
@@ -45,9 +49,9 @@ function updateNodeStatus() {
             }
             delete data["errors"];
             // Compute the number of nodes displayed in the HTML page
-            var uiNbNodes = $(".card-header").length;
+            let uiNbNodes = $(".card-header").length;
             // Compute the number of nodes described in the agent data
-            var dataNbNodes = 0;
+            let dataNbNodes = 0;
             for (bin in data) {
                 for (nodeType in data[bin]) {
                     dataNbNodes += data[bin][nodeType].length
@@ -67,7 +71,7 @@ function updateNodeStatus() {
                             // Reload the page to display the password
                             location.reload();
                         }
-                        var nameDiv = $("#" + node["name"] + "-name");
+                        let nameDiv = $("#" + node["name"] + "-name");
                         if("percent" in node && node["state"] == "env_check") {
                             nameDiv.html(node["name"] + " - " + node["percent"] + "%");
                         } else {
@@ -75,7 +79,7 @@ function updateNodeStatus() {
                                 nameDiv.html(node["name"]);
                             }
                         }
-                        var oldStatus = $("#" + node["name"] + "-state");
+                        let oldStatus = $("#" + node["name"] + "-state");
                         if(oldStatus.html() != node["state"]) {
                             oldStatus.html(node["state"]);
                             $("#" + node["name"] + "-circle").attr("class", "rounded-circle " + node["state"]);
@@ -92,7 +96,7 @@ function updateNodeStatus() {
 }
 
 function loadInfo(select) {
-    var info = "";
+    let info = "";
     switch($(select).val()) {
         case "hardreboot":
             info = "Hard reboot nodes by turning off and on the power supply.";
@@ -113,14 +117,14 @@ function loadInfo(select) {
 }
 
 function reconfigure(binName) {
-    var nodeNames = {};
-    var reconfiguration = $("#" + binName + "-select").val();
+    let nodeNames = {};
+    let reconfiguration = $("#" + binName + "-select").val();
     $(".accordion:visible").each(function(idx, accordion) {
         if(accordion.id.startsWith(binName)) {
             $(accordion).find(".node-name").each(function(idx, name) {
-                var imgName = name.parentNode.children[2].src.split("/");
+                let imgName = name.parentNode.children[2].src.split("/");
                 if(imgName[imgName.length - 1].startsWith("enabled")) {
-                    var agent = $("#" + name.innerHTML + "-agent").val();
+                    let agent = $("#" + name.innerHTML + "-agent").val();
                     if(!(agent in nodeNames)) {
                         nodeNames[agent] = []
                     }
@@ -154,15 +158,15 @@ function reconfigure(binName) {
 }
 
 function destroyBin(binName) {
-    var nodeNames = {};
+    let nodeNames = {};
     $(".type-selection").children("div").each(function(idx, typeButton) {
         if(typeButton.id.startsWith(binName)) {
-            var accordionId = $(typeButton).attr("id").replace("-button", "");
-            var accordion = $("#" + accordionId);
+            let accordionId = $(typeButton).attr("id").replace("-button", "");
+            let accordion = $("#" + accordionId);
             if(accordion.length > 0) {
                 accordion.find(".node-name").each(function(useless, node) {
-                    var nodeName = node.innerHTML;
-                    var agent = $("#" + nodeName + "-agent").val();
+                    let nodeName = node.innerHTML;
+                    let agent = $("#" + nodeName + "-agent").val();
                     if(!(agent in nodeNames)) {
                         nodeNames[agent] = []
                     }
@@ -195,15 +199,18 @@ function destroyBin(binName) {
 
 function nodeSelection(typeButton) {
     if(!typeButton.classList.contains("disabled")) {
-        var bin_name = $(typeButton).attr("id").split("-")[0];
+        let bin_name = $(typeButton).attr("id").split("-")[0];
         $(".type-selection").children("div").each(function(idx, allButton) {
             if(allButton.id.startsWith(bin_name)) {
-                var accordionId = $(allButton).attr("id").replace("-button", "");
+                let nodeType = $(allButton).attr("id").split("-")[1];
+                let accordionId = $(allButton).attr("id").replace("-button", "");
                 if(allButton == typeButton) {
                     $("#" + accordionId).show();
+                    $("#" + nodeType + "-states").show();
                     $(allButton).addClass("active");
                 } else {
                     if(!$(allButton).hasClass("disabled")) {
+                        $("#" + nodeType + "-states").hide();
                         $("#" + accordionId).hide();
                         $(allButton).removeClass("active");
                     }
@@ -216,7 +223,7 @@ function nodeSelection(typeButton) {
 function tickNode(elem) {
     // Do not propage to not open the accordion
     event.stopPropagation();
-    var img_name = elem.getAttribute("src").split("/")[3];
+    let img_name = elem.getAttribute("src").split("/")[3];
     if(img_name.includes("disabled")) {
         elem.setAttribute("src", "/static/img/enabled-checkbox.png");
     } else {

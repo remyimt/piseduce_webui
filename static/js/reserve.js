@@ -269,7 +269,7 @@ function addFilterSelection() {
         filterProp.append(span);
     });
     // Append the type of the first displayed node to the selection filter
-    let nodeName = $(".node-name").first().children("span").html();
+    let nodeName = $(".node-name:visible").first().children("span").html();
     let span = $("<span>type: " + NODES[nodeName]["type"] + "</span>");
     if(filterProp.children().length > 0) {
       span.hide();

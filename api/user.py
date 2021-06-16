@@ -121,7 +121,11 @@ def node_configuring():
 @b_user.route("/node/deploying")
 @login_required
 def node_deploying():
-    result = { "errors": [], "nodes": {}, "states": [] }
+    result = {
+        "errors": [],
+        "nodes": {},
+        "states": { "raspberry": [], "iot-lab": [], "g5k": [] }
+    }
     db = open_session()
     for agent in db.query(Agent).filter(Agent.state == "connected").all():
         try:
@@ -130,7 +134,6 @@ def node_deploying():
                 json = { "token": agent.token, "user": current_user.email })
             if r.status_code == 200:
                 json_data = r.json()
-                result["states"] = { "raspberry": [], "iot-lab": [], "g5k": [] }
                 result["states"][agent.type] = json_data["states"]
                 for node in json_data["nodes"]:
                     # Sort the nodes by bin

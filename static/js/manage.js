@@ -8,6 +8,7 @@ $(document).ready(function () {
         let nodeType = $(typeButton).attr("id").split("-")[0];
         if($(".accordion").filter("[id$='" + nodeType + "']").length == 0) {
             $(typeButton).addClass("disabled");
+            $("#" + nodeType + "-states").hide();
         } else if(showNodes) {
             showNodes = false;
             no_node = false;

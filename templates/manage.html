@@ -32,6 +32,16 @@
             <b>For example</b>, my raspberry has the IP 25.25.0.6. SSH connections from password
             on a raspbian environment use <i>ssh -l pi -p 22006 pi.seduce.fr</i>
         </div>
+        <!-- Buttons to select nodes to manage from the node type -->
+        <div class="type-selection">
+            {% for node_type in states %}
+                <div id="{{node_type}}-button" class="btn btn-outline-info"
+                    onclick="nodeSelection(this)">
+                    {{node_type}}
+                </div>
+            {% endfor %}
+        </div>
+        <!-- Colors of the deployment states -->
         {% for node_type in states %}
             {% if states[node_type]|length > 0 %}
                 <div id="{{node_type}}-states" class="container">
@@ -53,102 +63,99 @@
                 </div>
             {% endif %}
         {% endfor %}
+        <!-- Display the nodes inside their bin -->
         {% for node_bin in nodes %}
             <div class="bg-info rounded-right title">
                 <div>{{node_bin|replace("_", " ")}}</div>
                 <div class="rounded-right" onclick="destroyBin('{{node_bin}}')">Destroy</div>
             </div>
-            <div class="type-selection">
-                {% for node_type in nodes[node_bin] %}
-                    <div id="{{node_bin}}-{{node_type}}-button" class="btn btn-outline-info"
-                        onclick="nodeSelection(this)">
-                        {{node_type}}
-                    </div>
-                {% endfor %}
-            </div>
             {% for node_type in nodes[node_bin] %}
-                {% if nodes[node_bin][node_type]|length > 0 %}
                     <!-- 'accordion' class is used by the JS functions -->
                     <div id="{{node_bin}}-{{node_type}}" class="accordion">
-                        {% for node_data in nodes[node_bin][node_type] %}
-                            {% set agent = node_data.pop("agent") %}
-                            {% set node_name = node_data.pop("node_name") %}
-                            <!-- Send the agent name in the form -->
-                            <input type="hidden" id="{{node_name}}-agent" value="{{agent}}">
-                            <div class="card">
-                                <div class="card-header" id="heading-{{node_name}}">
-                                    <a type="button" data-toggle="collapse" data-target="#collapse-{{node_name}}"
-                                        aria-expanded="false" aria-controls="collapse-{{node_name}}" class="btn-link">
-                                        <div>
-                                            <div id="{{node_name}}-circle" title="{{node_data["state"]}}"
-                                                class="rounded-circle {{node_data["state"]}}">
-                                            </div>
-                                            <div id="{{node_name}}-name" class="node-name">{{node_name}}</div>
-                                            <img src="/static/img/disabled-checkbox.png" onclick="tickNode(this)">
-                                        </div>
-                                    </a>
-                                </div><!-- card-header -->
-                                <div id="collapse-{{node_name}}" class="collapse collapsed"
-                                    aria-labelledby="heading-{{node_name}}" data-parent="#{{node_bin}}-{{node_type}}">
-                                    <div class="card-body">
-                                        <!-- configure the number of columns per row -->
-                                        {% set nb_col = 3 %}
-                                        {% set extra_col = (nb_col - node_data|length % nb_col) % nb_col %}
-                                        <div class="container">
-                                            {% for prop in node_data|dictsort %}
-                                                {% if loop.index % nb_col == 1 %}
-                                                    <div class="row">
-                                                {% endif %}
-                                                <div class="col">
-                                                    <div>
-                                                        {% for name in prop[0].split("_") %}
-                                                            {{ name[0]|upper}}{{name[1:] }}
-                                                        {% endfor %}
-                                                    </div>
-                                                    {% if prop[0] == "url" %}
-                                                        <div id="{{node_name}}-{{prop[0]}}">
-                                                            <a href="{{prop[1]}}" target="_blank">
-                                                                node UI
-                                                            </a>
-                                                        </div>
-                                                    {% elif prop[0] == "assigned_nodes" %}
-                                                        <div id="{{node_name}}-{{prop[0]}}">
-                                                            <a
-                                                                href="javascript:alert('{{prop[1]}}')">
-                                                                {{prop[1].split(",")|length}} nodes
-                                                            </a>
-                                                        </div>
-                                                    {% elif "date" in prop[0] %}
-                                                        <div id="{{node_name}}-{{prop[0]}}">
-                                                            {{prop[1]|timestamp_to_date}}
-                                                        </div>
-                                                    {% else %}
-                                                        {% if prop[1]|string|length > 0 %}
-                                                            <div id="{{node_name}}-{{prop[0]}}">{{prop[1]}}</div>
-                                                        {% else %}
-                                                            <div id="{{node_name}}-{{prop[0]}}">None</div>
-                                                        {% endif %}
-                                                    {% endif %}
+                        {% if nodes[node_bin][node_type]|length == 0 %}
+                            <span class="ml-2">
+                                <b>No node with the '{{node_type}}' type</b>
+                            </span>
+                        {% else %}
+                            {% for node_data in nodes[node_bin][node_type] %}
+                                {% set agent = node_data.pop("agent") %}
+                                {% set node_name = node_data.pop("node_name") %}
+                                <!-- Send the agent name in the form -->
+                                <input type="hidden" id="{{node_name}}-agent" value="{{agent}}">
+                                <div class="card">
+                                    <div class="card-header" id="heading-{{node_name}}">
+                                        <a type="button" data-toggle="collapse" data-target="#collapse-{{node_name}}"
+                                            aria-expanded="false" aria-controls="collapse-{{node_name}}" class="btn-link">
+                                            <div>
+                                                <div id="{{node_name}}-circle" title="{{node_data["state"]}}"
+                                                    class="rounded-circle {{node_data["state"]}}">
                                                 </div>
-                                                {% if loop.index % nb_col == 0 %}
+                                                <div id="{{node_name}}-name" class="node-name">{{node_name}}</div>
+                                                <img src="/static/img/disabled-checkbox.png" onclick="tickNode(this)">
+                                            </div>
+                                        </a>
+                                    </div><!-- card-header -->
+                                    <div id="collapse-{{node_name}}" class="collapse collapsed"
+                                        aria-labelledby="heading-{{node_name}}" data-parent="#{{node_bin}}-{{node_type}}">
+                                        <div class="card-body">
+                                            <!-- configure the number of columns per row -->
+                                            {% set nb_col = 3 %}
+                                            {% set extra_col = (nb_col - node_data|length % nb_col) % nb_col %}
+                                            <div class="container">
+                                                {% for prop in node_data|dictsort %}
+                                                    {% if loop.index % nb_col == 1 %}
+                                                        <div class="row">
+                                                    {% endif %}
+                                                    <div class="col">
+                                                        <div>
+                                                            {% for name in prop[0].split("_") %}
+                                                                {{ name[0]|upper}}{{name[1:] }}
+                                                            {% endfor %}
+                                                        </div>
+                                                        {% if prop[0] == "url" %}
+                                                            <div id="{{node_name}}-{{prop[0]}}">
+                                                                <a href="{{prop[1]}}" target="_blank">
+                                                                    node UI
+                                                                </a>
+                                                            </div>
+                                                        {% elif prop[0] == "assigned_nodes" %}
+                                                            <div id="{{node_name}}-{{prop[0]}}">
+                                                                <a
+                                                                    href="javascript:alert('{{prop[1]}}')">
+                                                                    {{prop[1].split(",")|length}} nodes
+                                                                </a>
+                                                            </div>
+                                                        {% elif "date" in prop[0] %}
+                                                            <div id="{{node_name}}-{{prop[0]}}">
+                                                                {{prop[1]|timestamp_to_date}}
+                                                            </div>
+                                                        {% else %}
+                                                            {% if prop[1]|string|length > 0 %}
+                                                                <div id="{{node_name}}-{{prop[0]}}">{{prop[1]}}</div>
+                                                            {% else %}
+                                                                <div id="{{node_name}}-{{prop[0]}}">None</div>
+                                                            {% endif %}
+                                                        {% endif %}
+                                                    </div>
+                                                    {% if loop.index % nb_col == 0 %}
+                                                        </div><!-- end row -->
+                                                    {% endif %}
+                                                {% endfor %}
+                                                {% for n in range(extra_col) %}
+                                                    <div class="col">
+                                                    </div>
+                                                {% endfor %}
+                                                {% if extra_col != 0 %}
                                                     </div><!-- end row -->
                                                 {% endif %}
-                                            {% endfor %}
-                                            {% for n in range(extra_col) %}
-                                                <div class="col">
-                                                </div>
-                                            {% endfor %}
-                                            {% if extra_col != 0 %}
-                                                </div><!-- end row -->
-                                            {% endif %}
-                                        </div>
-                                    </div><!-- card-body -->
-                                </div><!-- collapse-node_name -->
-                            </div><!-- card -->
-                        {% endfor %}
+                                            </div>
+                                        </div><!-- card-body -->
+                                    </div><!-- collapse-node_name -->
+                                </div><!-- card -->
+                            {% endfor %}<!-- nodes[node_bin][node_type] -->
+                        {% endif %}
                     </div><!-- node_bin-node_type -->
-                {% endif %}
-            {% endfor %}
+            {% endfor %}<!-- nodes[node_bin] -->
             <div class="actions">
                 <div class="text-info">
                     <span>Node Reconfiguration</span> (select nodes then execute the reconfiguration)

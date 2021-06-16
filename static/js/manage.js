@@ -1,29 +1,17 @@
 // Display nodes and configure type buttons
 $(document).ready(function () {
-    let hideMe = false;
+    let showNodes = true;
     let no_node = true;
     let activeButton = [];
-    // Show the nodes according to the selected type button (raspberry, sensor, server)
+    // Disable buttons if there is no node for the button type
     $(".type-selection").children("div").each(function(idx, typeButton) {
-        let accordionId = $(typeButton).attr("id").replace("-button", "");
-        let accordion = $("#" + accordionId);
-        let nodeType = $(typeButton).attr("id").split("-")[1];
-        let stateLegend = $("#" + nodeType + "-states");
-        if(accordion.length > 0) {
-            no_node = false;
-            let bin_name = accordionId.split("-")[0];
-            if(activeButton.includes(bin_name)) {
-                // A button is already active, hide the nodes
-                accordion.hide();
-                stateLegend.hide();
-            } else {
-                // Active the button and show the nodes
-                $(typeButton).addClass("active");
-                activeButton.push(bin_name);
-                stateLegend.show();
-            }
-        } else {
+        let nodeType = $(typeButton).attr("id").split("-")[0];
+        if($(".accordion").filter("[id$='" + nodeType + "']").length == 0) {
             $(typeButton).addClass("disabled");
+        } else if(showNodes) {
+            showNodes = false;
+            no_node = false;
+            nodeSelection(typeButton);
         }
     });
     if(no_node) {
@@ -199,22 +187,24 @@ function destroyBin(binName) {
 
 function nodeSelection(typeButton) {
     if(!typeButton.classList.contains("disabled")) {
-        let bin_name = $(typeButton).attr("id").split("-")[0];
-        $(".type-selection").children("div").each(function(idx, allButton) {
-            if(allButton.id.startsWith(bin_name)) {
-                let nodeType = $(allButton).attr("id").split("-")[1];
-                let accordionId = $(allButton).attr("id").replace("-button", "");
-                if(allButton == typeButton) {
-                    $("#" + accordionId).show();
-                    $("#" + nodeType + "-states").show();
-                    $(allButton).addClass("active");
-                } else {
-                    if(!$(allButton).hasClass("disabled")) {
-                        $("#" + nodeType + "-states").hide();
-                        $("#" + accordionId).hide();
-                        $(allButton).removeClass("active");
-                    }
-                }
+        let nodeType = $(typeButton).attr("id").split("-")[0];
+        // Enable the buttons with the right type
+        $(".type-selection").children("div").each(function(idx, tButton) {
+            if(tButton.id.includes(nodeType)) {
+                $(tButton).addClass("active");
+                $("#" + nodeType + "-states").show();
+            } else {
+                $(tButton).removeClass("active");
+                let myType = tButton.id.split("-")[0];
+                $("#" + myType + "-states").hide();
+            }
+        });
+        // Show the nodes with the right type
+        $(".accordion").each(function(idx, accordion) {
+            if(accordion.id.includes(nodeType)) {
+                $(accordion).show();
+            } else {
+                $(accordion).hide();
             }
         });
     }

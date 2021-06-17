@@ -1,4 +1,5 @@
 from api.tool import sort_by_name
+from cryptography.fernet import Fernet
 from database.connector import open_session, close_session
 from database.tables import User, Agent
 from flask_login import current_user, login_required
@@ -11,6 +12,25 @@ b_user = flask.Blueprint("user", __name__, template_folder="templates/")
 POST_TIMEOUT = 30
 
 
+def post_data(db, user_email, agent_type, agent_token):
+    json_data = { "token": agent_token, "user": user_email }
+    if agent_type == "g5k":
+        user_db = db.query(User).filter(User.email == user_email).first()
+        if user_db.g5k_user is None or len(user_db.g5k_user) == 0 or \
+            user_db.g5k_pwd is None or len(user_db.g5k_pwd) == 0:
+                raise ValueError('G5k credentials are missing')
+        json_data["g5k_user"] = user_db.g5k_user
+        json_data["g5k_password"] = user_db.g5k_pwd
+    if agent_type == "iot-lab":
+        user_db = db.query(User).filter(User.email == user_email).first()
+        if user_db.iot_user is None or len(user_db.iot_user) == 0 or \
+            user_db.iot_pwd is None or len(user_db.iot_pwd) == 0:
+                raise ValueError('Iot-Lab credentials are missing')
+        json_data["iot_user"] = user_db.iot_user
+        json_data["password"] = user_db.iot_pwd
+    return json_data
+
+
 # REST API to connect the web UI and the agents
 @b_user.route("/node/list")
 @login_required
@@ -19,9 +39,9 @@ def node_list():
     db = open_session()
     for agent in db.query(Agent).filter(Agent.state == "connected").all():
         try:
+            r_data = post_data(db, current_user.email, agent.type, agent.token)
             r = requests.post(url = "http://%s:%s/v1/user/node/list" % (agent.ip, agent.port),
-                timeout = POST_TIMEOUT,
-                json = { "token": agent.token })
+                timeout = POST_TIMEOUT, json = r_data)
             if r.status_code == 200:
                 r_json = r.json()
                 duplicated_names = []
@@ -64,9 +84,9 @@ def node_schedule():
     db = open_session()
     for agent in db.query(Agent).filter(Agent.state == "connected").all():
         try:
+            r_data = post_data(db, current_user.email, agent.type, agent.token)
             r = requests.post(url = "http://%s:%s/v1/user/node/schedule" % (agent.ip, agent.port),
-                timeout = POST_TIMEOUT,
-                json = { "token": agent.token, "user": current_user.email })
+                timeout = POST_TIMEOUT, json = r_data)
             if r.status_code == 200:
                 r_json = r.json()
                 result["nodes"].update(r_json["nodes"])
@@ -91,9 +111,9 @@ def node_configuring():
     db = open_session()
     for agent in db.query(Agent).filter(Agent.state == "connected").all():
         try:
+            r_data = post_data(db, current_user.email, agent.type, agent.token)
             r = requests.post(url = "http://%s:%s/v1/user/configure" % (agent.ip, agent.port),
-                timeout = POST_TIMEOUT,
-                json = { "token": agent.token, "user": current_user.email })
+                timeout = POST_TIMEOUT, json = r_data)
             if r.status_code == 200 and agent.type in result:
                 # Add the agent name to the node information
                 json_data = r.json()
@@ -129,9 +149,9 @@ def node_deploying():
     db = open_session()
     for agent in db.query(Agent).filter(Agent.state == "connected").all():
         try:
+            r_data = post_data(db, current_user.email, agent.type, agent.token)
             r = requests.post(url = "http://%s:%s/v1/user/node/mine" % (agent.ip, agent.port),
-                timeout = POST_TIMEOUT,
-                json = { "token": agent.token, "user": current_user.email })
+                timeout = POST_TIMEOUT, json = r_data)
             if r.status_code == 200:
                 json_data = r.json()
                 result["states"][agent.type] = json_data["states"]
@@ -171,9 +191,9 @@ def node_updating():
     db = open_session()
     for agent in db.query(Agent).filter(Agent.state == "connected").all():
         try:
+            r_data = post_data(db, current_user.email, agent.type, agent.token)
             r = requests.post(url = "http://%s:%s/v1/user/node/state" % (agent.ip, agent.port),
-                timeout = POST_TIMEOUT,
-                json = { "token": agent.token, "user": current_user.email })
+                timeout = POST_TIMEOUT, json = r_data)
             if r.status_code == 200:
                 json_data = r.json()
                 for node in json_data["nodes"]:
@@ -205,13 +225,12 @@ def make_reserve():
             agent = db.query(Agent).filter(Agent.name == f["agent"]).filter(Agent.state == "connected").first()
             if agent is not None:
                 # Make the reservation
+                r_data = post_data(db, current_user.email, agent.type, agent.token)
+                r_data["filter"] = f
+                r_data["start_date"] = flask.request.json["start_date"]
+                r_data["duration"] = flask.request.json["duration"]
                 r = requests.post(url = "http://%s:%s/v1/user/reserve" % (agent.ip, agent.port),
-                    timeout = POST_TIMEOUT,
-                    json = {
-                        "token": agent.token, "filter": f, "user": current_user.email,
-                        "start_date": flask.request.json["start_date"],
-                        "duration": flask.request.json["duration"]
-                    })
+                    timeout = POST_TIMEOUT, json = r_data)
                 if r.status_code == 200:
                     r_json = r.json()
                     if "nodes" in r_json:
@@ -228,13 +247,12 @@ def make_reserve():
             for agent in db.query(Agent).filter(Agent.type == agent_type).filter(Agent.state == "connected").all():
                 if f["nb_nodes"] > 0:
                     # Make the reservation
+                    r_data = post_data(db, current_user.email, agent.type, agent.token)
+                    r_data["filter"] = f
+                    r_data["start_date"] = flask.request.json["start_date"]
+                    r_data["duration"] = flask.request.json["duration"]
                     r = requests.post(url = "http://%s:%s/v1/user/reserve" % (agent.ip, agent.port),
-                        timeout = POST_TIMEOUT,
-                        json = {
-                            "token": agent.token, "filter": f, "user": current_user.email,
-                            "start_date": flask.request.json["start_date"],
-                            "duration": flask.request.json["duration"]
-                        })
+                        timeout = POST_TIMEOUT, json = r_data)
                     if r.status_code == 200:
                         nb_nodes = len(r.json()["nodes"])
                         result["total_nodes"] += nb_nodes
@@ -277,9 +295,10 @@ def make_deploy():
             for node in result[agent_name]:
                 result[agent_name][node]["account_ssh_key"] = user_db.ssh_key
         agent = db.query(Agent).filter(Agent.name == agent_name).first()
+        r_data = post_data(db, current_user.email, agent.type, agent.token)
+        r_data["nodes"] = result[agent_name]
         r = requests.post(url = "http://%s:%s/v1/user/deploy" % (agent.ip, agent.port),
-            timeout = POST_TIMEOUT,
-            json = { "token": agent.token, "nodes": result[agent_name], "user": current_user.email })
+            timeout = POST_TIMEOUT, json = r_data)
         if r.status_code == 200:
             json_result.update(r.json())
         else:
@@ -302,9 +321,10 @@ def make_exec():
         db = open_session()
         for agent_name in json_data["nodes"]:
             agent = db.query(Agent).filter(Agent.name == agent_name).first()
+            r_data = post_data(db, current_user.email, agent.type, agent.token)
+            r_data["nodes"] = json_data["nodes"][agent_name]
             r = requests.post(url = "http://%s:%s/v1/user/%s" % (agent.ip, agent.port, json_data["reconfiguration"]),
-                timeout = POST_TIMEOUT,
-                json = { "token": agent.token, "nodes": json_data["nodes"][agent_name], "user": current_user.email })
+                timeout = POST_TIMEOUT, json = r_data)
             if r.status_code == 200:
                 json_answer = r.json()
                 if "error" in json_answer:
@@ -336,11 +356,85 @@ def user_pwd():
     if "password" in form_data and "confirm_password" in form_data:
         if form_data["password"] == form_data["confirm_password"]:
             user.password = generate_password_hash(form_data["password"], method="sha256")
+            msg = "Credentials updated!"
+        else:
+            msg = "The two passwords are different. Credentials unchanged!"
+    else:
+        msg = "Missing data in the request. Credentials unchanged!"
+    close_session(db)
+    return flask.redirect("/user/settings?msg=" + msg)
+
+
+@b_user.route("/settings/g5kpassword", methods=["POST"])
+@login_required
+def user_g5kpwd():
+    msg = "update credentials failure!"
+    form_data = flask.request.form
+    db = open_session()
+    user = db.query(User).filter(User.email == current_user.email).first()
+    if "password" in form_data and "confirm_password" in form_data:
+        if form_data["password"] == form_data["confirm_password"]:
+            with open("secret.key", "rb") as keyfile:
+                key = keyfile.read()
+                encoded_pwd = form_data["password"].encode()
+                f = Fernet(key)
+                user.g5k_pwd = f.encrypt(encoded_pwd).decode()
+            if "user" in form_data and len(form_data["user"]) > 0:
+                user.g5k_user = form_data["user"]
             msg = "Password updated!"
         else:
             msg = "The two passwords are different. Password unchanged!"
     else:
         msg = "Missing data in the request. Password unchanged!"
+    close_session(db)
+    return flask.redirect("/user/settings?msg=" + msg)
+
+
+@b_user.route("/settings/g5kdelete")
+@login_required
+def user_g5kdel():
+    msg = "credentials successful deleted!"
+    db = open_session()
+    user = db.query(User).filter(User.email == current_user.email).first()
+    user.g5k_user = ""
+    user.g5k_pwd = ""
+    close_session(db)
+    return flask.redirect("/user/settings?msg=" + msg)
+
+
+@b_user.route("/settings/iotpassword", methods=["POST"])
+@login_required
+def user_iotpwd():
+    msg = "update credentials failure"
+    form_data = flask.request.form
+    db = open_session()
+    user = db.query(User).filter(User.email == current_user.email).first()
+    if "password" in form_data and "confirm_password" in form_data:
+        if form_data["password"] == form_data["confirm_password"]:
+            with open("secret.key", "r") as keyfile:
+                key = keyfile.read()
+                encoded_pwd = form_data["password"].encode()
+                f = Fernet(key)
+                user.iot_pwd = f.encrypt(encoded_pwd)
+            if "user" in form_data and len(form_data["user"]) > 0:
+                user.iot_user = form_data["user"]
+            msg = "Password updated!"
+        else:
+            msg = "The two passwords are different. Password unchanged!"
+    else:
+        msg = "Missing data in the request. Password unchanged!"
+    close_session(db)
+    return flask.redirect("/user/settings?msg=" + msg)
+
+
+@b_user.route("/settings/iotdelete")
+@login_required
+def user_iotdel():
+    msg = "credentials successful deleted!"
+    db = open_session()
+    user = db.query(User).filter(User.email == current_user.email).first()
+    user.iot_user = ""
+    user.iot_pwd = ""
     close_session(db)
     return flask.redirect("/user/settings?msg=" + msg)
 
@@ -402,6 +496,24 @@ def settings():
             result = { "email": user.email, "ssh_key": ssh_key, "status": status, "vpn_key": True }
         else:
             result = { "email": user.email, "ssh_key": ssh_key, "status": status, "vpn_key": False }
+        # G5k credentials
+        if user.g5k_user is not None and len(user.g5k_user) > 0:
+            result["g5k_user"] = user.g5k_user
+        else:
+            result["g5k_user"] = "undefined"
+        if user.g5k_pwd is not None and len(user.g5k_pwd) > 0:
+            result["g5k_pwd"] = True
+        else:
+            result["g5k_pwd"] = False
+        # Iot-Lab credentials
+        if user.iot_user is not None and len(user.iot_user) > 0:
+            result["iot_user"] = user.iot_user
+        else:
+            result["iot_user"] = "undefined"
+        if user.iot_pwd is not None and len(user.iot_pwd) > 0:
+            result["iot_pwd"] = True
+        else:
+            result["iot_pwd"] = False
     close_session(db)
     return flask.render_template("settings.html", admin = current_user.is_admin, active_btn = "user_settings",
         user = result)

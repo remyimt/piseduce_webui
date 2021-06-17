@@ -5,8 +5,9 @@ $(document).ready(function () {
     let activeButton = [];
     // Disable buttons if there is no node for the button type
     $(".type-selection").children("div").each(function(idx, typeButton) {
-        let nodeType = $(typeButton).attr("id").split("-")[0];
-        if($(".accordion").filter("[id$='" + nodeType + "']").length == 0) {
+        let buttonId = $(typeButton).attr("id")
+        let nodeType = buttonId.substring(0, buttonId.lastIndexOf("-"));
+        if($(".accordion").filter("[id$='" + nodeType + "']").children(".card").length == 0) {
             $(typeButton).addClass("disabled");
             $("#" + nodeType + "-states").hide();
         } else if(showNodes) {

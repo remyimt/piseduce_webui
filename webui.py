@@ -7,7 +7,7 @@ from lib.config_loader import load_config
 from api.admin import b_admin
 from api.login import b_login
 from api.user import b_user
-import jinja2, logging
+import jinja2, logging, os, sys
 
 
 # Create the application
@@ -58,5 +58,12 @@ def page_not_found(e):
 if __name__ == "__main__":
     logging.basicConfig(filename="info_webui.log", level=logging.INFO,
         format="%(asctime)s %(levelname)-8s %(message)s", datefmt="%Y-%m-%d %H:%M:%S")
+    if not os.path.isfile("secret.key"):
+        msg = """Please, generate the secret key used to share passwords with agents:
+            python3 generate_password_key.py
+        """
+        print(msg)
+        logging.error(msg)
+        sys.exit(13)
     port_number = load_config()["port_number"]
     webui.run(port=port_number, host="0.0.0.0")

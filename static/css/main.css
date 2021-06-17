@@ -749,14 +749,23 @@
 /** Settings Page **/
 .settings {
     width: 1000px;
-    height: 600px;
+    height: 800px;
     padding-top: 20px;
-    padding-left: 6px;
     margin: auto;
     background: #fff;
 }
 
-.ssh {
+.settings .change-pwd {
+    margin-bottom: 40px;
+}
+
+.settings .subtitle {
+    margin-bottom: 10px;
+    font-size: 16px;
+    font-style: italic;
+}
+
+.settings .ssh {
     width: 400px;
     height: 300px;
     word-wrap: break-word;

@@ -16,8 +16,16 @@
                     aria-controls="home" aria-selected="true">Account Info</a>
             </li>
             <li class="nav-item">
-                    <a class="nav-link" id="password-tab" data-toggle="tab" href="#password" role="tab"
-                        aria-controls="password" aria-selected="false">Password</a>
+                    <a class="nav-link" id="piseduce-tab" data-toggle="tab" href="#piseduce" role="tab"
+                        aria-controls="piseduce" aria-selected="false">PiSeduce Credentials</a>
+            </li>
+            <li class="nav-item">
+                    <a class="nav-link" id="g5k-tab" data-toggle="tab" href="#g5k" role="tab"
+                        aria-controls="g5k" aria-selected="false">G5k Credentials</a>
+            </li>
+            <li class="nav-item">
+                    <a class="nav-link" id="iotlab-tab" data-toggle="tab" href="#iotlab" role="tab"
+                        aria-controls="iotlab" aria-selected="false">IoT-Lab Credentials</a>
             </li>
             <li class="nav-item">
                 <a class="nav-link" id="ssh-tab" data-toggle="tab" href="#ssh" role="tab"
@@ -25,7 +33,8 @@
             </li>
         </ul>
         <!-- Tab panes -->
-        <div class="tab-content grid-user">
+        <div class="container tab-content grid-user">
+            <!-- Account info tab -->
             <div class="tab-pane active pt-2 pane-user" id="home" role="tabpanel" aria-labelledby="home-tab">
                 <b class="text-info">Email</b>: {{user.email}}<br/>
                 {% if user.ssh_key|length > 0 %}
@@ -47,29 +56,113 @@
                         <b class="text-info">VPN key</b>: No VPN key<br/>
                     </span>
                 {% endif %}
+                {% if user.g5k_user and user.g5k_pwd %}
+                    <span>
+                        <b class="text-info">G5k user</b>: credentials are set<br/>
+                    </span>
+                {% else %}
+                    <span>
+                        <b class="text-info">G5k user</b>: no credentials<br/>
+                    </span>
+                {% endif %}
+                {% if user.iot_user and user.iot_pwd %}
+                    <span>
+                        <b class="text-info">Iot-Lab Credentials</b>: credentials are set<br/>
+                    </span>
+                {% else %}
+                    <span>
+                        <b class="text-info">Iot-Lab Credentials</b>: no credentials<br/>
+                    </span>
+                {% endif %}
                 <b class="text-info">Status</b>: {{user.status}}<br/>
             </div>
-            <div class="tab-pane pt-2" id="password" role="tabpanel" aria-labelledby="password-tab">
-                <div class="container">
-                    <form action="/user/settings/password" method="post">
-                        <div class="row" style="width: 400px;">
+            <!-- Password tab -->
+            <div class="tab-pane pt-2" id="piseduce" role="tabpanel" aria-labelledby="piseduce-tab">
+                <div>
+                    <b class="text-info">PiSeduce Credentials</b>
+                    <div class="subtitle">The password is hashed before being stored</div>
+                    <form action="/user/settings/password" method="post" class="pl-2 change-pwd">
+                        <div class="row" style="width: 410px;">
                             <div class="col">New password</div>
                             <div class="col"><input name="password" type="password"></div>
                         </div>
-                        <div class="row" style="width: 400px;">
+                        <div class="row" style="width: 410px;">
                             <div class="col">Confirm password</div>
                             <div class="col"><input name="confirm_password" type="password"></div>
                         </div>
-                        <div class="row text-center" style="width: 400px;">
+                        <div class="row text-center" style="width: 410px;">
                             <div class="col">
-                                <button type="submit" value="submit" class="btn btn-info btn-user">
-                                    Change password
+                                <button type="submit" value="submit" class="btn btn-info mt-1">
+                                    Update password
                                 </button>
                             </div>
                         </div>
                     </form>
                 </div>
             </div>
+            <!-- G5k credentials tab -->
+            <div class="tab-pane pt-2" id="g5k" role="tabpanel" aria-labelledby="g5k-tab">
+                <div>
+                    <b class="text-info">G5k Credentials</b>
+                    <div class="subtitle">The password is encrypted before being stored/sent to agents</div>
+                    <form action="/user/settings/g5kpassword" method="post" class="pl-2 change-pwd">
+                        <div class="row" style="width: 410px;">
+                            <div class="col">Username</div>
+                            <div class="col"><input name="user" type="text" value="{{user.g5k_user}}"></div>
+                        </div>
+                        <div class="row" style="width: 410px;">
+                            <div class="col">New password</div>
+                            <div class="col"><input name="password" type="password"></div>
+                        </div>
+                        <div class="row" style="width: 410px;">
+                            <div class="col">Confirm password</div>
+                            <div class="col"><input name="confirm_password" type="password"></div>
+                        </div>
+                        <div class="row text-center" style="width: 410px;">
+                            <div class="col">
+                                <a href="/user/settings/g5kdelete" class="btn btn-danger mt-1">
+                                    Delete credentials
+                                </a>
+                                <button type="submit" value="submit" class="btn btn-info mt-1">
+                                    Update Credentials
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <!-- IoT-Lab credentials tab -->
+            <div class="tab-pane pt-2" id="iotlab" role="tabpanel" aria-labelledby="iotlab-tab">
+                <div>
+                    <b class="text-info">Iot-Lab Credentials</b>
+                    <div class="subtitle">The password is encrypted before being stored/sent to agents</div>
+                    <form action="/user/settings/iotpassword" method="post" class="pl-2 change-pwd">
+                        <div class="row" style="width: 410px;">
+                            <div class="col">Username</div>
+                            <div class="col"><input name="user" type="text" value="{{user.iot_user}}"></div>
+                        </div>
+                        <div class="row" style="width: 410px;">
+                            <div class="col">New password</div>
+                            <div class="col"><input name="password" type="password"></div>
+                        </div>
+                        <div class="row" style="width: 410px;">
+                            <div class="col">Confirm password</div>
+                            <div class="col"><input name="confirm_password" type="password"></div>
+                        </div>
+                        <div class="row text-center" style="width: 410px;">
+                            <div class="col">
+                                <a href="/user/settings/iotdelete" class="btn btn-danger mt-1">
+                                    Delete credentials
+                                </a>
+                                <button type="submit" value="submit" class="btn btn-info mt-1">
+                                    Update Credentials
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <!-- SSH tab -->
             <div class="tab-pane pt-2" id="ssh" role="tabpanel" aria-labelledby="ssh-tab">
                 <div class="container">
                     <form action="/user/settings/ssh" method="post">
@@ -94,7 +187,7 @@
                         <br/>
                         <div class="row">
                             <div class="col center-block text-center">
-                                <button type="submit" value="submit" class="btn btn-info btn-user">
+                                <button type="submit" value="submit" class="btn btn-info">
                                     Change ssh key
                                 </button>
                             </div>

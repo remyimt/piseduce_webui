@@ -7,6 +7,10 @@ class User(Base):
     __tablename__ = "user"
     email = Column(Text, primary_key=True)
     password = Column(String)
+    g5k_user = Column(String)
+    g5k_pwd = Column(String)
+    iot_user = Column(String)
+    iot_pwd = Column(String)
     ssh_key = Column(Text)
     email_token = Column(Text)
     confirmed_email = Column(Boolean, default=False)
@@ -34,6 +38,10 @@ class User(Base):
         return False
 
 
+    def __repr__(self):
+        return "User(%s, %s, %s)" % (self.email, self.is_authorized, self.is_admin)
+
+
 class Agent(Base):
     __tablename__ = "agent"
     name = Column(Text, primary_key=True)
@@ -42,3 +50,7 @@ class Agent(Base):
     port = Column(Integer)
     state = Column(Text)
     token = Column(Text)
+
+
+    def __repr__(self):
+        return "Agent(%s, %s, %s)" % (self.name, self.type, self.state)

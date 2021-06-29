@@ -1,3 +1,5 @@
+from cryptography.fernet import Fernet
+
 
 # sort node names that must be used the pattern 'string-number'
 def sort_by_name(named_dict):
@@ -21,3 +23,11 @@ def sort_by_name(named_dict):
             key = names[n_str][0]
             result[key] = named_dict[key]
     return result
+
+
+def decrypt_password(pwd):
+    with open("secret.key", "r") as keyfile:
+        key = keyfile.read()
+        f = Fernet(key)
+        return f.decrypt(pwd).decode()
+    return ""

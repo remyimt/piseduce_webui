@@ -119,3 +119,25 @@
 .wait_deploying {
     background-color: #ba55d3;
 }
+
+
+/*** IoT-Lab states ***/
+.launching {
+    background-color: #fbc7a6;
+}
+
+.running {
+    background-color: #bdfba6;
+}
+
+.finishing {
+    background-color: #9cd5f8;
+}
+
+.terminated {
+    background-color: #c3c3c3;
+}
+
+.stopped {
+    background-color: #414141;
+}

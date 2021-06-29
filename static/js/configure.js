@@ -148,6 +148,13 @@ function showDesc(inputTag) {
         case "form_ssh_key":
             desc = "The public SSH key will be used to configure the root SSH login. There is no password authentication for the root login.";
             break;
+        // IoT-Lab properties
+        case "firmware":
+            desc = "The firmware to upload to IoT-Lab sensors. Information about firmwares are available on <a href='https://www.iot-lab.info/testbed/resources/firmware' target='_blank'>FIT IoT-Lab</a>. To upload new firmware, go to <a href='/user/settings'>Settings</a> > Iot-Lab Credentials."
+            break;
+        case "profile":
+            desc = "The profile used to monitor IoT-Lab sensors. To add profiles, you must connect to <a href='https://www.iot-lab.info/testbed/resources/monitoring' target='_blank'>FIT IoT-Lab</a> and select 'My resources'."
+            break;
         default:
             desc = "Unknown property! Oooops ;)";
     }

@@ -1,11 +1,11 @@
-from api.tool import sort_by_name
+from api.tool import sort_by_name, decrypt_password
 from cryptography.fernet import Fernet
 from database.connector import open_session, close_session
 from database.tables import User, Agent
 from flask_login import current_user, login_required
 from requests.exceptions import ConnectTimeout, ConnectionError
 from werkzeug.security import generate_password_hash
-import flask, json, logging, os, requests
+import flask, json, logging, os, requests, subprocess
 
 
 b_user = flask.Blueprint("user", __name__, template_folder="templates/")
@@ -27,7 +27,7 @@ def post_data(db, user_email, agent_type, agent_token):
             user_db.iot_pwd is None or len(user_db.iot_pwd) == 0:
                 raise ValueError('Iot-Lab credentials are missing')
         json_data["iot_user"] = user_db.iot_user
-        json_data["password"] = user_db.iot_pwd
+        json_data["iot_password"] = user_db.iot_pwd
     return json_data
 
 
@@ -210,6 +210,45 @@ def node_updating():
             logging.exception(error_msg)
     close_session(db)
     return json.dumps(result)
+
+
+@b_user.route("/iot/data/<agent_name>/<job_id>")
+@login_required
+def iot_data(agent_name, job_id):
+    db = open_session()
+    agent = db.query(Agent).filter(Agent.name == agent_name).first()
+    if agent is None:
+        close_session()
+        return flask.redirect("/user/manage?msg=no agent available")
+    user = db.query(User).filter(User.email == current_user.email).first()
+    iot_user = user.iot_user
+    iot_pwd = user.iot_pwd
+    close_session(db)
+    # Check if the job_id is in my current jobs
+    cmd = "iotlab-experiment -u %s -p %s get -l" % (iot_user, decrypt_password(iot_pwd))
+    process = subprocess.run(cmd, shell=True,
+        stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, universal_newlines=True)
+    json_data = json.loads(process.stdout)["items"]
+    not_found = True
+    for job in json_data:
+        if str(job["id"]) == job_id:
+            not_found = False
+            break
+    if not_found:
+        logging.error("No job '%s' for the user '%s'" % (job_id, iot_user))
+        return flask.redirect("/user/manage?msg=job not found")
+    data_path = "iot_data/%s/%s.tar.gz" % (current_user.email, job_id)
+    dir_path = "iot_data/%s" % current_user.email
+    if not os.path.isdir(dir_path):
+        os.mkdir(dir_path)
+    if not os.path.isfile(data_path):
+        # Download the file
+        cmd = "iotlab-experiment -u %s -p %s get -i %s -a" % (
+            iot_user, decrypt_password(iot_pwd), job_id)
+        process = subprocess.run(cmd, shell=True,
+            stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, universal_newlines=True)
+        os.rename("%s.tar.gz" % job_id, data_path)
+    return flask.send_file(data_path, as_attachment = True)
 
 
 @b_user.route("/make/reserve", methods=["POST"])

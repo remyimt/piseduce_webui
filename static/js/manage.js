@@ -23,7 +23,7 @@ $(document).ready(function () {
             "</center>");
     }
     updateNodeStatus();
-    setInterval(updateNodeStatus, 3000);
+    setInterval(updateNodeStatus, 10000);
 });
 
 // Functions

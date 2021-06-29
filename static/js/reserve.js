@@ -332,8 +332,10 @@ function reserveNodes() {
                     let filter = { "nb_nodes": nb_nodes };
                     total_requested += nb_nodes;
                     for (let span of spanArray) {
-                        let prop = span.innerHTML.replace(" ", "").split(":");
-                        filter[prop[0]] = prop[1];
+                        let prop = span.innerHTML.replace(" ", "")
+                        let prop_name = prop.split(":")[0]
+                        let prop_value = prop.substring(prop.indexOf(":") + 1)
+                        filter[prop_name] = prop_value;
                     }
                     filters.push(filter);
                 }

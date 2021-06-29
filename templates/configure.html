@@ -27,7 +27,7 @@
                             </span>
                         </div>
                         <div class="col">
-                            <input type="text" name="bin" onfocus="showDesc(this)" onfocusout="$('.desc').empty()" required>
+                            <input type="text" name="bin" onfocus="showDesc(this)" required>
                         </div>
                     </div>
                 </div>
@@ -99,30 +99,30 @@
                                                         {% if node_data[prop]["values"]|length == 0 %}
                                                             {% if node_data[prop]["mandatory"] %}
                                                                 <input name="{{node_name}}-{{prop}}" type="text"
-                                                                    onfocus="showDesc(this)" onfocusout="$('.desc').empty()"
+                                                                    onfocus="showDesc(this)"
                                                                     onchange="removeBold('heading{{node_loop.index}}')" required>
                                                             {% else %}
                                                                 {% if "password" in prop %}
                                                                     <input name="{{node_name}}-{{prop}}" type="text"
                                                                         pattern="(?=.*\d)(?=.*[!@#$£%^|&~*°_=+';:.,{}<>?\\\/\(\)\[\]\-])(?=.*[a-z])(?=.*[A-Z]).{8,}"
-                                                                        onfocus="showDesc(this)" onfocusout="$('.desc').empty()"
+                                                                        onfocus="showDesc(this)"
                                                                         onchange="removeBold('heading{{node_loop.index}}')">
                                                                 {% else %}
                                                                     <input name="{{node_name}}-{{prop}}" type="text"
-                                                                        onfocus="showDesc(this)" onfocusout="$('.desc').empty()"
+                                                                        onfocus="showDesc(this)"
                                                                         onchange="removeBold('heading{{node_loop.index}}')">
                                                                 {% endif %}
                                                             {% endif %}
                                                         {% else %}
                                                             {% if node_data[prop]["mandatory"] %}
-                                                                <select name="{{node_name}}-{{prop}}" onfocus="showDesc(this)" onfocusout="$('.desc').empty()"
+                                                                <select name="{{node_name}}-{{prop}}" onfocus="showDesc(this)"
                                                                     onchange="removeBold('heading{{node_loop.index}}')" required>
                                                                     {% for v in node_data[prop]["values"] %}
                                                                         <option value="{{v}}">{{v}}</option>
                                                                     {% endfor %}
                                                                 </select>
                                                             {% else %}
-                                                                <select name="{{node_name}}-{{prop}}" onfocus="showDesc(this)" onfocusout="$('.desc').empty()"
+                                                                <select name="{{node_name}}-{{prop}}" onfocus="showDesc(this)"
                                                                     onchange="removeBold('heading{{node_loop.index}}')">
                                                                     {% for v in node_data[prop]["values"] %}
                                                                         <option value="{{v}}">{{v}}</option>

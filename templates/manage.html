@@ -118,6 +118,16 @@
                                                                     node UI
                                                                 </a>
                                                             </div>
+                                                        {% elif prop[0] == "data_link" %}
+                                                            {% if prop[1] %}
+                                                                <div id="{{node_name}}-{{prop[0]}}">
+                                                                    <a href="/user/iot/data/{{agent}}/{{node_name}}">
+                                                                        Download data
+                                                                    </a>
+                                                                </div>
+                                                            {% else %}
+                                                                Not available yet
+                                                            {% endif %}
                                                         {% elif prop[0] == "assigned_nodes" %}
                                                             <div id="{{node_name}}-{{prop[0]}}">
                                                                 <a

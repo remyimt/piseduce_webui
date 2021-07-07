@@ -122,6 +122,10 @@
 
 
 /*** IoT-Lab states ***/
+.waiting {
+    background-color: #9fb8ff;
+}
+
 .launching {
     background-color: #fbc7a6;
 }

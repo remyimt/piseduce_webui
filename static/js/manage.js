@@ -5,7 +5,7 @@ $(document).ready(function () {
     let activeButton = [];
     // Disable buttons if there is no node for the button type
     $(".type-selection").children("div").each(function(idx, typeButton) {
-        let buttonId = $(typeButton).attr("id")
+        let buttonId = $(typeButton).attr("id");
         let nodeType = buttonId.substring(0, buttonId.lastIndexOf("-"));
         if($(".accordion").filter("[id$='" + nodeType + "']").children(".card").length == 0) {
             $(typeButton).addClass("disabled");
@@ -149,22 +149,19 @@ function reconfigure(binName) {
 
 function destroyBin(binName) {
     let nodeNames = {};
-    $(".type-selection").children("div").each(function(idx, typeButton) {
-        if(typeButton.id.startsWith(binName)) {
-            let accordionId = $(typeButton).attr("id").replace("-button", "");
-            let accordion = $("#" + accordionId);
-            if(accordion.length > 0) {
-                accordion.find(".node-name").each(function(useless, node) {
-                    let nodeName = node.innerHTML;
-                    let agent = $("#" + nodeName + "-agent").val();
-                    if(!(agent in nodeNames)) {
-                        nodeNames[agent] = []
-                    }
-                    nodeNames[agent].push(nodeName);
-                });
+    let activeButtonId = $(".type-selection").children("div.active").attr('id');
+    let nodeType = activeButtonId.substring(0, activeButtonId.lastIndexOf("-"));
+    let accordion = $("#" + binName+ "-" + nodeType);
+    if(accordion.length > 0) {
+        accordion.find(".node-name").each(function(useless, node) {
+            let nodeName = node.innerHTML;
+            let agent = $("#" + nodeName + "-agent").val();
+            if(!(agent in nodeNames)) {
+                nodeNames[agent] = []
             }
-        }
-    });
+            nodeNames[agent].push(nodeName);
+        });
+    }
     if(Object.keys(nodeNames).length > 0) {
         $.ajax({
             type: "POST",
@@ -188,8 +185,9 @@ function destroyBin(binName) {
 }
 
 function nodeSelection(typeButton) {
+    let buttonId = $(typeButton).attr("id");
+    let nodeType = buttonId.substring(0, buttonId.lastIndexOf("-"));
     if(!typeButton.classList.contains("disabled")) {
-        let nodeType = $(typeButton).attr("id").split("-")[0];
         // Enable the buttons with the right type
         $(".type-selection").children("div").each(function(idx, tButton) {
             if(tButton.id.includes(nodeType)) {
@@ -197,7 +195,8 @@ function nodeSelection(typeButton) {
                 $("#" + nodeType + "-states").show();
             } else {
                 $(tButton).removeClass("active");
-                let myType = tButton.id.split("-")[0];
+                let buttonId = tButton.id;
+                let myType = buttonId.substring(0, buttonId.lastIndexOf("-"));
                 $("#" + myType + "-states").hide();
             }
         });

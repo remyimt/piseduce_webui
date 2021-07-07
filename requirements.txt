@@ -1,3 +1,4 @@
 sqlalchemy
 flask
 flask_login
+iotlabcli

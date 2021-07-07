@@ -454,7 +454,7 @@ def user_iotpwd():
                 key = keyfile.read()
                 encoded_pwd = form_data["password"].encode()
                 f = Fernet(key)
-                user.iot_pwd = f.encrypt(encoded_pwd)
+                user.iot_pwd = f.encrypt(encoded_pwd).decode()
             if "user" in form_data and len(form_data["user"]) > 0:
                 user.iot_user = form_data["user"]
             msg = "Password updated!"

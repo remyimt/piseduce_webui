@@ -29,5 +29,5 @@ def decrypt_password(pwd):
     with open("secret.key", "r") as keyfile:
         key = keyfile.read()
         f = Fernet(key)
-        return f.decrypt(pwd).decode()
+        return f.decrypt(pwd.encode()).decode()
     return ""

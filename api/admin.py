@@ -359,7 +359,7 @@ def get(el_type, error=None):
             elem_type = el_type, elements = result, msg = ",".join(result["errors"]))
 
 
-@b_admin.route("/add/<el_type>/", methods=[ "POST" ])
+@b_admin.route("/add/<el_type>", methods=[ "POST" ])
 @login_required
 @admin_required
 def add(el_type):

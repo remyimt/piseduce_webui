@@ -295,7 +295,7 @@
                     <div id="{{agent}}-{{switch["name"]}}" class="switch-table">
                         <div class="switch-title">Switch: {{switch["name"]}}</div>
                         <div id="{{switch['name']}}-table" class="container">
-                            {% for n in range(0, switch["port_nb"]|int) %}
+                            {% for n in range(0, switch["port_number"]|int) %}
                                 {% if n % 4 == 0 %}
                                     <div class="row">
                                 {% endif %}

@@ -321,13 +321,8 @@ def get(el_type, error=None):
         result[w.name] = { "properties": [], "existing": {} }
         try:
             # Get the element properties to register new elements
-            if el_type == "environment":
-                # Send the request to the user URL instead of the admin URL
-                r = requests.post(url = "http://%s:%s/v1/user/%s/register" % (w.ip, w.port, el_type), timeout = 6,
-                    json = { "token": w.token })
-            else:
-                r = requests.post(url = "http://%s:%s/v1/admin/add/%s" % (w.ip, w.port, el_type), timeout = 6,
-                    json = { "token": w.token })
+            r = requests.post(url = "http://%s:%s/v1/admin/add/%s" % (w.ip, w.port, el_type), timeout = 6,
+                json = { "token": w.token })
             if r.status_code != 200 or "missing" not in r.json():
                 result["errors"].append("wrong answer from the agent '%s'" % w.name)
             else:
@@ -380,13 +375,8 @@ def add(el_type):
                 json_args[prop] = flask.request.form[prop]
         json_args["token"] = agent.token
         # Register the element to the agent
-        if el_type == "environment":
-            # Send the request to the user URL instead of the admin URL
-            r = requests.post(url = "http://%s:%s/v1/user/%s/register" % (agent.ip, agent.port, el_type), timeout = 60,
-                json = json_args)
-        else:
-            r = requests.post(url = "http://%s:%s/v1/admin/add/%s" % (agent.ip, agent.port, el_type), timeout = 60,
-                json = json_args)
+        r = requests.post(url = "http://%s:%s/v1/admin/add/%s" % (agent.ip, agent.port, el_type), timeout = 60,
+            json = json_args)
         if r.status_code != 200:
             msg = "can not add the %s '%s' to the agent '%s'" % (el_type, flask.request.form["name"], agent.name)
         elif el_type not in r.json():

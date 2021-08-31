@@ -13,6 +13,8 @@ import jinja2, logging, os, sys
 # Create the application
 webui = Flask(__name__)
 webui.secret_key = load_config()["pwd_secret_key"]
+# Maximum size in bytes of the uploads (the size of the 64-bit piseduce image)
+webui.config['MAX_CONTENT_PATH'] = 3000000000
 # Add routes from blueprints
 webui.register_blueprint(b_login)
 webui.register_blueprint(b_admin, url_prefix="/admin/")

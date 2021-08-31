@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block other_js %}
+{% endblock %}
+{% block content %}
+    <div class="bg-white shadow factory">
+        <center><h4>Environment Factory</h4></center>
+        {% if request.args.get('msg') %}
+            <div class="alert alert-danger">
+                {{request.args.get('msg')}}
+            </div>
+        {% endif %}
+        <div class="bg-info rounded-right title">How To</div>
+        <div class="howto">
+            New environments (operating system images) can be deployed on the PiSeduce resource 
+            manager. The first step is to reserve one Raspberry on the Raspberry agent.
+            Then, this Raspberry is used to download one existing environment image from our
+            <a href="http://dl.seduce.fr" target="_blank">server</a>
+            or create a customized environment image as described in this
+            <a href="http://doc.seduce.fr" target="_blank">article</a>.
+            To register new environments, fill the form below and wait the end of the
+            process.<br/>
+            <b>NOTE</b>: The <b>Environment Name</b> is used to identify the content of the
+            environment. Raspbian based environments will be prefixed by <b>raspbian_</b>,
+            Ubuntu based environment will be prefixed by <b>ubuntu_</b> and
+            piCore based environment will be prefixed by <b>picore_</b>.
+            <br/>
+            <b>IMPORTANT</b>: The compressed image <b>filename</b> contained in the <b>Image
+            File Path</b> must be the uncompressed image <b>filename</b> followed by the
+            '.tar.gz' extension. For example, the 'piCore-13.0.3.img' file must be compressed
+            into a file named 'piCore-13.0.3.img.tar.gz'.
+            <br/>
+            The progress of the registration can be followed from the
+            <a href="/user/manage">manage panel</a>.
+        </div>
+        <div class="bg-info rounded-right title">Register environments</div>
+        <div class="container">
+            <form action="/user/envregister" method="post" class="table">
+                <!-- Agent selection -->
+                <div class="row mb-1">
+                    <div class="col-3">
+                        Agent Name
+                    </div>
+                    <div class="col">
+                        <select name="agent_name">
+                            {% for agent in nodes %}
+                                <option value="{{agent}}">{{agent}}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div><!-- row -->
+                <!-- Raspberry selection -->
+                {% for agent in nodes %}
+                    <div id="{{agent}}-nodes" class="row mb-1">
+                        <div class="col-3">
+                            Raspberry Name
+                        </div>
+                        <div class="col">
+                            <select name="node_name">
+                                {% for node in nodes[agent] %}
+                                    <option value="{{node}}">{{node}}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div><!-- row -->
+                {% endfor %}
+                <!-- Path to the image file -->
+                <div class="row mb-1">
+                    <div class="col-3">
+                        Image File Path
+                    </div>
+                    <div class="col">
+                        <input name="img_path" type="text" size="30"
+                            placeholder="Absolute Path ending with .tar.gz" required>
+                    </div>
+                </div><!-- row -->
+                <!-- Environment name -->
+                <div class="row mb-1">
+                    <div class="col-3">
+                        Environment Name
+                    </div>
+                    <div class="col">
+                        <input name="env_name" type="text" size="30" placeholder="e.g. nginx" required>
+                    </div>
+                </div><!-- row -->
+                <!-- Environment name -->
+                <div class="row mb-1">
+                    <div class="col text-center mt-2">
+                        <input type="submit" class="btn btn-info register-button"
+                            value="Register">
+                    </div>
+            </div>
+        </form>
+    </div>
+{% endblock %}

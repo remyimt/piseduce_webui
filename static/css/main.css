@@ -746,6 +746,35 @@
     height: 20px;
 }
 
+/** Env Factory Page **/
+.factory {
+    width: 1000px;
+    height: 800px;
+    padding-top: 20px;
+    margin: auto;
+    background: #fff;
+}
+
+.factory .title {
+    width: 300px;
+    padding-right: 30px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    font-size: 20px;
+    color: white;
+    text-align: right;
+}
+
+.factory .howto {
+    width: 600px;
+    margin: auto;
+    text-align: justify;
+}
+
+.factory .register-button {
+    width: 300px;
+}
+
 /** Settings Page **/
 .settings {
     width: 1000px;

@@ -5,6 +5,7 @@ from database.tables import User, Agent
 from flask_login import current_user, login_required
 from requests.exceptions import ConnectTimeout, ConnectionError
 from werkzeug.security import generate_password_hash
+from werkzeug.utils import secure_filename
 import flask, json, logging, os, requests, subprocess
 
 
@@ -564,3 +565,46 @@ def vpn_download(vpn_key):
     if current_user.is_admin or current_user.email.replace("@", "_") == vpn_key:
         return flask.send_file("vpn_keys/%s.conf" % vpn_key, as_attachment = True)
 
+
+@b_user.route("/envfactory")
+@login_required
+def env_factory():
+    result = json.loads(node_list())["nodes"]
+    agent_sort = {}
+    for r in result:
+        if result[r]["agent"] not in agent_sort:
+            agent_sort[result[r]["agent"]] = []
+        agent_sort[result[r]["agent"]].append(r)
+    return flask.render_template("env_factory.html", admin = current_user.is_admin, active_btn = "env_factory",
+        nodes=agent_sort)
+
+
+@b_user.route("/envregister", methods = ["POST"])
+def env_register():
+    form_data = flask.request.form
+    if form_data["img_path"] is None:
+        return flask.redirect("/user/envfactory?msg=Fields must not be empty")
+    img_name = os.path.basename(form_data["img_path"])
+    if img_name.endswith(".tar.gz"):
+        db = open_session()
+        agent = db.query(Agent).filter(Agent.name == form_data["agent_name"]).first()
+        if agent is None:
+            close_session()
+            return flask.redirect("/user/envfactory?msg=agent '%s' does not exist" % form_data["agent_name"])
+
+        r_data = post_data(db, current_user.email, agent.type, agent.token)
+        r_data.update(form_data)
+        r = requests.post(url = "http://%s:%s/v1/user/environment/register" % (agent.ip, agent.port),
+            timeout = POST_TIMEOUT, json = r_data)
+        close_session(db)
+        if r.status_code == 200:
+            if "error" in r.json():
+                return flask.redirect("/user/envfactory?msg=%s" % r.json()["error"])
+            else:
+                return flask.redirect("/user/manage")
+        else:
+            logging.error("Wrong answer from the agent '%s'. Status code: %d" % (
+                form_data["agent_name"], r.status_code))
+            return flask.redirect("/user/envfactory?msg=wrong agent answer from '%s'" % form_data["agent_name"])
+    else:
+        return flask.redirect("/user/envfactory?msg=wrong filetype")

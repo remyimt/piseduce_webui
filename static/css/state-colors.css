@@ -107,6 +107,23 @@
     background-color: #b67dff;
 }
 
+/* Environment registration states */
+.uncompress {
+    background-color: #9fb8ff;
+}
+
+.read_info {
+    background-color: #fbc7a6;
+}
+
+.img_upload {
+    background-color: #bdfba6;
+}
+
+.update_db {
+    background-color: #9cd5f8;
+}
+
 /*** G5k states ***/
 .wait_running {
     background-color: #b22222;

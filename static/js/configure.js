@@ -140,7 +140,7 @@ function showDesc(inputTag) {
             desc = "The size of the main partition of the operating system. In most cases, the 'Whole' value must be selected. Only users who want to create multiple partitions should choose another value.";
             break;
         case "os_password":
-            desc = "The password for the operating system, the web services (ttyd,  cloud9), the SSH connections. Leave blank to generate a different password for every node. Syntax: At least one uppercase, one lowercase, one number and one special character.<br/>Special characters are !@#$£%^|&~*°_=+';:.,{}<>?\\/()[]-";
+            desc = "The password for the operating system, the web services (ttyd,  cloud9), the SSH connections. Leave blank to generate a different password for every node. Syntax: 8 characters including at least one uppercase, one lowercase, one number and one special character.<br/>Special characters are !@#$£%^|&~*°_=+';:.,{}<>?\\/()[]-";
             break;
         case "update_os":
             desc = "Update the operating system during the deployment.";

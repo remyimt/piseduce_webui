@@ -91,6 +91,11 @@ function loadInfo(select) {
         case "hardreboot":
             info = "Hard reboot nodes by turning off and on the power supply.";
             break;
+        case "bootfiles":
+            info = "Upload /boot directory to the TFTP server in order to update the boot files.<br/>" +
+            "This operation can be required after upgrading the operating system of the node.<br/>" +
+            "We <b>highly recommend to reboot the node</b> after uploading the boot files in order to load them.";
+            break;
         case "deployagain":
             info = "Deploy node environments again on nodes. All existing data will be erased.";
             break;
@@ -99,8 +104,7 @@ function loadInfo(select) {
             break;
         case "extend":
             info = "Extend reservations by postponing the end date to a later date.<br/>" +
-                "The extend reconfiguration is only available <b>4 hours before</b>" +
-                " the end of the reservation (maximum duration: 7 days).";
+                "The maximum duration of reservations is 7 days.";
             break;
     }
     $(select).parent().parent().find("#action-desc").html(info);

@@ -124,6 +124,11 @@
     background-color: #9cd5f8;
 }
 
+/* Update boot files state */
+.update_boot_files {
+    background-color: #ba55d3;
+}
+
 /*** G5k states ***/
 .wait_running {
     background-color: #b22222;
@@ -136,7 +141,6 @@
 .wait_deploying {
     background-color: #ba55d3;
 }
-
 
 /*** IoT-Lab states ***/
 .waiting {

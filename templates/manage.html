@@ -25,9 +25,9 @@
             <ul>
                 <li><b>Node IP</b>: <i>25.25.0.NN</i>. Note the number NN of your raspberry!</li>
                 <li><b>SSH Connections from password</b>: <i>ssh -l pwd_user -p 220NN pi.seduce.fr</i></li>
+                <li><b>pwd_user</b>: <i>Raspbian=pi, Ubuntu=ubuntu, piCore=tc</i></li>
                 <li><b>SSH Connections from key</b>: <i>ssh -l key_user -p 220NN pi.seduce.fr</i></li>
-                <li><b>pwd_user</b>: <i>Raspbian=pi, Ubuntu=ubuntu, TinyCore=tc</i></li>
-                <li><b>key_user</b>: <i>Raspbian=root, Ubuntu=root, TinyCore=tc</i></li>
+                <li><b>key_user</b>: <i>Raspbian=root, Ubuntu=root, piCore=tc</i></li>
             </ul>
             <b>For example</b>, my raspberry has the IP 25.25.0.6. SSH connections from password
             on a raspbian environment use <i>ssh -l pi -p 22006 pi.seduce.fr</i>
@@ -172,6 +172,7 @@
                 </div>
                 <div class="action">
                     <select id="{{node_bin}}-select" onchange="loadInfo(this)">
+                        <option value="bootfiles">Upload Boot Files</option>
                         <option value="hardreboot">Hard Reboot</option>
                         <option value="deployagain">Deploy Again</option>
                         <option value="destroy">Destroy</option>
@@ -180,7 +181,9 @@
                     <div class="btn btn-info" onclick="reconfigure('{{node_bin}}')">Execute</div>
                 </div>
                 <div id="action-desc">
-                    Hard reboot nodes by turning off and on the power supply.
+                    Upload /boot directory to the TFTP server in order to update the boot files.<br/>
+                    This operation can be required after upgrading the operating system of the node.<br/>
+                    We <b>highly recommend to reboot the node</b> after uploading the boot files in order to load them.
                 </div>
             </div>
         {% endfor %}

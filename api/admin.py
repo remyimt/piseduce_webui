@@ -310,13 +310,8 @@ def rename_nodes(agent_name, new_name):
 @admin_required
 def get(el_type, error=None):
     result = { "errors": [] }
-    agent_types = load_config()["%s_provider" % el_type]
-    if agent_types is None or len(agent_types) == 0:
-        error = "missing '%s_provider' property in the configuration file" % el_type
-        return flask.render_template("admin.html", admin = current_user.is_admin, active_btn = "admin_%s" % el_type,
-            elem_type = el_type, elements = result, msg = error)
     db = open_session()
-    agents = db.query(Agent).filter(Agent.type.in_(agent_types)).filter(Agent.state == "connected").all()
+    agents = db.query(Agent).filter(Agent.type == "raspberry").filter(Agent.state == "connected").all()
     for w in agents:
         result[w.name] = { "properties": [], "existing": {} }
         try:

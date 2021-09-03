@@ -1,9 +1,5 @@
 {
     "port_number": 9000,
     "pwd_secret_key": "oneSecretKey",
-    "db_url": "sqlite:///test-ui.db",
-    "node_provider": [ "raspberry" ],
-    "switch_provider": [ "raspberry" ],
-    "client_provider": [ "raspberry" ],
-    "environment_provider": [ "raspberry" ]
+    "db_url": "sqlite:///test-ui.db"
 }

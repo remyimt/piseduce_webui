@@ -30,7 +30,7 @@
             {% for node in nodes %}
                 <div class="node-schedule">
                     <div id="{{node}}" class="node-name" onclick="addNameFilter(this)">
-                        <img src="/static/img/rpi.png" height="28px">
+                        <img src="/static/img/{{nodes[node]['type']}}.png" height="28px">
                         <span>{{node}}</span>
                         <div class="btn-color" onclick="showInfoView('{{node}}')">info</div>
                     </div>

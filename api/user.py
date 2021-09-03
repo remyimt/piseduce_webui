@@ -340,7 +340,11 @@ def make_deploy():
         r = requests.post(url = "http://%s:%s/v1/user/deploy" % (agent.ip, agent.port),
             timeout = POST_TIMEOUT, json = r_data)
         if r.status_code == 200:
-            json_result.update(r.json())
+            r_json = r.json()
+            if "error" in r_json and len(r_json["error"]) > 0:
+                json_result["errors"].append(r_json["error"][0])
+            else:
+                json_result.update(r.json())
         else:
             json_result["errors"].append("wrong answer from the agent '%s'" % agent_name)
     close_session(db)

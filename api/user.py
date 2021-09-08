@@ -32,10 +32,7 @@ def post_data(db, user_email, agent_type, agent_token):
     return json_data
 
 
-# REST API to connect the web UI and the agents
-@b_user.route("/node/list")
-@login_required
-def node_list():
+def node_list_helper():
     result = { "errors": [], "nodes": {}, "duplicated": [] }
     db = open_session()
     for agent in db.query(Agent).filter(Agent.state == "connected").all():
@@ -75,7 +72,14 @@ def node_list():
     close_session(db)
     if len(result["errors"]) == 0:
         result["nodes"] = sort_by_name(result["nodes"])
-    return json.dumps(result)
+    return result
+
+
+# REST API to connect the web UI and the agents
+@b_user.route("/node/list")
+@login_required
+def node_list():
+    return json.dumps(node_list_helper())
 
 
 @b_user.route("/node/schedule")
@@ -503,7 +507,7 @@ def user_ssh():
 @b_user.route("/reserve")
 @login_required
 def reserve():
-    result = json.loads(node_list())
+    result = node_list_helper()
     return flask.render_template("reserve.html", admin = current_user.is_admin, active_btn = "user_reserve",
         nodes = result["nodes"], duplicated = result["duplicated"])
 
@@ -573,7 +577,7 @@ def vpn_download(vpn_key):
 @b_user.route("/envfactory")
 @login_required
 def env_factory():
-    result = json.loads(node_list())["nodes"]
+    result = node_list_helper()["nodes"]
     agent_sort = {}
     for r in result:
         if result[r]["agent"] not in agent_sort:
@@ -612,3 +616,88 @@ def env_register():
             return flask.redirect("/user/envfactory?msg=wrong agent answer from '%s'" % form_data["agent_name"])
     else:
         return flask.redirect("/user/envfactory?msg=wrong filetype")
+
+
+@b_user.route("/monitoring")
+@login_required
+def user_monitoring():
+    return flask.render_template("switch_monitoring.html", admin = current_user.is_admin, active_btn = "user_monitoring")
+
+
+def monitoring_data_helper(switch_name=None, period_str=None):
+    result = node_list_helper()["nodes"]
+    node_data = {}
+    # Retrieve the name of the nodes
+    for r in result:
+        my_agent = result[r]["agent"]
+        my_switch = result[r]["switch"]
+        my_port = str(result[r]["port_number"])
+        if my_agent not in node_data:
+            node_data[my_agent] = {}
+        if my_switch not in node_data[my_agent]:
+            node_data[my_agent][my_switch] = {}
+        node_data[my_agent][my_switch][my_port] = { "node": r, "consumptions": [] }
+    # Add the power consumption of every port
+    db = open_session()
+    for agent_name in node_data:
+        agent = db.query(Agent).filter(Agent.name == agent_name).first()
+        r_data = post_data(db, current_user.email, agent.type, agent.token)
+        if isinstance(period_str, str) and len(period_str) > 0:
+            r_data["period"] = period_str
+        if isinstance(switch_name, str) and len(switch_name) > 0:
+            r_data["switch"] = switch_name 
+        r = requests.post(url = "http://%s:%s/v1/user/switch/consumption" % (agent.ip, agent.port),
+            timeout = POST_TIMEOUT, json = r_data)
+        if r.status_code == 200:
+            r_json = r.json()
+            for cons in r_json:
+                my_switch = cons["switch"]
+                my_port = cons["port"]
+                if agent_name not in node_data:
+                    node_data[agent_name] = {}
+                if my_switch not in node_data[agent_name]:
+                    node_data[agent_name][my_switch] = {}
+                if my_port not in node_data[agent_name][my_switch]:
+                    node_data[agent_name][my_switch][my_port] = { "consumptions": [] }
+                node_data[agent_name][my_switch][my_port]["consumptions"].append({
+                    "time": cons["time"],
+                    "consumption": float(cons["consumption"])
+                })
+        else:
+            logging.error("Can not retrieve switch monitoring values from agent '%s' (status code: %d)" %
+                    (agent_name, r.status_code))
+    close_session(db)
+    # Remove the switch ports without consumptions
+    for agent in list(node_data.keys()):
+        agent_w_cons = False
+        for switch in list(node_data[agent].keys()):
+            switch_w_cons = False
+            for port in node_data[agent][switch]:
+                if len(node_data[agent][switch][port]["consumptions"]) > 0:
+                    switch_w_cons = True
+                    agent_w_cons = True
+            if not switch_w_cons:
+                del node_data[agent][switch]
+        if not agent_w_cons:
+            del node_data[agent]
+    return node_data
+
+
+@b_user.route("/monitoring/data")
+@login_required
+def user_monitoring_data(switch_name=None, period_str=None):
+        return json.dumps(monitoring_data_helper(switch_name, period_str))
+
+
+@b_user.route("/monitoring/download", methods=["POST"])
+@login_required
+def user_monitoring_download():
+    form_data = flask.request.form
+    data = monitoring_data_helper(form_data["switch"], form_data["period"])
+    data_path = "rasp_data/%s/monitoring_data.json" % current_user.email
+    dir_path = "rasp_data/%s" % current_user.email
+    if not os.path.isdir(dir_path):
+        os.mkdir(dir_path)
+    with open(data_path, "w") as fd:
+        json.dump(data, fd, indent = 4)
+    return flask.send_file(data_path, as_attachment = True)

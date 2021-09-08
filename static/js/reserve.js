@@ -43,7 +43,7 @@ $(document).ready(function () {
         },
         error: function () {
             console.log("error: can not send the request");
-        },
+        }
     });
     // Set default values
     filterNodes();

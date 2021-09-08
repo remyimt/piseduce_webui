@@ -775,6 +775,24 @@
     width: 300px;
 }
 
+/** Switch Monitoring Page **/
+.monitoring {
+    width: 1000px;
+    height: 800px;
+    padding-top: 20px;
+    margin: auto;
+    background: #fff;
+}
+
+.monitoring select {
+    height: 32px;
+}
+
+.monitoring .download {
+    width: 193px;
+    margin-top: 3px;
+}
+
 /** Settings Page **/
 .settings {
     width: 1000px;

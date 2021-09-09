@@ -67,7 +67,7 @@ $(document).ready(function () {
 					chartDiv.id = switch_name + "_chart";
                     chartDiv.className = "m-auto";
                     let offSpan = document.createElement("span");
-                    offSpan.innerHTML = "<b>Turn Off Ports</b>: " + offPorts.join();
+                    offSpan.innerHTML = "<b>Switch ports turned off for more than one hour are ignored.</b>";
 					let canvas = document.createElement("canvas");
                     canvas.id = switch_name + "_canvas";
                     chartDiv.append(offSpan);

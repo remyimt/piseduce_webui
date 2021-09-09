@@ -81,7 +81,32 @@ $(document).ready(function () {
 								y: {
 									beginAtZero: true
 								}
-							}
+							},
+                            plugins: {
+                                legend: {
+                                    onClick: function(event, elem) {
+                                        // Change the default behavior of the
+                                        // click on the text of the legend
+                                        let meHidden = false;
+                                        let allHidden = true;
+                                        for(ds of myChart.data.datasets) {
+                                            if(ds.label == elem.text) {
+                                                meHidden = ds.hidden;
+                                                ds.hidden = false;
+                                            } else {
+                                                allHidden &= ds.hidden;
+                                                ds.hidden = true;
+                                            }
+                                        }
+                                        if(allHidden && !meHidden) {
+                                            for(ds of myChart.data.datasets) {
+                                                ds.hidden = false;
+                                            }
+                                        }
+                                        myChart.update();
+                                    }
+                                }
+                            }
 						}
 					});
                     // Deep copy the monitoring variables

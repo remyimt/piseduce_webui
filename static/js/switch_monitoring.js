@@ -1,4 +1,4 @@
-MONTH_STR = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Now", "Dec" ];
+const MONTH_STR = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Now", "Dec" ];
 
 $(document).ready(function () {
     $.ajax({
@@ -23,7 +23,6 @@ $(document).ready(function () {
                     let label_ts = [];
                     let label_values = [];
                     let datasets_values = [];
-                    let offPorts = [];
                     for (port in data[agent][switch_name]) {
                         let one_value = {
                             label: "Port " + port,
@@ -49,17 +48,11 @@ $(document).ready(function () {
                             one_value.borderColor = 
                                 colors[datasets_values.length % colors.length];
                             datasets_values.push(one_value);
-                        } else {
-                            offPorts.push(one_value.label);
                         }
                     }
                     // Convert the timestamps to Strings
                     for (time of label_ts) {
-                        let myDate = new Date(time * 1000);
-                        label_values.push(int2digit(myDate.getDate()) + "-" +
-                            MONTH_STR[myDate.getMonth()] + " " + int2digit(myDate.getHours()) +
-                            ":" + int2digit(myDate.getMinutes()) + ":" +
-                            int2digit(myDate.getSeconds()));
+                        label_values.push(timestamp2string(time));
                     }
                     // Build the chart
 					let chartDiv = document.createElement("div");
@@ -91,6 +84,12 @@ $(document).ready(function () {
 							}
 						}
 					});
+                    // Deep copy the monitoring variables
+                    let info = { my_agent: agent, my_switch: switch_name };
+                    setInterval(function() {
+                        // Update the chart every 10s
+                        updateChart(info, myChart);
+                    }, 10000);
                 }
             }
             switchCons($("#switch-list"));
@@ -105,9 +104,52 @@ function int2digit(number) {
     return ("0" + number).slice(-2);
 }
 
+function timestamp2string(ts) {
+    let myDate = new Date(ts * 1000);
+    return int2digit(myDate.getDate()) + "-" + MONTH_STR[myDate.getMonth()] + " " +
+        int2digit(myDate.getHours()) + ":" + int2digit(myDate.getMinutes()) + ":" +
+        int2digit(myDate.getSeconds());
+}
+
 function switchCons(select) {
     let switchName = $(select).val().split("@")[0];
     $("div[id$='_chart']").hide();
     $("#" + switchName + "_chart").show();
     $("#switch-name").val(switchName);
+}
+
+function updateChart(info, chart) {
+    $.ajax({
+        type: "GET",
+        url: WEBUI + "/user/monitoring/get/" + info.my_agent + "/" + info.my_switch + "/9s",
+        dataType: 'json',
+        success: function (data) {
+            let m_data = {};
+            let new_time = "";
+            for(let port_nb in data[info.my_switch]) {
+                let port_data = data[info.my_switch][port_nb];
+                let port_cons = port_data["consumptions"][0];
+                let time_str = timestamp2string(port_cons.time);
+                if(!chart.data.labels.includes(time_str)) {
+                    new_time = time_str;
+                    if("node" in port_data) {
+                        m_data[port_data["node"]] = port_cons.consumption;
+                    } else {
+                        m_data["Port " + port_nb] = port_cons.consumption;
+                    }
+                }
+            }
+            if(new_time.length > 0) {
+                // Add new points
+                chart.data.labels.push(new_time);
+                for(ds of chart.data.datasets) {
+                    ds.data.push(m_data[ds.label]);
+                }
+                chart.update();
+            }
+        },
+        error: function () {
+            console.log("error: can not send the request");
+        }
+    });
 }

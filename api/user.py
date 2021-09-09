@@ -667,7 +667,7 @@ def monitoring_data_helper(switch_name=None, period_str=None):
             logging.error("Can not retrieve switch monitoring values from agent '%s' (status code: %d)" %
                     (agent_name, r.status_code))
     close_session(db)
-    # Remove the switch ports without consumptions or every consumption equal to 0
+    # Remove the switch ports without consumptions or with every consumption equal to 0
     for agent in list(node_data.keys()):
         agent_w_cons = False
         for switch in list(node_data[agent].keys()):
@@ -692,6 +692,76 @@ def monitoring_data_helper(switch_name=None, period_str=None):
 @login_required
 def user_monitoring_data(switch_name=None, period_str=None):
         return json.dumps(monitoring_data_helper(switch_name, period_str))
+
+
+# Do the same thing than the monitoring_data_helper without authentication
+def monitoring_get_helper(agent_name, switch_name, period):
+    result = {}
+    # Check the period unit: s (seconds), m (minutes), h (hours), d (days)
+    last_char = period[-1]
+    if last_char not in [ "s", "m", "h", "d" ]:
+        return {"error": "wrong unit for the period parameter"}
+    # Get the agent information
+    db = open_session()
+    agent = db.query(Agent
+            ).filter(Agent.state == "connected"
+            ).filter(Agent.name == agent_name
+            ).first()
+    if agent is None:
+        close_session(db)
+        return json.dumps({ "error": "agent '%s' does not exist" % agent_name })
+    r = requests.post(url = "http://%s:%s/v1/user/node/list" % (agent.ip, agent.port),
+            timeout = POST_TIMEOUT, json = { "token": agent.token }) 
+    if r.status_code == 200:
+        # Retrieve the name of the nodes
+        node_list = r.json()
+        for n in node_list:
+            my_switch = node_list[n]["switch"]
+            my_port = str(node_list[n]["port_number"])
+            if my_switch == switch_name:
+                if my_switch not in result:
+                    result[my_switch] = {}
+                result[my_switch][my_port] = { "node": n, "consumptions": [] }
+        # Retrieve the port consumptions of the switch
+        r = requests.post(url = "http://%s:%s/v1/user/switch/consumption" % (agent.ip, agent.port),
+            timeout = POST_TIMEOUT, json = {
+                "token": agent.token,
+                "switch": switch_name,
+                "period": period
+            })
+        if r.status_code == 200:
+            r_json = r.json()
+            for cons in r_json:
+                my_switch = cons["switch"]
+                my_port = cons["port"]
+                if my_switch not in result:
+                    result[my_switch] = {}
+                if my_port not in result[my_switch]:
+                    result[my_switch][my_port] = { "consumptions": [] }
+                result[my_switch][my_port]["consumptions"].append({
+                    "time": cons["time"],
+                    "consumption": float(cons["consumption"])
+                })
+            # Remove the switch ports without consumptions or with every consumption equal to 0
+            for switch in list(result.keys()):
+                switch_w_cons = False
+                for port in list(result[switch].keys()):
+                    port_w_cons = False
+                    for cons in result[switch][port]["consumptions"]:
+                        if cons["consumption"] > 0:
+                            port_w_cons = True
+                            switch_w_cons = True
+                    if not port_w_cons:
+                        del result[switch][port]
+                if not switch_w_cons:
+                    del result[switch]
+    close_session(db)
+    return result
+
+
+@b_user.route("/monitoring/get/<agent>/<switch>/<period>")
+def user_monitoring_get(agent, switch, period):
+    return json.dumps(monitoring_get_helper(agent, switch, period), indent = 4)
 
 
 @b_user.route("/monitoring/download", methods=["POST"])

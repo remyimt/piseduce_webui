@@ -87,20 +87,31 @@ $(document).ready(function () {
                                     onClick: function(event, elem) {
                                         // Change the default behavior of the
                                         // click on the text of the legend
-                                        let meHidden = false;
-                                        let allHidden = true;
+                                        let allVisible = true;
+                                        let showAll = false;
                                         for(ds of myChart.data.datasets) {
-                                            if(ds.label == elem.text) {
-                                                meHidden = ds.hidden;
-                                                ds.hidden = false;
-                                            } else {
-                                                allHidden &= ds.hidden;
-                                                ds.hidden = true;
-                                            }
+                                            allVisible &= !ds.hidden;
                                         }
-                                        if(allHidden && !meHidden) {
+                                        if(allVisible) {
                                             for(ds of myChart.data.datasets) {
-                                                ds.hidden = false;
+                                                if(ds.label != elem.text) {
+                                                    ds.hidden = true;
+                                                }
+                                            }
+                                        } else {
+                                            for(ds of myChart.data.datasets) {
+                                                if(ds.label == elem.text) {
+                                                    if(ds.hidden) {
+                                                        ds.hidden = false;
+                                                    } else {
+                                                        showAll = true;
+                                                    }
+                                                }
+                                            }
+                                            if(showAll) {
+                                                for(ds of myChart.data.datasets) {
+                                                    ds.hidden = false;
+                                                }
                                             }
                                         }
                                         myChart.update();

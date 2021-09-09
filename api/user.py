@@ -667,15 +667,20 @@ def monitoring_data_helper(switch_name=None, period_str=None):
             logging.error("Can not retrieve switch monitoring values from agent '%s' (status code: %d)" %
                     (agent_name, r.status_code))
     close_session(db)
-    # Remove the switch ports without consumptions
+    # Remove the switch ports without consumptions or every consumption equal to 0
     for agent in list(node_data.keys()):
         agent_w_cons = False
         for switch in list(node_data[agent].keys()):
             switch_w_cons = False
-            for port in node_data[agent][switch]:
-                if len(node_data[agent][switch][port]["consumptions"]) > 0:
-                    switch_w_cons = True
-                    agent_w_cons = True
+            for port in list(node_data[agent][switch].keys()):
+                port_w_cons = False
+                for cons in node_data[agent][switch][port]["consumptions"]:
+                    if cons["consumption"] > 0:
+                        port_w_cons = True
+                        switch_w_cons = True
+                        agent_w_cons = True
+                if not port_w_cons:
+                    del node_data[agent][switch][port]
             if not switch_w_cons:
                 del node_data[agent][switch]
         if not agent_w_cons:
